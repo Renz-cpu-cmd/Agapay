@@ -1,0 +1,9 @@
+{
+  "station_id": "STATION_001",
+  "sequence_no": 1000002,
+  "water_depth_cm": null,
+  "rainfall_mm": 0.0,
+  "sensor_quality": "invalid",
+  "device_uptime_ms": 25342,
+  "firmware_version": "0.1.0"
+}

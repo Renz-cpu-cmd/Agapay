@@ -1,0 +1,9 @@
+.pio/
+.vscode/
+include/secrets.h
+secrets.h
+*.bin
+*.elf
+*.map
+.DS_Store
+Thumbs.db

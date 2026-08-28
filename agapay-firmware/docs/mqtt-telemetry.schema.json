@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agapay.local/schemas/mqtt-telemetry-v1.json",
+  "title": "AGAPAY MQTT Telemetry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "station_id",
+    "sequence_no",
+    "water_depth_cm",
+    "rainfall_mm",
+    "sensor_quality",
+    "device_uptime_ms",
+    "firmware_version"
+  ],
+  "properties": {
+    "station_id": {
+      "type": "string",
+      "pattern": "^[A-Z0-9_-]{3,50}$"
+    },
+    "sequence_no": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "water_depth_cm": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "rainfall_mm": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "sensor_quality": {
+      "type": "string",
+      "enum": ["valid", "invalid"]
+    },
+    "device_uptime_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "firmware_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50,
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "sensor_quality": {"const": "valid"}
+        },
+        "required": ["sensor_quality"]
+      },
+      "then": {
+        "properties": {
+          "water_depth_cm": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "water_depth_cm": {"type": "null"}
+        }
+      }
+    }
+  ]
+}
