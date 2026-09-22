@@ -1,20 +1,25 @@
 # AGAPAY Backend
 
-Day-1 FastAPI and database foundation for AGAPAY.
+FastAPI telemetry foundation and persistent account services for AGAPAY.
+
+For first-administrator setup, web/mobile login, roles, and account endpoints, see [Accounts setup](../agapay-docs/ACCOUNTS_SETUP.md).
 
 ## What is implemented
 
 - FastAPI application and interactive OpenAPI documentation
 - SQLAlchemy 2 database layer
-- Automatically seeded `STATION_001` demo station
+- Automatically seeded `STATION_001` virtual UCU irrigation station
 - Strict telemetry validation matching the MQTT contract
 - Duplicate protection using `(station_id, sequence_no)`
 - UTC receive timestamps
 - Latest and historical telemetry endpoints
-- HTTP simulated-sensor sender
+- Scenario-driven HTTP virtual-station sender
+- Authenticated monitoring snapshot with freshness, source, severity, trend, and history
 - Optional MQTT subscriber scaffold
 
-Only the `stations` and `telemetry` foundation is included today. Authentication, alerts, WebSockets, notifications, reports, and ML are later phases.
+Persistent practice SOS with owner/staff access, idempotent submissions and audited status transitions is documented in [Practice SOS setup](../agapay-docs/SOS_SETUP.md).
+
+Authentication, resident registration, profiles, revocable sessions, and administrator user management are implemented alongside `stations` and `telemetry`. The [prediction interface](../agapay-docs/PREDICTION_INTERFACE.md) supplies 30/60/90-minute availability responses and explicit development previews. No trained ML model is configured. Push delivery, WebSockets, operational reports, and ML training remain later phases.
 
 ## Start on Windows
 
@@ -33,8 +38,12 @@ Open `http://127.0.0.1:8000/docs`.
 In a second activated PowerShell window:
 
 ```powershell
-python simulator\simulate_http.py --count 10 --interval 1
+python simulator\simulate_http.py --scenario flash-flood --count 16 --interval 2
 ```
+
+No hardware or simulator account is required. The web and mobile apps need a
+normal local account to read the protected monitoring snapshot. See the
+[virtual-station guide](../agapay-docs/TELEMETRY_SIMULATOR.md) for every scenario.
 
 ## Useful endpoints
 
@@ -46,6 +55,8 @@ python simulator\simulate_http.py --count 10 --interval 1
 | POST | `/api/telemetry` | Validate and store one reading |
 | GET | `/api/telemetry/{station_id}/latest` | Latest reading |
 | GET | `/api/telemetry/{station_id}?limit=20` | Recent history |
+| GET | `/api/monitoring/stations?history_limit=60` | Authenticated app-ready monitoring snapshot |
+| GET | `/api/predictions/{station_id}` | Authenticated forecast availability and development previews |
 
 ## Database progression
 

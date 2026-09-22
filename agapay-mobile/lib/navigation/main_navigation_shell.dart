@@ -1,112 +1,188 @@
-import 'package:flutter/material.dart';
-import '../core/theme/app_colors.dart';
-import '../controllers/app_controller.dart';
-import '../screens/dashboard/home_dashboard_screen.dart';
-import '../screens/map/evacuation_map_screen.dart';
-import '../screens/notifications/notifications_inbox_screen.dart';
-import '../screens/settings/settings_screen.dart';
-import 'app_routes.dart';
+import '../core/ui.dart';
+import '../screens/home/home_screen.dart';
+import '../screens/map/map_screen.dart';
+import '../screens/alerts/alerts_screen.dart';
+import '../screens/alerts/alert_details_screen.dart';
+import '../screens/sos/sos_screen.dart';
+import '../screens/profile/profile_screen.dart';
 
-/// Main Application Shell hosting the 4-tab Bottom Navigation and Global SOS shortcut
-class MainNavigationShell extends StatefulWidget {
-  final AppController controller;
-
-  const MainNavigationShell({super.key, required this.controller});
-
-  @override
-  State<MainNavigationShell> createState() => _MainNavigationShellState();
-}
-
-class _MainNavigationShellState extends State<MainNavigationShell> {
+class MainNavigationShell extends StatelessWidget {
+  const MainNavigationShell({super.key});
+  static const _screens = [
+    HomeScreen(key: PageStorageKey('home')),
+    MapScreen(key: PageStorageKey('map')),
+    SosScreen(key: PageStorageKey('sos')),
+    AlertsScreen(key: PageStorageKey('alerts')),
+    ProfileScreen(key: PageStorageKey('profile')),
+  ];
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: widget.controller,
-      builder: (context, _) {
-        final currentIndex = widget.controller.currentTabIndex;
-
-        final screens = [
-          HomeDashboardScreen(controller: widget.controller),
-          EvacuationMapScreen(controller: widget.controller),
-          NotificationsInboxScreen(controller: widget.controller),
-          SettingsScreen(controller: widget.controller),
-        ];
-
-        return Scaffold(
-          body: IndexedStack(
-            index: currentIndex,
-            children: screens,
-          ),
-          bottomNavigationBar: Container(
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: AppColors.border, width: 1.0)),
-            ),
-            child: BottomNavigationBar(
-              currentIndex: currentIndex,
-              onTap: (index) => widget.controller.setTabIndex(index),
-              type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.white,
-              selectedItemColor: AppColors.primary,
-              unselectedItemColor: AppColors.textMuted,
-              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
-              items: [
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.home_rounded),
-                  activeIcon: Icon(Icons.home_rounded),
-                  label: 'Home',
-                ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.map_outlined),
-                  activeIcon: Icon(Icons.map_rounded),
-                  label: 'Map',
-                ),
-                BottomNavigationBarItem(
-                  icon: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(Icons.notifications_outlined),
-                      if (widget.controller.unreadNotificationCount > 0)
-                        Positioned(
-                          right: -4,
-                          top: -2,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppColors.alertEvacuate,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  activeIcon: const Icon(Icons.notifications_rounded),
-                  label: 'Alerts',
-                ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.settings_outlined),
-                  activeIcon: Icon(Icons.settings_rounded),
-                  label: 'Settings',
-                ),
-              ],
-            ),
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.sosBeacon);
-            },
-            backgroundColor: AppColors.sosRed,
-            foregroundColor: Colors.white,
-            elevation: 4,
-            icon: const Icon(Icons.emergency_rounded, size: 20),
-            label: const Text(
-              'SOS',
-              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0),
-            ),
-          ),
-        );
+    final app = AppScope.of(context);
+    return PopScope(
+      canPop: !app.details,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && app.details) {
+          app.closeDetails();
+        }
       },
+      child: Scaffold(
+        body: SafeArea(
+          bottom: false,
+          child: Stack(
+            children: [
+              Offstage(
+                offstage: app.details,
+                child: IndexedStack(
+                  index: app.tab.index,
+                  children: [
+                    for (var i = 0; i < _screens.length; i++)
+                      TickerMode(
+                        enabled: !app.details && i == app.tab.index,
+                        child: _screens[i],
+                      ),
+                  ],
+                ),
+              ),
+              if (app.details) const AlertDetailsScreen(),
+            ],
+          ),
+        ),
+        bottomNavigationBar: AgapayBottomNav(),
+      ),
+    );
+  }
+}
+
+class AgapayBottomNav extends StatelessWidget {
+  const AgapayBottomNav({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final app = AppScope.of(context);
+    const labels = ['Home', 'Map', 'SOS', 'Alerts', 'Profile'];
+    const icons = ['home', 'map', 'sos', 'bell', 'user'];
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppColors.surfaceRaised, AppColors.background],
+        ),
+        border: Border(top: BorderSide(color: AppColors.border, width: 1.25)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 18,
+            offset: Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 74,
+          child: Row(
+            children: [
+              for (var i = 0; i < labels.length; i++)
+                Expanded(
+                  child: Semantics(
+                    label: '${labels[i]} tab',
+                    button: true,
+                    selected: app.tab.index == i,
+                    child: ExcludeSemantics(
+                      child: InkWell(
+                        onTap: () => app.navigate(AppTab.values[i]),
+                        child: i == 2
+                            ? Stack(
+                                clipBehavior: Clip.none,
+                                alignment: Alignment.topCenter,
+                                children: [
+                                  Positioned(
+                                    top: -14,
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                          width: 62,
+                                          height: 62,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.red,
+                                            shape: BoxShape.circle,
+                                            boxShadow:
+                                                app.alert != AlertLevel.normal
+                                                ? const [
+                                                    BoxShadow(
+                                                      color: Color(0x80dc2626),
+                                                      blurRadius: 16,
+                                                    ),
+                                                  ]
+                                                : null,
+                                          ),
+                                          child: const Center(
+                                            child: SvgIcon(
+                                              'sos',
+                                              size: 27,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        tx(
+                                          'SOS',
+                                          size: 11,
+                                          display: true,
+                                          weight: 600,
+                                          color: const Color(0xfff87171),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    spacing: 5,
+                                    children: [
+                                      SvgIcon(
+                                        icons[i],
+                                        size: 23,
+                                        color: app.tab.index == i
+                                            ? AppColors.link
+                                            : AppColors.muted,
+                                      ),
+                                      tx(
+                                        labels[i],
+                                        size: 11,
+                                        weight: app.tab.index == i ? 700 : 500,
+                                        display: true,
+                                        color: app.tab.index == i
+                                            ? AppColors.link
+                                            : AppColors.muted,
+                                      ),
+                                    ],
+                                  ),
+                                  if (i == 3 && app.alert != AlertLevel.normal)
+                                    const Positioned(
+                                      top: 8,
+                                      right: 12,
+                                      child: Dot(AppColors.red),
+                                    ),
+                                  if (app.tab.index == i)
+                                    const Positioned(
+                                      bottom: 4,
+                                      child: Dot(AppColors.link, size: 4),
+                                    ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

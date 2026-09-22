@@ -1,0 +1,230 @@
+{
+  "$defs": {
+    "ForecastPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "horizon_minutes": {
+          "enum": [
+            30,
+            60,
+            90
+          ],
+          "title": "Horizon Minutes",
+          "type": "integer"
+        },
+        "target_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target At"
+        },
+        "water_depth_cm": {
+          "anyOf": [
+            {
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Water Depth Cm"
+        }
+      },
+      "required": [
+        "horizon_minutes"
+      ],
+      "title": "ForecastPoint",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "station_id": {
+      "title": "Station Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "not_trained",
+        "insufficient_data",
+        "stale_data",
+        "invalid_data",
+        "available",
+        "service_error"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "reason": {
+      "title": "Reason",
+      "type": "string"
+    },
+    "source": {
+      "enum": [
+        "none",
+        "model",
+        "simulated"
+      ],
+      "title": "Source",
+      "type": "string"
+    },
+    "advisory_only": {
+      "const": true,
+      "default": true,
+      "title": "Advisory Only",
+      "type": "boolean"
+    },
+    "checked_at": {
+      "format": "date-time",
+      "title": "Checked At",
+      "type": "string"
+    },
+    "generated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Generated At"
+    },
+    "valid_until": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid Until"
+    },
+    "model_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model Version"
+    },
+    "input_status": {
+      "enum": [
+        "usable",
+        "insufficient_data",
+        "stale_data",
+        "invalid_data"
+      ],
+      "title": "Input Status",
+      "type": "string"
+    },
+    "input_window_start": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Input Window Start"
+    },
+    "input_last_recorded_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Input Last Recorded At"
+    },
+    "sample_count": {
+      "minimum": 0,
+      "title": "Sample Count",
+      "type": "integer"
+    },
+    "valid_sample_count": {
+      "minimum": 0,
+      "title": "Valid Sample Count",
+      "type": "integer"
+    },
+    "timestamp_basis": {
+      "enum": [
+        "server_received",
+        "device_measured",
+        "synthetic"
+      ],
+      "title": "Timestamp Basis",
+      "type": "string"
+    },
+    "rainfall_interval_seconds": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rainfall Interval Seconds"
+    },
+    "preview_allowed": {
+      "title": "Preview Allowed",
+      "type": "boolean"
+    },
+    "forecasts": {
+      "items": {
+        "$ref": "#/$defs/ForecastPoint"
+      },
+      "title": "Forecasts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "station_id",
+    "status",
+    "reason",
+    "source",
+    "checked_at",
+    "input_status",
+    "sample_count",
+    "valid_sample_count",
+    "timestamp_basis",
+    "preview_allowed",
+    "forecasts"
+  ],
+  "title": "PredictionResponse",
+  "type": "object"
+}

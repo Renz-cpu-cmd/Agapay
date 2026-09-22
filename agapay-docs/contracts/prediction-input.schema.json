@@ -1,0 +1,107 @@
+{
+  "$defs": {
+    "PredictionSample": {
+      "additionalProperties": false,
+      "properties": {
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "water_depth_cm": {
+          "anyOf": [
+            {
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Water Depth Cm"
+        },
+        "rainfall_mm": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Rainfall Mm",
+          "type": "number"
+        },
+        "rainfall_interval_seconds": {
+          "anyOf": [
+            {
+              "maximum": 86400,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rainfall Interval Seconds"
+        },
+        "sensor_quality": {
+          "enum": [
+            "valid",
+            "invalid"
+          ],
+          "title": "Sensor Quality",
+          "type": "string"
+        }
+      },
+      "required": [
+        "recorded_at",
+        "water_depth_cm",
+        "rainfall_mm",
+        "sensor_quality"
+      ],
+      "title": "PredictionSample",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "station_id": {
+      "pattern": "^[A-Z0-9_-]{3,50}$",
+      "title": "Station Id",
+      "type": "string"
+    },
+    "as_of": {
+      "format": "date-time",
+      "title": "As Of",
+      "type": "string"
+    },
+    "timestamp_basis": {
+      "enum": [
+        "server_received",
+        "device_measured",
+        "synthetic"
+      ],
+      "title": "Timestamp Basis",
+      "type": "string"
+    },
+    "samples": {
+      "items": {
+        "$ref": "#/$defs/PredictionSample"
+      },
+      "maxItems": 3600,
+      "title": "Samples",
+      "type": "array"
+    }
+  },
+  "required": [
+    "station_id",
+    "as_of",
+    "timestamp_basis",
+    "samples"
+  ],
+  "title": "PredictionInput",
+  "type": "object"
+}

@@ -1,260 +1,214 @@
-import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/constants/app_constants.dart';
-import '../../widgets/common/app_buttons.dart';
+import '../../core/ui.dart';
 import '../../navigation/app_routes.dart';
-import '../../controllers/app_controller.dart';
+import '../../widgets/common/auth_field.dart';
 
-/// Screen 3: Resident Registration Screen
 class RegisterScreen extends StatefulWidget {
-  final AppController controller;
-
-  const RegisterScreen({super.key, required this.controller});
-
+  const RegisterScreen({super.key});
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  final _phoneController = TextEditingController();
-  String _selectedBarangay = AppConstants.availableBarangays.first;
-  bool _agreedToTerms = false;
-  bool _obscurePassword = true;
-  bool _isLoading = false;
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _phone = TextEditingController();
+  final _password = TextEditingController();
+  String _barangay = 'San Vicente';
+  bool _busy = false;
+  String? _error;
+
+  Future<void> _submit() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    if ([
+      _name.text,
+      _email.text,
+      _phone.text,
+    ].any((value) => value.trim().isEmpty)) {
+      setState(() => _error = 'Enter your name, email, and phone number.');
+      return;
+    }
+    if (_password.text.length < 12 || _password.text.length > 128) {
+      setState(() => _error = 'Use a password with 12–128 characters.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await AppScope.of(context).register({
+        'name': _name.text.trim(),
+        'email': _email.text.trim(),
+        'phone': _phone.text.trim(),
+        'barangay': _barangay,
+        'password': _password.text,
+      });
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.main,
+          (_) => false,
+        );
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    _phoneController.dispose();
+    for (final c in [_name, _email, _phone, _password]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
-  Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (!_agreedToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please accept the Community Disaster Warning Terms & Privacy Policy.'),
-          backgroundColor: AppColors.alertWarning,
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      await widget.controller.register(
-        fullName: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        barangay: _selectedBarangay,
-        phone: _phoneController.text.trim(),
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful! Welcome to AGAPAY.'),
-            backgroundColor: AppColors.alertNormal,
-          ),
-        );
-        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Registration error: $e'), backgroundColor: AppColors.alertEvacuate),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Create Account'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Join AGAPAY Community',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Register your location to receive localized flood thresholds and rapid rescue alerts.',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 24),
-
-                // Full Name
-                _label('Full Name'),
-                TextFormField(
-                  controller: _nameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    hintText: 'Juan Dela Cruz',
-                    prefixIcon: Icon(Icons.person_outline_rounded, size: 20, color: AppColors.textSecondary),
-                  ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Please enter your full name' : null,
-                ),
-                const SizedBox(height: 16),
-
-                // Email
-                _label('Email Address'),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    hintText: 'name@example.com',
-                    prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppColors.textSecondary),
-                  ),
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) return 'Please enter your email';
-                    if (!val.contains('@')) return 'Enter a valid email address';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Barangay Dropdown
-                _label('Home Barangay / Community'),
-                DropdownButtonFormField<String>(
-                  value: _selectedBarangay,
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.location_city_rounded, size: 20, color: AppColors.textSecondary),
-                  ),
-                  items: AppConstants.availableBarangays.map((bg) {
-                    return DropdownMenuItem(value: bg, child: Text(bg));
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) setState(() => _selectedBarangay = val);
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Phone Number
-                _label('Mobile Phone Number (for Emergency SMS)'),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    hintText: '+63 9XX XXX XXXX',
-                    prefixIcon: Icon(Icons.phone_outlined, size: 20, color: AppColors.textSecondary),
-                  ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Please enter your contact number' : null,
-                ),
-                const SizedBox(height: 16),
-
-                // Password
-                _label('Password'),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    hintText: 'At least 6 characters',
-                    prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20, color: AppColors.textSecondary),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        color: AppColors.textSecondary,
-                        size: 20,
-                      ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+  Widget build(BuildContext context) => Scaffold(
+    body: SafeArea(
+      child: PageContent(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+        children: [
+          Row(
+            children: [
+              Semantics(
+                label: 'Back',
+                button: true,
+                child: InkWell(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: SvgIcon('back', size: 16, color: AppColors.label),
                     ),
                   ),
-                  validator: (val) {
-                    if (val == null || val.length < 6) return 'Password must be at least 6 characters';
-                    return null;
-                  },
                 ),
-                const SizedBox(height: 16),
-
-                // Confirm Password
-                _label('Confirm Password'),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscurePassword,
-                  decoration: const InputDecoration(
-                    hintText: 'Re-enter your password',
-                    prefixIcon: Icon(Icons.lock_clock_outlined, size: 20, color: AppColors.textSecondary),
-                  ),
-                  validator: (val) {
-                    if (val != _passwordController.text) return 'Passwords do not match';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Terms Checkbox
-                Row(
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Checkbox(
-                      value: _agreedToTerms,
-                      activeColor: AppColors.primary,
-                      onChanged: (val) => setState(() => _agreedToTerms = val ?? false),
+                    tx(
+                      'Create Account',
+                      size: 20,
+                      weight: 700,
+                      display: true,
+                      color: Colors.white,
+                      height: 1.4,
                     ),
-                    const Expanded(
-                      child: Text(
-                        'I agree to the Community Disaster & Early-Warning Terms of Use, GPS dispatch location sharing during SOS emergencies, and Privacy Policy.',
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3),
-                      ),
+                    tx(
+                      'Join the AGAPAY community network',
+                      size: 12,
+                      color: AppColors.muted,
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
-
-                // Register Button
-                PrimaryButton(
-                  label: 'Complete Registration',
-                  isLoading: _isLoading,
-                  onPressed: _handleRegister,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              const AgapayLogo(size: 32),
+              const SizedBox(width: 8),
+              tx(
+                'AGAPAY',
+                display: true,
+                weight: 700,
+                size: 16,
+                spacing: .8,
+                color: AppColors.link,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Column(
+            spacing: 16,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AuthField('Full Name', controller: _name, hint: 'Renz Alvarez'),
+              AuthField(
+                'Email Address',
+                controller: _email,
+                hint: 'example@email.com',
+                keyboardType: TextInputType.emailAddress,
+              ),
+              AuthField(
+                'Phone Number',
+                controller: _phone,
+                hint: '+63 9xx xxx xxxx',
+                keyboardType: TextInputType.phone,
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  tx(
+                    'BARANGAY',
+                    size: 11,
+                    weight: 600,
+                    color: AppColors.label,
+                    display: true,
+                    spacing: 1.1,
+                  ),
+                  const SizedBox(height: 6),
+                  BarangayPicker(
+                    value: _barangay,
+                    onChanged: (value) => setState(() => _barangay = value),
+                  ),
+                ],
+              ),
+              AuthField(
+                'Password',
+                controller: _password,
+                hint: 'At least 12 characters',
+                password: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+          if (_error != null) ...[
+            Semantics(
+              liveRegion: true,
+              child: tx(_error!, color: const Color(0xfff87171), size: 12),
+            ),
+            const SizedBox(height: 12),
+          ],
+          ActionButton(
+            _busy ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT',
+            vertical: 14,
+            endColor: const Color(0xff2563eb),
+            onPressed: _busy ? null : _submit,
+          ),
+          const SizedBox(height: 20),
+          Text.rich(
+            TextSpan(
+              style: const TextStyle(
+                fontSize: 12,
+                height: 16 / 12,
+                color: AppColors.muted,
+              ),
+              children: const [
+                TextSpan(
+                  text: 'By creating an account you agree to the AGAPAY ',
                 ),
-                const SizedBox(height: 24),
+                TextSpan(
+                  text: 'Terms of Service',
+                  style: TextStyle(color: AppColors.link),
+                ),
               ],
             ),
+            textAlign: TextAlign.center,
           ),
-        ),
+        ],
       ),
-    );
-  }
-
-  Widget _label(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-      ),
-    );
-  }
+    ),
+  );
 }

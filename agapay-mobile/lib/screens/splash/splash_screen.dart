@@ -1,124 +1,159 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/constants/app_constants.dart';
-import '../../widgets/branding/agapay_logo.dart';
+import 'dart:math' as math;
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../core/ui.dart';
 import '../../navigation/app_routes.dart';
 
-/// Screen 1: Splash Screen with subtle logo fade-in & transition
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnim;
-  late Animation<double> _scaleAnim;
-
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animation = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1800),
+  )..repeat();
+  Timer? _timer;
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
-    );
-
-    _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-    _scaleAnim = Tween<double>(begin: 0.92, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
-
-    _controller.forward();
-
-    // Smooth navigation after 2 seconds
-    Timer(const Duration(milliseconds: 2200), () {
+    _timer = Timer(const Duration(milliseconds: 2800), () async {
+      if (!mounted) return;
+      final app = AppScope.of(context);
+      await app.restoreSession();
       if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        Navigator.pushReplacementNamed(
+          context,
+          app.signedIn ? AppRoutes.main : AppRoutes.login,
+        );
       }
     });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _timer?.cancel();
+    _animation.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.primaryDark,
-      body: SafeArea(
-        child: Center(
-          child: FadeTransition(
-            opacity: _fadeAnim,
-            child: ScaleTransition(
-              scale: _scaleAnim,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Spacer(),
-                    // Branded Logo
-                    const AgapayLogo(size: 96, isDark: true),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'AGAPAY',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 3.0,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 2,
-                      width: 48,
-                      color: AppColors.secondary,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      AppConstants.appTagline,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFFCBD5E1),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        height: 1.4,
-                      ),
-                    ),
-                    const Spacer(),
-                    // Bottom loading indicator & version
-                    const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.2,
-                        color: Color(0xFF60A5FA),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      AppConstants.appVersion,
-                      style: TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+  Widget build(BuildContext context) => Scaffold(
+    body: SafeArea(
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.blue.withValues(alpha: .2),
+                    Colors.transparent,
                   ],
+                  radius: .65,
+                  stops: const [0, .7],
                 ),
               ),
             ),
           ),
-        ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 120,
+            child: Opacity(
+              opacity: .15,
+              child: SvgPicture.string(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 120" preserveAspectRatio="none"><path d="M0,60 C65,20 130,100 195,60 C260,20 325,100 390,60 L390,120 L0,120 Z" fill="#1d4ed8"/></svg>',
+                fit: BoxFit.fill,
+              ),
+            ),
+          ),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedBuilder(
+                      animation: _animation,
+                      builder: (context, child) => Transform.scale(
+                        scale: 1 + 1.4 * _animation.value,
+                        child: Opacity(
+                          opacity: .8 * (1 - _animation.value),
+                          child: Container(
+                            width: 96,
+                            height: 96,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColors.blue),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const AgapayLogo(size: 96),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                tx(
+                  'AGAPAY',
+                  size: 48,
+                  weight: 900,
+                  display: true,
+                  color: Colors.white,
+                  spacing: -.96,
+                  height: 1,
+                ),
+                const SizedBox(height: 4),
+                tx(
+                  'COMMUNITY FLOOD & DISASTER',
+                  size: 13,
+                  weight: 500,
+                  display: true,
+                  color: AppColors.link,
+                  spacing: 1.3,
+                ),
+                tx(
+                  'EARLY-WARNING SYSTEM',
+                  size: 13,
+                  weight: 500,
+                  display: true,
+                  color: AppColors.link,
+                  spacing: 1.3,
+                ),
+                const SizedBox(height: 40),
+                AnimatedBuilder(
+                  animation: _animation,
+                  builder: (context, child) => Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 8,
+                    children: List.generate(3, (index) {
+                      final wave =
+                          (math.sin(
+                                (_animation.value - index * .14) * 2 * math.pi,
+                              ) +
+                              1) /
+                          2;
+                      return Transform.scale(
+                        scale: .6 + .4 * wave,
+                        child: Opacity(
+                          opacity: .4 + .6 * wave,
+                          child: const Dot(Color(0xff3b82f6)),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 }

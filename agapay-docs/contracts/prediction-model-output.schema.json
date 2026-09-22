@@ -1,0 +1,45 @@
+{
+  "$defs": {
+    "ModelForecast": {
+      "additionalProperties": false,
+      "properties": {
+        "horizon_minutes": {
+          "enum": [
+            30,
+            60,
+            90
+          ],
+          "title": "Horizon Minutes",
+          "type": "integer"
+        },
+        "water_depth_cm": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Water Depth Cm",
+          "type": "number"
+        }
+      },
+      "required": [
+        "horizon_minutes",
+        "water_depth_cm"
+      ],
+      "title": "ModelForecast",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "forecasts": {
+      "items": {
+        "$ref": "#/$defs/ModelForecast"
+      },
+      "title": "Forecasts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "forecasts"
+  ],
+  "title": "ModelOutput",
+  "type": "object"
+}

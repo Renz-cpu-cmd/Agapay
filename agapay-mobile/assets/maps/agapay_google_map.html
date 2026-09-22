@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <style>
+    html, body, #map {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #00112e;
+      font-family: Arial, sans-serif;
+    }
+
+    #provider {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 4;
+      padding: 6px 9px;
+      border: 1px solid rgba(96, 165, 250, .55);
+      border-radius: 7px;
+      background: rgba(0, 17, 46, .9);
+      color: #93c5fd;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      pointer-events: none;
+    }
+
+    #status {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      background: #00112e;
+      color: #93c5fd;
+      font-size: 12px;
+      letter-spacing: .08em;
+      transition: opacity .2s ease;
+      pointer-events: none;
+    }
+
+    #status.hidden {
+      opacity: 0;
+    }
+
+    .gm-style .gm-style-iw-c,
+    .gm-style .gm-style-iw-tc::after {
+      background: #071a37;
+      color: #f8fafc;
+    }
+  </style>
+</head>
+<body>
+  <div id="map" role="application" aria-label="Interactive Google map"></div>
+  <div id="provider">GOOGLE DEMO · DARK</div>
+  <div id="status" role="status">LOADING GOOGLE MAP…</div>
+
+  <script>
+    let map = null;
+    let mapMarkers = [];
+    let routeLines = [];
+    let loaderPromise = null;
+    let latestConfig = null;
+    let readyTimer = null;
+    let renderRevision = 0;
+
+    function bridge(message) {
+      if (window.AgapayBridge && window.AgapayBridge.postMessage) {
+        window.AgapayBridge.postMessage(JSON.stringify(message));
+      }
+    }
+
+    function showStatus(text) {
+      const status = document.getElementById('status');
+      status.textContent = text;
+      status.classList.remove('hidden');
+    }
+
+    function markReady() {
+      const status = document.getElementById('status');
+      status.classList.add('hidden');
+      bridge({ type: 'ready' });
+    }
+
+    window.gm_authFailure = function () {
+      showStatus('GOOGLE DEMO KEY WAS REJECTED');
+      bridge({ type: 'error', message: 'The Google Maps Demo Key was rejected.' });
+    };
+
+    function loadGoogle(key) {
+      if (window.google && window.google.maps) return Promise.resolve();
+      if (loaderPromise) return loaderPromise;
+
+      loaderPromise = new Promise((resolve, reject) => {
+        window.__agapayGoogleReady = resolve;
+        const script = document.createElement('script');
+        script.async = true;
+        script.defer = true;
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=' +
+          encodeURIComponent(key) +
+          '&v=weekly&loading=async&callback=__agapayGoogleReady';
+        script.onerror = () => reject(new Error('Google Maps JavaScript could not be downloaded.'));
+        document.head.appendChild(script);
+      });
+
+      return loaderPromise;
+    }
+
+    function clearOverlays() {
+      mapMarkers.forEach(marker => { marker.map = null; });
+      mapMarkers = [];
+      routeLines.forEach(line => line.setMap(null));
+      routeLines = [];
+    }
+
+    window.agapayRender = async function (config) {
+      const revision = ++renderRevision;
+      latestConfig = config;
+      showStatus('LOADING GOOGLE MAP…');
+
+      try {
+        await loadGoogle(config.apiKey);
+        const [mapsLibrary, markerLibrary, coreLibrary] = await Promise.all([
+          google.maps.importLibrary('maps'),
+          google.maps.importLibrary('marker'),
+          google.maps.importLibrary('core'),
+        ]);
+        const routesLibrary = config.route
+          ? await google.maps.importLibrary('routes')
+          : null;
+
+        if (config !== latestConfig || revision !== renderRevision) return;
+
+        const { Map, MapTypeId, RenderingType } = mapsLibrary;
+        const { AdvancedMarkerElement, PinElement } = markerLibrary;
+        const { ColorScheme, ControlPosition } = coreLibrary;
+        const Route = routesLibrary && routesLibrary.Route;
+        const center = { lat: config.center.latitude, lng: config.center.longitude };
+
+        if (!map) {
+          map = new Map(document.getElementById('map'), {
+            center,
+            zoom: config.zoom,
+            tilt: config.tilt,
+            heading: 0,
+            mapId: 'DEMO_MAP_ID',
+            renderingType: RenderingType.VECTOR,
+            colorScheme: ColorScheme.DARK,
+            backgroundColor: '#00112e',
+            gestureHandling: 'greedy',
+            keyboardShortcuts: false,
+            cameraControl: true,
+            zoomControl: true,
+            rotateControl: true,
+            fullscreenControl: false,
+            streetViewControl: true,
+            scaleControl: true,
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+              position: ControlPosition.TOP_RIGHT,
+              mapTypeIds: [MapTypeId.ROADMAP, MapTypeId.TERRAIN, MapTypeId.SATELLITE, MapTypeId.HYBRID],
+            },
+            minZoom: 3,
+            maxZoom: 21,
+          });
+        }
+
+        clearOverlays();
+        const markerPositions = [];
+
+        config.markers.forEach(item => {
+          const position = { lat: item.position.latitude, lng: item.position.longitude };
+          markerPositions.push(position);
+          const pin = new PinElement({
+            background: item.color,
+            borderColor: '#f8fafc',
+            glyphColor: '#00112e',
+            glyphText: item.glyph,
+            scale: item.selected ? 1.35 : 1.18,
+          });
+          const marker = new AdvancedMarkerElement({
+            map,
+            position,
+            title: item.title,
+            content: pin,
+            gmpClickable: true,
+            zIndex: item.selected ? 20 : 10,
+          });
+          marker.addEventListener('gmp-click', () => bridge({ type: 'marker', id: item.id }));
+          mapMarkers.push(marker);
+        });
+
+        let routeViewport = null;
+        if (config.route) {
+          bridge({ type: 'route', id: config.route.id, status: 'loading' });
+          try {
+            const result = await Route.computeRoutes({
+              origin: {
+                lat: config.route.origin.latitude,
+                lng: config.route.origin.longitude,
+              },
+              destination: {
+                lat: config.route.destination.latitude,
+                lng: config.route.destination.longitude,
+              },
+              travelMode: config.route.travelMode,
+              polylineQuality: 'HIGH_QUALITY',
+              fields: ['path', 'distanceMeters', 'durationMillis', 'viewport', 'warnings'],
+            });
+
+            if (config !== latestConfig || revision !== renderRevision) return;
+            const route = result.routes && result.routes[0];
+            if (!route) throw new Error('No walking route was found.');
+
+            routeLines = route.createPolylines({
+              polylineOptions: {
+                strokeColor: '#38bdf8',
+                strokeOpacity: .98,
+                strokeWeight: 7,
+                zIndex: 5,
+              },
+            });
+            routeLines.forEach(line => line.setMap(map));
+            routeViewport = route.viewport || null;
+            bridge({
+              type: 'route',
+              id: config.route.id,
+              status: 'ready',
+              distanceMeters: route.distanceMeters,
+              durationSeconds: route.durationMillis == null
+                ? null
+                : Math.ceil(route.durationMillis / 1000),
+              warnings: route.warnings || [],
+            });
+          } catch (routeError) {
+            if (config !== latestConfig || revision !== renderRevision) return;
+            bridge({
+              type: 'route',
+              id: config.route.id,
+              status: 'error',
+              message: routeError && routeError.message
+                ? routeError.message
+                : 'Google could not calculate a walking route.',
+            });
+          }
+        }
+
+        const selected = config.markers.find(item => item.id === config.selectedMarkerId);
+        if (selected) {
+          map.moveCamera({
+            center: { lat: selected.position.latitude, lng: selected.position.longitude },
+            zoom: 17,
+            tilt: config.tilt,
+          });
+        } else if (routeViewport) {
+          map.fitBounds(routeViewport, 54);
+        } else if (config.fitAll && markerPositions.length > 1) {
+          const bounds = new google.maps.LatLngBounds();
+          markerPositions.forEach(point => bounds.extend(point));
+          map.fitBounds(bounds, 54);
+        } else {
+          map.moveCamera({ center, zoom: config.zoom, tilt: config.tilt, heading: 0 });
+        }
+
+        clearTimeout(readyTimer);
+        google.maps.event.addListenerOnce(map, 'tilesloaded', markReady);
+        readyTimer = setTimeout(markReady, 8000);
+      } catch (error) {
+        const message = error && error.message
+          ? error.message
+          : 'Google Maps could not load.';
+        showStatus(message.toUpperCase());
+        bridge({ type: 'error', message });
+      }
+    };
+  </script>
+</body>
+</html>

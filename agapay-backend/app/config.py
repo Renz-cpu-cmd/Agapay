@@ -12,6 +12,11 @@ class Settings(BaseSettings):
 
     environment: str = "development"
     database_url: str = "sqlite:///./agapay_dev.db"
+    session_days: int = 7
+    cors_origins: list[str] = ["http://localhost:8080", "http://127.0.0.1:8080"]
+    prediction_preview_enabled: bool = True
+    local_admin_setup_enabled: bool = True
+    telemetry_stale_after_seconds: int = 30
 
     mqtt_enabled: bool = False
     mqtt_host: str = "localhost"
