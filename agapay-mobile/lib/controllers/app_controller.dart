@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../models/alert_level.dart';
 import '../models/account.dart';
 import '../services/auth_api.dart';
+import '../services/push_token_provider.dart';
+import 'notification_registration_controller.dart';
 import '../services/sos_drafts.dart';
 import 'sos_controller.dart';
 import 'forecast_controller.dart';
@@ -13,8 +15,15 @@ enum AppTab { home, map, sos, alerts, profile }
 
 /// Central state for accounts, forecasts, practice SOS, and station monitoring.
 class AppController extends ChangeNotifier {
-  AppController({AuthApi? authApi, SosDraftStore? sosStorage})
-    : auth = authApi ?? AuthApi() {
+  AppController({
+    AuthApi? authApi,
+    SosDraftStore? sosStorage,
+    PushTokenProvider? pushTokenProvider,
+  }) : auth = authApi ?? AuthApi() {
+    notificationRegistration = NotificationRegistrationController(
+      auth,
+      provider: pushTokenProvider ?? const DisabledPushTokenProvider(),
+    );
     sos = SosController(auth, storage: sosStorage);
     forecasts = ForecastController(auth);
     monitoring = MonitoringController(auth)..addListener(_monitoringChanged);
@@ -26,12 +35,14 @@ class AppController extends ChangeNotifier {
       forecasts.setOwner(null);
       monitoring.setOwner(null);
       communityAlerts.setOwner(null);
+      notificationRegistration.setOwner(null);
       details = false;
       notifyListeners();
     };
   }
   final AuthApi auth;
   late final SosController sos;
+  late final NotificationRegistrationController notificationRegistration;
   late final ForecastController forecasts;
   late final MonitoringController monitoring;
   late final CommunityAlertController communityAlerts;
@@ -58,6 +69,7 @@ class AppController extends ChangeNotifier {
     forecasts.setOwner(account.id);
     monitoring.setOwner(account.id);
     communityAlerts.setOwner(account.id);
+    notificationRegistration.setOwner(account.id);
     barangay = account.barangay;
     authError = null;
     notifyListeners();
@@ -82,18 +94,26 @@ class AppController extends ChangeNotifier {
       forecasts.setOwner(null);
       monitoring.setOwner(null);
       communityAlerts.setOwner(null);
+      notificationRegistration.setOwner(null);
       details = false;
       notifyListeners();
     }
   }
 
   Future<void> logout() async {
-    await auth.logout();
+    await notificationRegistration.unregisterForLogout();
+    try {
+      await auth.logout();
+    } catch (_) {
+      notificationRegistration.setOwner(user?.id);
+      rethrow;
+    }
     user = null;
     sos.setOwner(null);
     forecasts.setOwner(null);
     monitoring.setOwner(null);
     communityAlerts.setOwner(null);
+    notificationRegistration.setOwner(null);
     details = false;
     tab = AppTab.home;
     notifications = true;
@@ -112,6 +132,7 @@ class AppController extends ChangeNotifier {
     monitoring.dispose();
     communityAlerts.removeListener(_communityChanged);
     communityAlerts.dispose();
+    notificationRegistration.dispose();
     auth.dispose();
     super.dispose();
   }

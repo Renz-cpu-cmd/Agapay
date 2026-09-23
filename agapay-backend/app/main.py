@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.database import Base, SessionLocal, engine
-from app.routers import alerts, auth, community_alerts, health, monitoring, stations, telemetry, users, sos, predictions
+from app.routers import alerts, auth, community_alerts, health, monitoring, notification_devices, stations, telemetry, users, sos, predictions
 from app.seed import seed_demo_station
 
 
@@ -55,7 +55,8 @@ app.include_router(predictions.router)
 app.include_router(monitoring.router)
 app.include_router(alerts.router)
 app.include_router(community_alerts.router)
-app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["GET", "POST", "PATCH"], allow_headers=["Authorization", "Content-Type"])
+app.include_router(notification_devices.router)
+app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["GET", "POST", "PATCH", "DELETE"], allow_headers=["Authorization", "Content-Type"])
 
 
 @app.exception_handler(RequestValidationError)
@@ -66,7 +67,7 @@ async def safe_validation_error(request, exc):
 @app.middleware("http")
 async def private_account_responses(request, call_next):
     response = await call_next(request)
-    if request.url.path.startswith(("/api/auth", "/api/users", "/api/sos", "/api/predictions", "/api/monitoring", "/api/alerts", "/api/community-alerts")):
+    if request.url.path.startswith(("/api/auth", "/api/users", "/api/sos", "/api/predictions", "/api/monitoring", "/api/alerts", "/api/community-alerts", "/api/notification-devices")):
         response.headers["Cache-Control"] = "no-store"
     return response
 

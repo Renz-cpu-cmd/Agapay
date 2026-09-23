@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Alert, AlertTransition, Station, Telemetry
 from app.services.alert_classifier import SEVERITY_ORDER, classify_depth
+from app.services.notification_service import enqueue_transition
 
 
 def process_sensor_alert(db: Session, station: Station, telemetry: Telemetry) -> None:
@@ -44,9 +45,12 @@ def process_sensor_alert(db: Session, station: Station, telemetry: Telemetry) ->
         episode.status = "RESOLVED"
         episode.resolved_at = telemetry.recorded_at
     db.flush()  # Assign a new episode ID before inserting its first transition.
-    db.add(AlertTransition(
+    transition = AlertTransition(
         alert_id=episode.id, station_id=station.station_id,
         telemetry_id=telemetry.id, sequence_no=telemetry.sequence_no,
         previous_severity=previous, new_severity=severity,
         water_depth_cm=telemetry.water_depth_cm, transitioned_at=telemetry.recorded_at,
-    ))
+    )
+    db.add(transition)
+    db.flush()
+    enqueue_transition(db, transition)

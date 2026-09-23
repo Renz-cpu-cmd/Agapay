@@ -150,8 +150,8 @@ loads that persistent episode's detail and timeline.
   shown. A successful response can still contain an old valid reading: invalid
   telemetry preserves the persistent episode and does not resolve it.
 - The static notification feed, fake read/unread counts, and monitoring-derived
-  notification dots were removed. There is no notification-delivery or read-receipt
-  backend. The Profile switch is explicitly a future preference only and does not
+  notification dots were removed. There is no real notification delivery or read-receipt
+  backend; the disabled delivery foundation is documented below. The Profile switch is explicitly a future preference only and does not
   disable this safety feed, register devices, or control push delivery.
 - `source=sensor` means telemetry-generated. Device/simulator historical origin
   is not stored, and persistent episodes are not labelled physically verified.
@@ -168,3 +168,47 @@ typed parsing, unsafe values, authenticated owner lifecycle, pagination, errors,
 polling overlap, late responses, expiry/logout/password changes, real episode UI,
 peak/recovery semantics, direct transitions, and narrow-screen layout. Existing
 authentication, SOS, prediction and navigation/monitoring checks remain in the suite.
+
+## Push registration foundation (delivery disabled)
+
+`PushTokenProvider` separates future Firebase token acquisition from authenticated
+registration. The default `DisabledPushTokenProvider` has no token, makes no device
+requests, and requires no Firebase dependencies/project files. No real FCM send or
+device receipt has been performed by this integration.
+
+`NotificationRegistrationController` uses only `AuthApi.request()`:
+after login/restoration it reads the provider token, then serializes token-change
+events into POST `/api/notification-devices`. The future provider must keep one
+stable UUID per installation through token rotation. Repeated token events do not
+repeat registrations; failures remain unavailable and can retry through
+`refresh()`, a new token event, or a new session. No registration polling runs.
+Provider/token error text is not exposed in UI state or logs.
+
+Logout drains registration work, attempts DELETE for this device, then revokes
+the session. If deletion fails, the backend's registration-bound session check
+prevents future sends after logout/expiry/password revocation. A send already
+in flight cannot be recalled. Expiry, password changes, owner removal and disposal
+cancel subscriptions and ignore late results. A non-401 API failure does not
+destroy the login session; 401 uses the existing AuthApi expiration callback.
+
+The Profile switch remains explicitly **future preference only**. It is not
+server-connected and does not control registrations or delivery. A future release
+must implement a server-enforced preference before labelling it operational.
+The Community Alert feed and live Home monitoring remain separate and unchanged;
+no unread/read-receipt model or notification presentation/background handler exists.
+
+Future notification metadata uses a structured persistent `alert_id` for opening
+Community Alert detail, not navigation parsed from prose. Actual deep-link receipt
+handling awaits the Firebase adapter. Source device/simulator history remains
+unknown; sensor EVACUATE is not an official LGU evacuation order and physical/site
+calibration remains pending. Local ESP32 alert operation is independent of push.
+
+See [backend notification setup](../agapay-backend/docs/notifications.md) for the
+exact external Firebase/APNs/platform setup still needed. Do not put service-account
+JSON, private keys or local Firebase configuration in Git. Current CI uses fakes
+and does not require an emulator or physical device.
+
+Validate with `flutter pub get`, `flutter analyze`, and `flutter test`.
+Registration tests cover login, disabled/no-token behavior, rotation, serialization,
+logout races, failure/expiry, provider errors and disposal; existing Community Alert,
+auth, SOS, monitoring, prediction and navigation tests remain in the full suite.

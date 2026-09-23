@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from uuid import uuid4
 
 from sqlalchemy import (
     BigInteger,
@@ -172,6 +173,63 @@ class AdministratorSetup(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class NotificationDevice(Base):
+    __tablename__ = "notification_devices"
+    __table_args__ = (
+        UniqueConstraint("user_id", "installation_id", name="uq_notification_installation"),
+        CheckConstraint("platform IN ('android', 'ios')", name="ck_notification_platform"),
+        CheckConstraint("provider = 'fcm'", name="ck_notification_provider"),
+        CheckConstraint("NOT enabled OR (provider_token IS NOT NULL AND token_hash IS NOT NULL)", name="ck_notification_token"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    installation_id: Mapped[str] = mapped_column(String(36))
+    platform: Mapped[str] = mapped_column(String(10))
+    provider: Mapped[str] = mapped_column(String(10), default="fcm")
+    provider_token: Mapped[str | None] = mapped_column(String(4096), nullable=True)
+    token_hash: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    # Deliberately not a FK: revoked/expired sessions may be deleted. Delivery
+    # requires a still-valid session, so logout also protects failed cleanup.
+    session_hash: Mapped[str] = mapped_column(String(64), index=True)
+    revision: Mapped[int] = mapped_column(Integer, default=1)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class NotificationEvent(Base):
+    """Durable intent, including transitions with zero eligible recipients."""
+    __tablename__ = "notification_events"
+    id: Mapped[int] = mapped_column(sqlite_bigint, primary_key=True)
+    transition_id: Mapped[int] = mapped_column(ForeignKey("alert_transitions.id"), unique=True)
+    notification_type: Mapped[str] = mapped_column(String(30), default="SENSOR_ESCALATION")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class NotificationDelivery(Base):
+    __tablename__ = "notification_deliveries"
+    __table_args__ = (
+        UniqueConstraint("event_id", "device_id", name="uq_notification_event_device"),
+        CheckConstraint("state IN ('PENDING', 'PROCESSING', 'SENT', 'FAILED', 'SUPPRESSED', 'TESTED', 'UNKNOWN')", name="ck_notification_delivery_state"),
+        Index("ix_notification_pending", "state", "next_attempt_at"),
+    )
+    id: Mapped[int] = mapped_column(sqlite_bigint, primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("notification_events.id"), index=True)
+    device_id: Mapped[str] = mapped_column(ForeignKey("notification_devices.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    device_revision: Mapped[int] = mapped_column(Integer)
+    state: Mapped[str] = mapped_column(String(20), default="PENDING")
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    result_category: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    provider_mode: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    attempted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class SosRequest(Base):

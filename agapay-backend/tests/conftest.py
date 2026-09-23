@@ -29,3 +29,14 @@ def clean_database():
 def client():
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture(autouse=True)
+def clean_notifications():
+    # New dependent tables must be isolated before account/station fixtures.
+    from app.database import SessionLocal
+    from app.models import NotificationDelivery, NotificationEvent, NotificationDevice
+    with SessionLocal() as db:
+        for model in (NotificationDelivery, NotificationEvent, NotificationDevice):
+            db.query(model).delete()
+        db.commit()

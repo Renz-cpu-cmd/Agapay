@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     local_admin_setup_enabled: bool = True
     telemetry_stale_after_seconds: int = 30
 
+    # Reserved FCM boundary; adapter intentionally disabled in this foundation.
+    notification_provider: str = "disabled"
+    firebase_project_id: str = ""
+    firebase_credentials_path: str = ""
+
     mqtt_enabled: bool = False
     mqtt_host: str = "localhost"
     mqtt_port: int = 1883

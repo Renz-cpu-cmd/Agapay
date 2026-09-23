@@ -223,8 +223,15 @@ current firmware metadata. `source="sensor"` means telemetry-generated, not
 physically verified. An EVACUATE sensor tier is not an official LGU evacuation
 order; physical/site calibration of the provisional thresholds remains outstanding.
 
-Flutter currently has demo notification/history presentation and is unchanged
-by this API addition. Its next integration can use the existing authenticated
-request client, map this contract, and handle loading, unavailable, active, and
-resolved states explicitly. **Push notifications, subscriptions, geofencing, and
-delivery/read receipts are not implemented.**
+Flutter consumes this Community Alert API through its authenticated client.
+Loading, unavailable, active and resolved states are distinct. Real push delivery,
+subscriptions, geofencing and read receipts are not implemented; the notification
+foundation below adds registration and an outbox only.
+
+## Notification foundation
+
+Device registration and a transactional escalation outbox now prepare resident
+push delivery. The provider remains disabled: no real Firebase/FCM delivery or
+credentials are configured. See [notification architecture and local worker checks](docs/notifications.md)
+for API contracts, session-bound ownership, retry/ambiguity policy, payload safety,
+and the external Firebase setup still required.
