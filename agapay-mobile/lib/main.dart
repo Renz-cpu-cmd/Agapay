@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 import 'app.dart';
+import 'controllers/app_controller.dart';
+import 'services/firebase_push.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const AgapayApp());
+  final push = await FirebasePushRuntime.initialize();
+  runApp(
+    AgapayApp(
+      controller: AppController(
+        pushTokenProvider: push.provider,
+        pushMessages: push.messages,
+      ),
+    ),
+  );
 }

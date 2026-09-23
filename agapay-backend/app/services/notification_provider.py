@@ -1,4 +1,4 @@
-"""Network boundary. No Firebase SDK, credentials, or real sends in this foundation."""
+"""Push transport boundary. Acceptance is not proof of physical delivery."""
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Protocol
@@ -62,6 +62,9 @@ class FakeNotificationProvider:
 
 
 def configured_provider(settings: Settings) -> NotificationProvider:
-    if settings.notification_provider != "disabled":
-        raise ValueError("FCM adapter is not implemented; keep notification provider disabled.")
-    return NoopNotificationProvider()
+    if settings.notification_provider == "disabled":
+        return NoopNotificationProvider()
+    if settings.notification_provider == "fcm":
+        from app.services.firebase_provider import FirebaseNotificationProvider
+        return FirebaseNotificationProvider(settings)
+    raise ValueError("Unsupported notification provider configuration.")

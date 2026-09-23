@@ -16,10 +16,35 @@ class AgapayApp extends StatefulWidget {
   State<AgapayApp> createState() => _AgapayAppState();
 }
 
-class _AgapayAppState extends State<AgapayApp> {
+class _AgapayAppState extends State<AgapayApp> with WidgetsBindingObserver {
   late final _controller = widget.controller ?? AppController();
+  final _navigator = GlobalKey<NavigatorState>();
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _controller.onPushOpened = () {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_controller.signedIn) return;
+        // Remove history/profile subroutes so the selected episode is visible.
+        // During cold launch, leave splash in place to finish its account gate.
+        _navigator.currentState?.popUntil(
+          (route) => route.settings.name == AppRoutes.main || route.isFirst,
+        );
+      });
+    };
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _controller.signedIn) {
+      _controller.notificationRegistration.refresh();
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
   }
@@ -29,6 +54,7 @@ class _AgapayAppState extends State<AgapayApp> {
     controller: _controller,
     child: MaterialApp(
       title: 'AGAPAY',
+      navigatorKey: _navigator,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       initialRoute: AppRoutes.splash,

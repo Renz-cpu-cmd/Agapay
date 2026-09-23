@@ -35,3 +35,9 @@ GoogleService-Info.plist
 *service_account*.json
 *firebase-adminsdk*.json
 **/credentials/
+firebase_options.dart
+firebase.json
+application_default_credentials.json
+*.p8
+*.p12
+*.pem

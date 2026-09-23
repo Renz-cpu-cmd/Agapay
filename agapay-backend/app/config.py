@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     local_admin_setup_enabled: bool = True
     telemetry_stale_after_seconds: int = 30
 
-    # Reserved FCM boundary; adapter intentionally disabled in this foundation.
+    # Explicit opt-in. FCM requires valid project and ADC or a protected credential file.
     notification_provider: str = "disabled"
     firebase_project_id: str = ""
     firebase_credentials_path: str = ""

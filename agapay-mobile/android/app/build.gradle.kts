@@ -5,6 +5,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// flutterfire configure supplies this ignored file for the real application ID.
+// Analysis/tests and unconfigured local builds must not require a Firebase project.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.agapay.agapay_mobile"
     compileSdk = flutter.compileSdkVersion

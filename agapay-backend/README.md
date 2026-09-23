@@ -224,14 +224,13 @@ physically verified. An EVACUATE sensor tier is not an official LGU evacuation
 order; physical/site calibration of the provisional thresholds remains outstanding.
 
 Flutter consumes this Community Alert API through its authenticated client.
-Loading, unavailable, active and resolved states are distinct. Real push delivery,
-subscriptions, geofencing and read receipts are not implemented; the notification
-foundation below adds registration and an outbox only.
+Loading, unavailable, active and resolved states are distinct. The FCM adapter is available behind explicit configuration; actual delivery is
+unverified. Subscriptions, geofencing and read receipts are not implemented.
 
 ## Notification foundation
 
 Device registration and a transactional escalation outbox now prepare resident
-push delivery. The provider remains disabled: no real Firebase/FCM delivery or
-credentials are configured. See [notification architecture and local worker checks](docs/notifications.md)
+push delivery. The Firebase Admin HTTP v1 adapter is implemented; the default
+provider remains disabled and no real delivery is verified. See [external FCM setup](docs/firebase-fcm-setup.md). See [notification architecture and local worker checks](docs/notifications.md)
 for API contracts, session-linked explicit revocation, retry/ambiguity policy, payload safety,
 and the external Firebase setup still required.

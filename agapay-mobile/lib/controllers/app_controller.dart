@@ -4,6 +4,7 @@ import '../models/alert_level.dart';
 import '../models/account.dart';
 import '../services/auth_api.dart';
 import '../services/push_token_provider.dart';
+import '../services/push_messaging.dart';
 import 'notification_registration_controller.dart';
 import '../services/sos_drafts.dart';
 import 'sos_controller.dart';
@@ -19,6 +20,7 @@ class AppController extends ChangeNotifier {
     AuthApi? authApi,
     SosDraftStore? sosStorage,
     PushTokenProvider? pushTokenProvider,
+    PushMessages? pushMessages,
   }) : auth = authApi ?? AuthApi() {
     notificationRegistration = NotificationRegistrationController(
       auth,
@@ -29,6 +31,23 @@ class AppController extends ChangeNotifier {
     monitoring = MonitoringController(auth)..addListener(_monitoringChanged);
     communityAlerts = CommunityAlertController(auth)
       ..addListener(_communityChanged);
+    if (pushMessages != null) {
+      _pushSubscriptions.add(
+        pushMessages.foreground.listen((data) {
+          if (!_disposed && signedIn && SensorPush.parse(data) != null) {
+            unawaited(communityAlerts.refreshActive());
+            unawaited(communityAlerts.refreshHistory(offset: 0));
+          }
+        }, onError: (Object _) {}),
+      );
+      _pushSubscriptions.add(
+        pushMessages.opened.listen(
+          (data) => unawaited(_openPush(data)),
+          onError: (Object _) {},
+        ),
+      );
+      unawaited(_initialPush(pushMessages));
+    }
     auth.onExpired = () {
       user = null;
       sos.setOwner(null);
@@ -41,6 +60,28 @@ class AppController extends ChangeNotifier {
     };
   }
   final AuthApi auth;
+  VoidCallback? onPushOpened;
+  bool _disposed = false;
+  final _pushSubscriptions = <StreamSubscription<Map<String, Object?>>>[];
+  Future<void> _initialPush(PushMessages messages) async {
+    try {
+      final data = await messages.initialMessage();
+      if (data != null) await _openPush(data);
+    } catch (_) {
+      /* Push failure must not affect API login. */
+    }
+  }
+
+  Future<void> _openPush(Map<String, Object?> data) async {
+    final push = SensorPush.parse(data);
+    if (push == null || _disposed) return;
+    await restoreSession();
+    if (_disposed || !signedIn) return;
+    tab = AppTab.alerts;
+    showCommunityAlert(push.alertId);
+    onPushOpened?.call();
+  }
+
   late final SosController sos;
   late final NotificationRegistrationController notificationRegistration;
   late final ForecastController forecasts;
@@ -55,7 +96,7 @@ class AppController extends ChangeNotifier {
   Future<void> _restore() async {
     try {
       final restored = await auth.restore();
-      if (restored != null) _setUser(restored);
+      if (!_disposed && restored != null) _setUser(restored);
     } catch (error) {
       authError = error is AccountException
           ? error.message
@@ -126,6 +167,11 @@ class AppController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
+    onPushOpened = null;
+    for (final subscription in _pushSubscriptions) {
+      unawaited(subscription.cancel());
+    }
     auth.onExpired = null;
     sos.dispose();
     forecasts.dispose();

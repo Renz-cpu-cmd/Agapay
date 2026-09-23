@@ -121,11 +121,15 @@ def test_owner_can_share_fresh_location_until_request_is_resolved(client, reside
 
 @pytest.mark.parametrize("changes", [
     {"latitude": 91}, {"longitude": 181}, {"accuracy_m": -1},
-    {"location_recorded_at": (utc_now() - timedelta(minutes=3)).isoformat()},
-    {"location_recorded_at": (utc_now() + timedelta(minutes=2)).isoformat()},
+    lambda: {"location_recorded_at": (utc_now() - timedelta(minutes=3)).isoformat()},
+    lambda: {"location_recorded_at": (utc_now() + timedelta(minutes=2)).isoformat()},
     {"location_source": "gps"},
 ])
 def test_live_location_rejects_invalid_or_injected_data(client, resident, changes):
+    # Resolve time-relative inputs at execution, not collection: longer suites
+    # must not turn an invalid future fix into a valid current fix.
+    if callable(changes):
+        changes = changes()
     item = client.post("/api/sos", headers=resident, json=payload()).json()
     fix = dict(latitude=15.97883, longitude=120.56382, accuracy_m=7.5,
                location_recorded_at=utc_now().isoformat())

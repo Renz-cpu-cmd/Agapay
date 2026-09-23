@@ -1,15 +1,15 @@
 # Notification delivery foundation
 
-Status: **real push delivery is disabled**. No Firebase credentials, Firebase SDK,
-FCM network adapter, device receipt, or end-to-end push verification is included.
-The app and CI require no Firebase configuration.
+Status: **disabled by default**. The Firebase Admin HTTP v1 adapter is implemented,
+but no Firebase project/credentials or physical delivery have been verified.
+The app and CI require no Firebase configuration. See [FCM setup](firebase-fcm-setup.md).
 
 ```text
 VALID telemetry -> AlertTransition -> NotificationEvent + NotificationDelivery
                                             (one database transaction)
                                    -> explicit bounded worker
                                    -> NotificationProvider
-                                   -> future FCM adapter
+                                   -> Firebase Admin HTTP v1 adapter (explicit opt-in)
 ```
 
 The alert classifier remains provider-independent. Only severity increases create
@@ -148,8 +148,10 @@ UNKNOWN rows with provider evidence before any future replay tooling is used.
 delivery key an exactly-once guarantee. This foundation avoids blind resend of
 ambiguous outcomes, accepting possible nondelivery instead of duplicate pushes.
 An accepted send followed by a DB failure is likewise not automatically replayed.
-The future adapter must bound network timeouts and return RETRYABLE_REJECTION only
-when it knows acceptance did not occur.
+The adapter bounds transport and credential-refresh timeouts to 15 seconds each,
+disables SDK automatic send retries, and retries only explicit 429/503 rejections.
+Timeouts, transport errors and ambiguous SDK errors become UNKNOWN. The pinned SDK
+transport seam is tested; review it before upgrading firebase-admin.
 
 An invalid-token result disables and erases the unchanged device registration.
 Failures cannot roll back previously committed telemetry or alert history.
@@ -159,7 +161,7 @@ state and fixed result category; never raw tokens, credentials or exception dump
 ## Payload and safety
 
 The structured data contains only type=SENSOR_ESCALATION, alert_id (persistent
-community episode ID for a future deep link), severity, station_id, and status.
+community episode ID for authenticated deep-link retrieval), severity, station_id, and status.
 Title/body use known severity text. No telemetry IDs, sequence numbers, account
 data, auth tokens or provider token go into notification content.
 
@@ -169,30 +171,13 @@ and does not activate a prototype shelter. Thresholds remain provisional pending
 physical/site calibration. Notification delivery is independent of local ESP32
 buzzer/alert operation; no firmware or thresholds change here.
 
-## External setup still required (separate reviewed task)
+## External setup still required
 
-1. Create/select a Firebase project and enable FCM HTTP v1. Implement the future
-   backend adapter using least-privileged IAM and Application Default Credentials
-   or a secret-managed service-account file **outside Git**. Reserved settings are
-   `AGAPAY_FIREBASE_PROJECT_ID` and `AGAPAY_FIREBASE_CREDENTIALS_PATH`.
-   Setting provider to fcm currently fails closed: no adapter is implemented.
-2. Register Android application `com.agapay.agapay_mobile` and the confirmed iOS
-   Xcode bundle ID with Firebase. Supply local google-services.json /
-   GoogleService-Info.plist, add the Firebase Flutter adapter and platform build
-   configuration; none is included here.
-3. Configure Apple APNs credentials in Firebase, iOS push capability/entitlements
-   and permissions, Android runtime notification permission/channel, and production
-   signing as needed. Implement permission-aware token retrieval/refresh and
-   persist a random installation UUID in secure local storage.
-4. Add foreground/background receipt handling and structured alert_id navigation,
-   with authenticated Community Alert detail retrieval. Design server-enforced
-   preferences before presenting the Profile switch as operational.
-5. Run a real credentialed backend send to a physical device with a genuine token
-   and verify device receipt, safe text, logout/rotation, and deep linking.
-
-Ignore rules protect common Firebase/service-account filenames and credentials
-directories. Arbitrarily named secret files still require review; never commit
-private keys, service credentials, tokens, or production account details.
+Follow [Firebase FCM setup](firebase-fcm-setup.md) for actual project, ADC or secret
+file configuration, FlutterFire native configuration, Apple signing/APNs and
+physical-device verification. No real credential or token belongs in Git.
+Provider mode remains disabled unless explicitly configured. Enabling FCM without
+valid configuration fails closed before the worker claims any delivery.
 
 ## Validation
 

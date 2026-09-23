@@ -17,6 +17,8 @@ dependencies:
   # 10.x supports this project's Android SDK 36 toolchain.
   flutter_secure_storage: ^10.3.1
   webview_flutter: ^4.14.1
+  firebase_core: ^4.15.0
+  firebase_messaging: ^16.7.0
 
 dev_dependencies:
   flutter_test:

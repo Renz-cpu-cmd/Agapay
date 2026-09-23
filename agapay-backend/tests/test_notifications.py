@@ -214,7 +214,7 @@ def test_disabled_provider_suppresses_without_delivery(client, station):
     assert process_pending(provider) == 1
     assert rows(NotificationDelivery)[0].state == "SUPPRESSED"
     assert rows(NotificationDelivery)[0].result_category == "disabled"
-    with pytest.raises(ValueError, match="not implemented"):
+    with pytest.raises(ValueError, match="configuration unavailable or invalid"):
         configured_provider(Settings(notification_provider="fcm"))
 
 
