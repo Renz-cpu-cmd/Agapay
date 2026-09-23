@@ -7,14 +7,14 @@ from datetime import timedelta
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pwdlib import PasswordHash
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.account_schemas import RegisterRequest, SessionRead, UserRead
 from app.config import get_settings
 from app.database import get_db
-from app.models import AuthSession, User, utc_now
+from app.models import AuthSession, NotificationDevice, User, utc_now
 
 passwords = PasswordHash.recommended()
 _dummy_hash = passwords.hash(secrets.token_urlsafe(32))
@@ -45,11 +45,47 @@ def commit_account(db: Session) -> None:
         raise HTTPException(409, "An account with this email already exists.") from exc
 
 
+def lock_account(db: Session, user_id: int) -> None:
+    """Serialize registration and deliberate revocation until caller commit.
+
+    A no-op UPDATE acquires a SQLite write lock / PostgreSQL row lock without
+    changing the account timestamp. Registration re-authenticates after waiting.
+    """
+    db.execute(update(User).where(User.id == user_id)
+               .values(updated_at=User.updated_at).execution_options(synchronize_session=False))
+
+
+def _disable_registrations(db: Session, condition) -> None:
+    db.execute(update(NotificationDevice).where(condition, NotificationDevice.enabled.is_(True))
+               .values(enabled=False, provider_token=None, token_hash=None,
+                       revision=NotificationDevice.revision + 1))
+
+
+def revoke_session(db: Session, session_hash: str) -> None:
+    """Explicit logout, including expired/pruned sessions; caller commits."""
+    owners = db.scalars(select(AuthSession.user_id).where(AuthSession.token_hash == session_hash)
+                        .union(select(NotificationDevice.user_id).where(
+                            NotificationDevice.session_hash == session_hash))).all()
+    for user_id in sorted(set(owners)):
+        lock_account(db, user_id)
+    _disable_registrations(db, NotificationDevice.session_hash == session_hash)
+    db.execute(delete(AuthSession).where(AuthSession.token_hash == session_hash))
+
+
 def revoke_sessions(db: Session, user_id: int) -> None:
+    """Deliberate security revocation; includes devices whose sessions were pruned.
+
+    All registrations currently authorized by this account are revoked under the
+    same lock used by registration. Registrations authorized after commit survive.
+    Natural expiry cleanup must NOT call this function.
+    """
+    lock_account(db, user_id)
+    _disable_registrations(db, NotificationDevice.user_id == user_id)
     db.execute(delete(AuthSession).where(AuthSession.user_id == user_id))
 
 
 def issue_session(db: Session, user: User) -> SessionRead:
+    lock_account(db, user.id)
     token = secrets.token_urlsafe(32)
     expires_at = utc_now() + timedelta(days=get_settings().session_days)
     db.execute(delete(AuthSession).where(AuthSession.expires_at <= utc_now()))

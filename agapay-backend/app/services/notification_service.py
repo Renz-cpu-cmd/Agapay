@@ -6,7 +6,7 @@ from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
-from app.models import (Alert, AlertTransition, AuthSession, NotificationDevice,
+from app.models import (Alert, AlertTransition, NotificationDevice,
                         NotificationDelivery, NotificationEvent, User, utc_now)
 from app.services.alert_classifier import SEVERITY_ORDER
 from app.services.notification_provider import NotificationProvider, PushMessage, PushTarget, SendOutcome
@@ -18,9 +18,11 @@ MAX_ATTEMPTS = 3
 def eligible_devices():
     return (select(NotificationDevice)
             .join(User, User.id == NotificationDevice.user_id)
-            .join(AuthSession, AuthSession.token_hash == NotificationDevice.session_hash)
             .where(NotificationDevice.enabled.is_(True), User.is_active.is_(True), User.role == "resident",
-                   AuthSession.user_id == User.id, AuthSession.expires_at > utc_now()))
+                   NotificationDevice.provider_token.is_not(None),
+                   NotificationDevice.provider_token != "",
+                   NotificationDevice.token_hash.is_not(None),
+                   NotificationDevice.token_hash != ""))
 
 
 def device_is_eligible(db: Session, device: NotificationDevice) -> bool:

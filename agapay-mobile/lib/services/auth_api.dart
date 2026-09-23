@@ -56,6 +56,20 @@ class AuthApi {
     String method = 'GET',
     Map<String, dynamic>? body,
     bool authenticated = true,
+  }) => _request(
+    path,
+    method: method,
+    body: body,
+    authenticated: authenticated,
+    sessionToken: _token,
+  );
+
+  Future<dynamic> _request(
+    String path, {
+    String method = 'GET',
+    Map<String, dynamic>? body,
+    bool authenticated = true,
+    required String? sessionToken,
   }) async {
     final url = Uri.parse(
       '${baseUrl.replaceFirst(RegExp(r'/$'), '')}/api/$path',
@@ -66,7 +80,7 @@ class AuthApi {
       );
     }
     try {
-      final requestToken = _token;
+      final requestToken = sessionToken;
       final request = http.Request(method, url)
         ..headers['Content-Type'] = 'application/json';
       if (authenticated && requestToken != null) {
@@ -168,8 +182,15 @@ class AuthApi {
         await request('auth/me', method: 'PATCH', body: fields)
             as Map<String, dynamic>,
       );
-  Future<void> logout() async {
-    if (_token != null) await request('auth/logout', method: 'POST');
+  Future<void> logout({Future<void> Function()? beforeRevoke}) async {
+    // Explicit logout must still revoke push registration if device DELETE
+    // receives 401 and clears local API state. Keep the token only for this
+    // logout request; never restore it to authenticated app state or storage.
+    final logoutToken = _token;
+    await beforeRevoke?.call();
+    if (logoutToken != null) {
+      await _request('auth/logout', method: 'POST', sessionToken: logoutToken);
+    }
     await clearLocalSession();
   }
 

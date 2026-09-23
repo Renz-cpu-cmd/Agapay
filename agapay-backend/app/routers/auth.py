@@ -2,14 +2,14 @@ from ipaddress import ip_address
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.account_schemas import LoginRequest, ProfileUpdate, RegisterRequest, SessionRead, SetupStatus, UserRead
 from app.config import Settings, get_settings
 from app.database import get_db
-from app.models import AuthSession, User
-from app.services.accounts import bearer, commit_account, create_user, current_user, issue_session, limiter, passwords, request_ip, revoke_sessions, token_digest, verify_password
+from app.models import User
+from app.services.accounts import bearer, commit_account, create_user, current_user, issue_session, limiter, passwords, request_ip, revoke_session, revoke_sessions, token_digest, verify_password
 from app.services.administrator_setup import create_first_administrator, setup_complete
 
 router = APIRouter(prefix="/api/auth", tags=["accounts"])
@@ -87,7 +87,7 @@ def update_profile(payload: ProfileUpdate, user: User = Depends(current_user), d
 
 @router.post("/logout", status_code=204)
 def logout(credentials: HTTPAuthorizationCredentials | None = Depends(bearer), db: Session = Depends(get_db)):
-    if credentials:
-        db.execute(delete(AuthSession).where(AuthSession.token_hash == token_digest(credentials.credentials)))
+    if credentials and len(credentials.credentials) <= 256:
+        revoke_session(db, token_digest(credentials.credentials))
         db.commit()
     return Response(status_code=204)

@@ -101,9 +101,10 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await notificationRegistration.unregisterForLogout();
     try {
-      await auth.logout();
+      await auth.logout(
+        beforeRevoke: notificationRegistration.unregisterForLogout,
+      );
     } catch (_) {
       notificationRegistration.setOwner(user?.id);
       rethrow;

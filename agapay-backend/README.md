@@ -233,5 +233,5 @@ foundation below adds registration and an outbox only.
 Device registration and a transactional escalation outbox now prepare resident
 push delivery. The provider remains disabled: no real Firebase/FCM delivery or
 credentials are configured. See [notification architecture and local worker checks](docs/notifications.md)
-for API contracts, session-bound ownership, retry/ambiguity policy, payload safety,
+for API contracts, session-linked explicit revocation, retry/ambiguity policy, payload safety,
 and the external Firebase setup still required.

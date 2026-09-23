@@ -191,8 +191,8 @@ class NotificationDevice(Base):
     provider: Mapped[str] = mapped_column(String(10), default="fcm")
     provider_token: Mapped[str | None] = mapped_column(String(4096), nullable=True)
     token_hash: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
-    # Deliberately not a FK: revoked/expired sessions may be deleted. Delivery
-    # requires a still-valid session, so logout also protects failed cleanup.
+    # Authorization provenance for explicit revocation, NOT an eligibility lease.
+    # No FK: naturally expired API sessions may be pruned without revoking push.
     session_hash: Mapped[str] = mapped_column(String(64), index=True)
     revision: Mapped[int] = mapped_column(Integer, default=1)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)

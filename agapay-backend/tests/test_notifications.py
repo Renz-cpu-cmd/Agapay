@@ -111,7 +111,7 @@ def test_authentication_ownership_and_no_token_enumeration(client):
 
 
 @pytest.mark.parametrize("old_sorts_first", [True, False])
-def test_expired_owner_does_not_reserve_token_forever(client, monkeypatch, old_sorts_first):
+def test_logged_out_owner_releases_token(client, monkeypatch, old_sorts_first):
     # UUID lexical order is unrelated to registration order. Exercise both.
     identifiers = ["00000000-0000-4000-8000-000000000001",
                    "ffffffff-ffff-4fff-8fff-ffffffffffff"]
@@ -265,7 +265,7 @@ def test_provider_exception_is_unknown_no_secret_log_no_rollback(client, station
     assert process_pending(Broken()) == 0 and episodes(station)[0].status == "ACTIVE"
 
 
-@pytest.mark.parametrize("change", ["delete", "logout", "expired", "inactive", "rotate", "resolved", "downshift"])
+@pytest.mark.parametrize("change", ["delete", "logout", "inactive", "rotate", "resolved", "downshift"])
 def test_recheck_eligibility_and_superseded_intents(client, station, change):
     access, device = prepare(client, station)
     if change == "delete":
@@ -278,10 +278,7 @@ def test_recheck_eligibility_and_superseded_intents(client, station, change):
         send(client, station, 2, 0 if change == "resolved" else 90)
     else:
         with SessionLocal() as db:
-            if change == "expired":
-                db.execute(update(AuthSession).values(expires_at=utc_now() - timedelta(seconds=1)))
-            else:
-                db.execute(update(User).values(is_active=False))
+            db.execute(update(User).values(is_active=False))
             db.commit()
     provider = FakeNotificationProvider()
     process_pending(provider)

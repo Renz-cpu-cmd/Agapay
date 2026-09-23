@@ -128,8 +128,9 @@ class NotificationRegistrationController extends ChangeNotifier {
   }
 
   /// Drain an in-flight registration before logout revokes its session.
-  /// Failed deletion does not prevent logout; backend session eligibility is
-  /// the fallback. A provider send already in flight cannot be recalled.
+  /// Failed deletion does not prevent logout; backend explicit logout revocation
+  /// is the fallback. Natural API expiry does not revoke server push registration.
+  /// A provider send already in flight cannot be recalled.
   Future<void> unregisterForLogout() async {
     _stopping = true;
     await _subscription?.cancel();

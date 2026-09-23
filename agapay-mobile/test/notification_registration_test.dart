@@ -123,6 +123,43 @@ class Harness {
 
 void main() {
   test(
+    'natural 401 after registration clears API state without revoking push',
+    () async {
+      final h = Harness();
+      addTearDown(h.close);
+      await h.login();
+      h.deviceResponse = (_) async =>
+          http.Response('{"detail":"Expired"}', 401);
+      h.tokens.rotate(tokenTwo);
+      await h.registration.settled;
+      expect(h.app.signedIn, isFalse);
+      expect(h.storage.value, isNull);
+      expect(h.deviceRequests.map((r) => r.method), ['POST', 'POST']);
+      expect(h.requests.any((r) => r.url.path == '/api/auth/logout'), isFalse);
+      h.tokens.rotate(null);
+      await h.registration.settled;
+      expect(h.deviceRequests.length, 2);
+    },
+  );
+
+  test(
+    'explicit logout still revokes when device DELETE reports expired session',
+    () async {
+      final h = Harness();
+      addTearDown(h.close);
+      await h.login();
+      h.deviceResponse = (_) async =>
+          http.Response('{"detail":"Expired"}', 401);
+      await h.app.logout();
+      expect(h.deviceRequests.last.method, 'DELETE');
+      expect(h.requests.last.url.path, '/api/auth/logout');
+      expect(h.requests.last.headers['Authorization'], 'Bearer test-session');
+      expect(h.storage.value, isNull);
+      expect(h.app.signedIn, isFalse);
+    },
+  );
+
+  test(
     'no registration logged out and default provider makes no requests',
     () async {
       final h = Harness(enabled: false);

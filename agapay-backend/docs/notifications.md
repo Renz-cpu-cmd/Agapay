@@ -20,8 +20,8 @@ do not create push events in this first policy. Recovery and downshifts remain
 in persistent Community Alert history; invalid telemetry never creates all-clear.
 
 An event is persisted even with zero recipients. Eligible recipients are captured
-at transition time: all enabled devices belonging to active residents, with a
-valid registration-bound session, across AGAPAY stations. There is no geographic
+at transition time: all enabled devices with retained provider tokens/hashes
+belonging to active residents, across AGAPAY stations. There is no geographic
 personalization or barangay matching. Later registration does not replay history.
 Device/simulator historical origin is not known.
 
@@ -45,17 +45,60 @@ One device per resident/installation UUID and one retained token globally are
 enforced by DB constraints. Rotation updates the existing row. A reinstall with
 the same token reuses that resident's row. Conflicting existing installations or
 another resident's eligible token produce a generic 409. Concurrent upserts may
-return 409 and can safely be retried. A disabled/expired/revoked registration can
+return 409 and can safely be retried. A disabled/revoked registration can
 release its token to a new registration; an eligible other owner cannot be taken
 over. The push token is not an authentication credential.
 
-Registration stores only the session hash already used by authentication, not a
-bearer token. Eligibility requires the matching unexpired session and active
-resident at enqueue and send time. Logout/password revocation therefore blocks
-future worker sends even if mobile device deletion failed. Tokens on such
-ineligible rows remain until explicit deletion, replacement, or future retention
-cleanup; database access must remain restricted. No new retention scheduler is
-included. Logout cannot recall a send already in flight.
+### API session and push registration are separate lifecycles
+
+API sessions authenticate API requests. An explicitly enabled device registration
+authorizes a resident installation for community flood notifications. Natural
+API-session expiry does **not** revoke that authorization: a phone registered on
+day 1 remains eligible on day 8 even if API access now requires another login.
+Pruning an expired AuthSession row during login also leaves push eligibility
+intact. Another resident cannot claim its token just because its session expired.
+
+`session_hash` is private authorization provenance and explicit-revocation linkage,
+not a continuously renewed delivery lease. No bearer token is stored on the device.
+Recipient capture and worker rechecks require an enabled device with nonempty
+provider token/hash and an existing active resident owner. Processing additionally
+checks the captured device revision and whether a newer alert transition superseded
+the intent. Neither step joins AuthSession or checks its expiration timestamp.
+
+Explicit events revoke registration:
+
+- `/api/auth/logout` disables registrations still linked to the supplied bearer
+  hash, clears provider tokens/hashes, advances revisions, and deletes that session
+  in one transaction. This works even if it expired or its row was pruned, and
+  provides fallback cleanup when mobile DELETE fails or is skipped. Phone A's
+  logout does not disable phone B registered under a different session.
+- Password changes and deliberate account-wide session revocation disable all
+  currently authorized registrations for that account, including registrations
+  whose expired session rows were pruned. Existing administrative deactivation,
+  role changes and password resets use this same revocation path. Reactivating an
+  account does not restore disabled devices; authenticated registration is required.
+- Authenticated own-device DELETE/token withdrawal and invalid-provider-token
+  results disable the affected registration. Invalid-token results retain the
+  atomic revision guard so an old response cannot disable a rotated token.
+
+Registration and explicit revocation serialize on an account row lock (SQLite's
+write lock in development). Registration re-authenticates after acquiring that
+lock: a request authenticated just before revocation cannot restore a device with
+its now-revoked session. A fresh authenticated registration after revocation commits
+is allowed. Replaying logout for the old session cannot disable a registration
+rebound to a new session. Expiry cleanup never calls deliberate revocation.
+
+Flutter still attempts device DELETE before explicit logout. If DELETE returns
+401, it retains the bearer only within that logout operation to call the cleanup
+endpoint; it does not restore the expired API session. Ordinary 401 handling clears
+local API state without DELETE/logout and does not erase server push authorization.
+A send already in flight cannot be recalled by logout or revocation.
+
+Provider tokens must remain available for future delivery. Production deployment
+requires restricted database/storage and backup access plus encryption-at-rest
+controls. This task introduces no ad-hoc reversible encryption. Token/hash/session
+provenance must never be exposed through APIs or credential logs. No real FCM
+delivery or automatic worker scheduler is enabled.
 
 ## Outbox, processing and failures
 
@@ -82,7 +125,7 @@ Do not treat running the disabled worker as a real push test.
 A conditional UPDATE claims each row as PROCESSING and commits before provider
 invocation, allowing concurrent workers without duplicate claims. No database
 transaction is held across the external call. Immediately before sending the
-worker rechecks account/session/device eligibility, registration revision, and
+worker rechecks account/device eligibility, registration revision, and
 whether a newer episode transition superseded the intent. Changed registrations
 and superseded incidents are suppressed, preventing old recovery/incident context
 from being sent as a current escalation. These checks cannot cancel changes
@@ -156,4 +199,5 @@ private keys, service credentials, tokens, or production account details.
 `python -m pytest -q` uses isolated SQLite, no-op/fake providers, and mocked
 outcomes. Tests cover authorization, token privacy/rotation, intent atomicity,
 duplicates, concurrent workers, bounded retry, disabled and ambiguous outcomes,
-session eligibility, and safe payloads. CI does not establish real FCM delivery.
+natural expiry versus explicit revocation, concurrent registration/revocation,
+multiple sessions/devices, and safe payloads. CI does not establish real FCM delivery.

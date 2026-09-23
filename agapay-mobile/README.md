@@ -185,11 +185,24 @@ repeat registrations; failures remain unavailable and can retry through
 Provider/token error text is not exposed in UI state or logs.
 
 Logout drains registration work, attempts DELETE for this device, then revokes
-the session. If deletion fails, the backend's registration-bound session check
-prevents future sends after logout/expiry/password revocation. A send already
-in flight cannot be recalled. Expiry, password changes, owner removal and disposal
+the session. If deletion fails, backend logout explicitly disables devices linked
+to that session, even when it has expired or been pruned. If DELETE returns 401,
+AuthApi keeps the bearer only within this explicit logout operation to complete
+that server cleanup; it never restores the expired API session.
+
+**API session != push registration.** Natural API expiry/401 clears local API state
+without deleting the server push registration. An already enabled device remains
+eligible while its resident owner is active, until explicit logout, withdrawal,
+security revocation or an invalid-provider-token result disables it. Password and
+administrative security revocation also cover registrations with pruned sessions;
+reactivation requires fresh registration. A send already in flight cannot be
+recalled. Expiry, password changes, owner removal and disposal
 cancel subscriptions and ignore late results. A non-401 API failure does not
 destroy the login session; 401 uses the existing AuthApi expiration callback.
+
+This is authorization behavior only: the default provider remains disabled and
+the app does not claim real notifications are active. Production provider-token
+storage requires protected database/backups and encryption-at-rest controls.
 
 The Profile switch remains explicitly **future preference only**. It is not
 server-connected and does not control registrations or delivery. A future release

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import NotificationDevice, User, utc_now
 from app.notification_schemas import DeviceRegistration, NotificationDeviceRead
-from app.services.accounts import bearer, current_user, token_digest
+from app.services.accounts import bearer, current_user, lock_account, token_digest
 from app.services.notification_service import device_is_eligible, disable_device
 
 router = APIRouter(prefix="/api/notification-devices", tags=["notification devices"])
@@ -23,6 +23,13 @@ def resident(user: User = Depends(current_user)) -> User:
 def register_device(payload: DeviceRegistration, user: User = Depends(resident),
                     credentials: HTTPAuthorizationCredentials = Depends(bearer),
                     db: Session = Depends(get_db)):
+    # Authentication may have succeeded before a concurrent logout/security
+    # revocation acquired its lock. Recheck after waiting, before authorizing push.
+    lock_account(db, user.id)
+    db.refresh(user)
+    current_user(credentials, db)
+    if user.role != "resident":
+        raise HTTPException(403, "Resident mobile access is required.")
     raw_token = payload.provider_token.get_secret_value()
     digest = token_digest(raw_token)
     session_hash = token_digest(credentials.credentials)
