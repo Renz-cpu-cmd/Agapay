@@ -110,13 +110,23 @@ def test_authentication_ownership_and_no_token_enumeration(client):
     assert register(client, other)["id"] != device["id"]
 
 
-def test_expired_owner_does_not_reserve_token_forever(client):
+@pytest.mark.parametrize("old_sorts_first", [True, False])
+def test_expired_owner_does_not_reserve_token_forever(client, monkeypatch, old_sorts_first):
+    # UUID lexical order is unrelated to registration order. Exercise both.
+    identifiers = ["00000000-0000-4000-8000-000000000001",
+                   "ffffffff-ffff-4fff-8fff-ffffffffffff"]
+    generated = iter(identifiers if old_sorts_first else reversed(identifiers))
+    monkeypatch.setattr("app.models.uuid4", lambda: next(generated))
     owner = resident(client)
     old = register(client, owner)
     assert client.post("/api/auth/logout", headers=owner).status_code == 204
     new = register(client, resident(client, "other@example.com"))
     assert old["id"] != new["id"]
-    assert not rows(NotificationDevice)[0].enabled
+    with SessionLocal() as db:
+        previous = db.get(NotificationDevice, old["id"])
+        replacement = db.get(NotificationDevice, new["id"])
+        assert not previous.enabled and previous.provider_token is None
+        assert replacement.enabled and replacement.user_id != previous.user_id
 
 
 @pytest.mark.parametrize("depth,severity", [(60, "ADVISORY"), (85, "WARNING"), (100, "EVACUATE")])
