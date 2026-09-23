@@ -1,0 +1,132 @@
+name: AGAPAY CI
+
+on:
+  push:
+    branches: [main, feature/day1-foundation]
+  pull_request:
+    branches: [main, feature/day1-foundation]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: agapay-backend
+    env:
+      AGAPAY_MQTT_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: agapay-backend/requirements*.txt
+      - name: Install development requirements
+        run: python -m pip install -r requirements-dev.txt
+      - name: Run complete backend suite (isolated SQLite and fakes)
+        run: python -m pytest -q
+
+  firmware-build:
+    name: ESP32 Firmware Build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: Install PlatformIO
+        run: python -m pip install "platformio==6.2.0"
+      - name: Create ignored placeholder configuration
+        shell: bash
+        run: |
+          test -z "$(git ls-files agapay-firmware/include/secrets.h)"
+          git check-ignore -q agapay-firmware/include/secrets.h
+          cp agapay-firmware/include/secrets.example.h agapay-firmware/include/secrets.h
+      - name: Compile and link ESP32 firmware (no upload or physical test)
+        run: python -m platformio run --project-dir agapay-firmware --environment esp32doit-devkit-v1
+
+  firmware-contract:
+    name: Firmware Contract Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: agapay-backend/requirements.txt
+      - name: Install host validation requirements
+        run: python -m pip install -r agapay-backend/requirements.txt "jsonschema>=4,<5" "platformio==6.2.0"
+      - name: Resolve libraries from the existing PlatformIO configuration
+        run: python -m platformio pkg install --project-dir agapay-firmware --environment esp32doit-devkit-v1
+      - name: Run actual firmware with host fakes and both telemetry contracts
+        run: python agapay-firmware/tests/run_host_tests.py --cxx g++
+
+  web:
+    name: Next.js Build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: agapay-web
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ""
+      NEXT_PUBLIC_GOOGLE_MAP_ID: DEMO_MAP_ID
+      AGAPAY_API_URL: http://127.0.0.1:8000
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: agapay-web/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Check TypeScript
+        run: npm run typecheck
+      - name: Build Next.js without live services or a Maps key
+        run: npm run build
+
+  flutter:
+    name: Flutter Analyze & Test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: agapay-mobile
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          flutter-version: "3.38.7"
+          cache: true
+      - name: Resolve Flutter dependencies
+        run: flutter pub get
+      - name: Analyze Dart
+        run: flutter analyze
+      - name: Run unit and widget tests (no emulator or device)
+        run: flutter test

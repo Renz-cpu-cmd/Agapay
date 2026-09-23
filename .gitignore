@@ -21,3 +21,9 @@
 .vscode/
 *.swp
 *.log
+
+# Local environment and hardware credentials in every subsystem
+.env
+.env.*
+!.env.example
+secrets.h
