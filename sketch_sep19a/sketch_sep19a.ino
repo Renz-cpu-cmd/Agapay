@@ -1,3 +1,4 @@
+// HISTORICAL BENCH SKETCH: use agapay-firmware/src/main.cpp for official telemetry.
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
@@ -14,14 +15,14 @@
 
 // ========================== WIFI ==============================
 
-const char* WIFI_SSID = "Trinidad WIFI";
-const char* WIFI_PASSWORD = "68C21T18";
+// Credentials shared with the canonical firmware; never commit secrets.h.
+#include "../agapay-firmware/include/secrets.h"
 
 
 // ========================== MQTT ==============================
 
 const char* MQTT_SERVER = "broker.hivemq.com";
-const int MQTT_PORT = 1883;
+// MQTT_PORT comes from the local secrets.h.
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
