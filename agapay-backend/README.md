@@ -158,5 +158,73 @@ existing development databases. No old telemetry is backfilled/replayed: persist
 history starts with newly accepted samples after this version is deployed. Restarting
 the service preserves episodes; it does not reclassify them without new valid data.
 Manual/demo web alerts are not imported. Production migrations, calibrated hysteresis,
-notifications, WebSockets, and web/mobile alert integration remain separate work.
+notifications, WebSockets, and resident mobile alert integration remain separate work.
 **No push notification delivery or production-readiness claim is included.**
+
+### Community read API
+
+`/api/alerts` remains the **staff-only operational API**, including richer
+telemetry diagnostics. Residents still receive 403 on every operational alert
+read. The separate `/api/community-alerts` API accepts active authenticated
+**resident, officer, or admin** accounts using the existing bearer sessions.
+Missing, invalid, expired, revoked, or inactive-account sessions receive 401.
+Community responses, including errors, use `Cache-Control: no-store`. There is
+no anonymous access or alert mutation/acknowledgment endpoint.
+
+| Method | Path | Result |
+|---|---|---|
+| GET | `/api/community-alerts/active` | Active persistent sensor episodes |
+| GET | `/api/community-alerts` | Active and resolved episodes; use `status=RESOLVED` for history |
+| GET | `/api/community-alerts/{alert_id}` | Safe episode detail with a bounded transition page; 404 if absent |
+
+Both lists return `{items, total}`. They accept `station_id`, `limit` (default 50,
+range 1–100), and `offset` (default 0, minimum 0). The general list additionally
+accepts `status=ACTIVE|RESOLVED`. Ordering is newest `triggered_at` first, then
+descending episode ID for ties. `total` counts matching episodes before pagination;
+an unknown station or exhausted page returns an empty `items` list. Offset pages
+can shift while new episodes arrive; clients should refresh rather than treat
+them as an immutable snapshot.
+
+Each episode exposes only:
+
+- `id`, `station_id`, `station_name`, nullable `barangay` and `municipality`
+- `status`, `severity`, `source="sensor"`
+- `trigger_depth_cm`, `latest_depth_cm`
+- `triggered_at`, `last_transition_at`, nullable `resolved_at` (UTC timestamps)
+
+**Severity is current severity while ACTIVE and highest incident severity while
+RESOLVED.** It is ADVISORY, WARNING, or EVACUATE; resolved history never presents
+NORMAL as its incident tier. `status` distinguishes ongoing and ended episodes.
+Trigger depth is the first alert reading, not a peak depth. Latest depth is the
+last valid episode reading while active, or the final NORMAL recovery reading
+after resolution. Peak severity does not imply a stored peak depth.
+
+Detail adds `transitions: {items, total}`. Use `transition_limit` (default 50,
+range 1–100) and `transition_offset` (default 0, minimum 0) to page the timeline.
+Transitions follow chronological ingestion order, with the internal transition
+ID breaking timestamp ties. Their public fields are only `previous_severity`,
+`new_severity`, `water_depth_cm`, and `transitioned_at`. A direct
+NORMAL → EVACUATE transition is returned as recorded. Telemetry IDs, telemetry
+foreign keys, sequence numbers, transition IDs, actor/account/session information,
+and authentication data are excluded from the community contract.
+
+The existing `Alert` and `AlertTransition` records remain authoritative. Reads
+do not classify telemetry or alter the engine. Invalid telemetry does not resolve,
+downgrade, or update an episode, so the community API retains the previous state
+and last valid depth; that depth may be stale. Resolution is not a new all-clear
+notification and does not guarantee that an area is safe.
+
+Feeds cover registered AGAPAY stations without automatically filtering by the
+resident profile's barangay. Explicit station filtering is optional. Station
+names/areas reflect current metadata, not a historical metadata snapshot.
+Inactive or maintenance station settings do not hide or resolve stored episodes.
+Historical device/simulator origin is **not stored** and is not inferred from
+current firmware metadata. `source="sensor"` means telemetry-generated, not
+physically verified. An EVACUATE sensor tier is not an official LGU evacuation
+order; physical/site calibration of the provisional thresholds remains outstanding.
+
+Flutter currently has demo notification/history presentation and is unchanged
+by this API addition. Its next integration can use the existing authenticated
+request client, map this contract, and handle loading, unavailable, active, and
+resolved states explicitly. **Push notifications, subscriptions, geofencing, and
+delivery/read receipts are not implemented.**
