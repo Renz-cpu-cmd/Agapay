@@ -1,13 +1,17 @@
 import '../../core/ui.dart';
 import '../../widgets/common/forecast_panel.dart';
+import 'community_alert_detail_screen.dart';
 
 class AlertDetailsScreen extends StatelessWidget {
   const AlertDetailsScreen({super.key});
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
-    final station = app.historyAlert == null ? app.monitoring.primary : null;
-    final level = app.historyAlert ?? station?.alertLevel ?? app.alert;
+    if (app.communityAlerts.selectedId != null) {
+      return const CommunityAlertDetailScreen();
+    }
+    final station = app.monitoring.primary;
+    final level = station?.alertLevel ?? app.alert;
     final waterDepth = station?.currentDepthCm ?? level.water;
     final observed = station?.observedAt;
     final observedTime = observed == null

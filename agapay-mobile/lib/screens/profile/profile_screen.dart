@@ -132,7 +132,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _setting(
                 Icons.notifications_none_rounded,
                 'Flood Alerts',
-                'Push notifications for alert tier changes',
+                'Future preference only · Push delivery is not connected',
                 _toggle(
                   'Flood Alerts',
                   app.notifications,

@@ -48,7 +48,7 @@ provider.
   snapshot refresh, device GPS location, UCU Gym evacuation guidance, a Google-computed
   walking route with distance and duration, Street View controls, and external
   Google walking directions.
-- Notifications with today/yesterday groups, details, and in-memory read state.
+- Notifications with authenticated persistent sensor episodes, Active/History pages, and sanitized transition details.
 - Persistent practice SOS: confirmed submission, optional device/manual location, Google Maps GPS preview, safe retry, foreground location updates, status polling and history.
 - Saved profile and barangay editing, password changes, and revocable logout;
   notification/location switches and language selection remain in-memory prototype settings.
@@ -59,7 +59,7 @@ provider.
 Home readings, alert details, station markers, and recent telemetry history now use
 the authenticated monitoring API. They explicitly label simulator readings as a
 virtual station and preserve the last valid severity when the latest sensor sample is
-invalid. Static alert-notification history remains sample content. The map shows only
+invalid. The Alerts tab uses persistent community episodes, separately from live monitoring. The map shows only
 monitoring stations whose coordinates exist in the backend and labels missing data
 honestly. UCU Gym is listed as an evacuation-use facility in the city's 2017
 profile, but activation, capacity and safe entrance are not supplied live. Accounts and
@@ -69,7 +69,7 @@ navigation, ML inference and emergency dispatch are not connected. Evacuation ro
 uses the online Google Maps Compute Routes service and must not replace instructions
 from local responders.
 
-Home and Alert Details forecasts use the authenticated [prediction API](../agapay-docs/PREDICTION_INTERFACE.md)
+Home and monitoring-based Alert Details forecasts use the authenticated [prediction API](../agapay-docs/PREDICTION_INTERFACE.md)
 for `STATION_001`. Actual mode shows Model not trained until an adapter is configured.
 Development previews label sample values and let you exercise all availability states.
 Failed or expired results hide numbers; forecast previews do not change alert tiers.
@@ -86,9 +86,9 @@ to an administrator. Privacy policy publishing remains unavailable.
 ## Structure
 
 - `lib/app.dart`: app setup, routes, theme, and preview sizing.
-- `lib/controllers/`: accounts, practice SOS, forecast availability, and polling monitoring state.
+- `lib/controllers/`: accounts, practice SOS, forecast availability, polling monitoring, and community alert state.
 - `lib/services/auth_api.dart`: authenticated HTTP API and secure token persistence.
-- `lib/models/`: account, forecast, alert-level, and monitoring contracts.
+- `lib/models/`: account, forecast, alert-level, monitoring, and resident-safe community alert contracts.
 - `lib/core/`: design tokens and shared UI primitives.
 - `lib/screens/`: Flutter versions of the supplied screens.
 - `lib/navigation/`: app routes and custom bottom navigation.
@@ -106,7 +106,7 @@ flutter build web
 ```
 
 Widget tests cover the main navigation, registration and dropdown, all four
-alert tiers, station/shelter selection, notification read state, SOS cancellation
+alert tiers, station/shelter selection, persistent community alert details, SOS cancellation
 and simulated completion, settings, logout, and 320-pixel phone/keyboard layouts.
 
 To regenerate optional development screenshots:
@@ -117,3 +117,54 @@ flutter test --update-goldens --dart-define=CAPTURE_PREVIEWS=true
 
 Screenshots go to ignored `build/previews/`. Widget-test screenshots may lack
 platform emoji fonts; the live app uses platform fallback glyphs.
+
+## Community alert integration
+
+The Alerts tab uses only the authenticated resident-safe `/api/community-alerts`
+family through the existing `AuthApi.request()` and secure session storage. It
+does not call the staff-only `/api/alerts` API. `CommunityAlertController` owns
+typed episode/page/detail models and sanitized transitions; `MonitoringController`
+continues to supply Home's current water level, rainfall, trend, and sensor quality.
+Home's detail action remains monitoring-based. Tapping an Alerts card instead
+loads that persistent episode's detail and timeline.
+
+- Active loads `/community-alerts/active` every five seconds while signed in,
+  skipping ticks during an outstanding request. History uses `/community-alerts`
+  (active and resolved episodes), refreshed on entering Alerts/History or manually.
+- Both feeds use Previous/Next pages of 50, replacing rather than accumulating
+  records. Backend totals drive pagination. Offset pages can shift as new episodes
+  arrive; refresh to restart a current view. Detail timelines use the same bound
+  with `transition_limit` and `transition_offset` and refresh on open/page change.
+- Requests are serialized per resource. Owner/query generations suppress old
+  results and queued requests after account changes, logout, expiry, password
+  changes, or disposal. Logout/disposal stops alert timers; no background service
+  or delivery infrastructure was added.
+- Active cards show current severity and latest valid depth. Resolved cards show
+  peak incident severity, trigger depth, and explicitly labelled recovery depth.
+  Trigger/recovery readings are not peak depths. UTC timestamps stay parsed as
+  UTC and are formatted in Philippine time (UTC+08:00/PHT), independent of the
+  phone's timezone. Unknown/malformed values produce an unavailable state, never
+  a NORMAL fallback.
+- Loading, unavailable, empty Active, and empty History states are distinct.
+  A failed fetch clears that resource's previous data; no offline alert cache is
+  shown. A successful response can still contain an old valid reading: invalid
+  telemetry preserves the persistent episode and does not resolve it.
+- The static notification feed, fake read/unread counts, and monitoring-derived
+  notification dots were removed. There is no notification-delivery or read-receipt
+  backend. The Profile switch is explicitly a future preference only and does not
+  disable this safety feed, register devices, or control push delivery.
+- `source=sensor` means telemetry-generated. Device/simulator historical origin
+  is not stored, and persistent episodes are not labelled physically verified.
+  Physical/site calibration remains pending. An EVACUATE sensor tier is not an
+  official LGU evacuation order; follow official local instructions and confirm
+  shelter activation and safe access. The existing prototype UCU Gym map remains.
+
+Firebase/FCM, APNs, SMS, push delivery, acknowledgments and background notification
+handlers are not implemented. No firmware, thresholds, backend lifecycle or
+authentication changes are part of this integration.
+
+Run `flutter pub get`, `flutter analyze`, and `flutter test`. Community tests cover
+typed parsing, unsafe values, authenticated owner lifecycle, pagination, errors,
+polling overlap, late responses, expiry/logout/password changes, real episode UI,
+peak/recovery semantics, direct transitions, and narrow-screen layout. Existing
+authentication, SOS, prediction and navigation/monitoring checks remain in the suite.

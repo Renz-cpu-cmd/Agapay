@@ -1,237 +1,130 @@
+import 'dart:async';
 import '../../core/ui.dart';
+import 'community_alert_widgets.dart';
 
 class AlertsScreen extends StatefulWidget {
-  const AlertsScreen({super.key});
+  const AlertsScreen({this.initialHistory = false, super.key});
+  final bool initialHistory;
   @override
   State<AlertsScreen> createState() => _AlertsScreenState();
 }
 
 class _AlertsScreenState extends State<AlertsScreen> {
-  final _read = <int>{2, 3, 4, 5, 6};
-  static const _alerts = [
-    (
-      AlertLevel.evacuate,
-      'EVACUATION ALERT',
-      'San Vicente River Station — Water level reached 103.2 cm. Proceed to nearest evacuation shelter.',
-      '11:45 AM',
-    ),
-    (
-      AlertLevel.warning,
-      'FLOOD WARNING',
-      'Water level has reached warning level at San Vicente Station. 95.8 cm — Prepare for evacuation.',
-      '11:41 AM',
-    ),
-    (
-      AlertLevel.advisory,
-      'ADVISORY',
-      'Elevated water level detected at STATION_001. 63.1 cm and rising. Stay alert.',
-      '11:32 AM',
-    ),
-    (
-      AlertLevel.advisory,
-      'RAINFALL ADVISORY',
-      'Rainfall accumulation at 4.6 mm. River levels may increase. Monitor AGAPAY for updates.',
-      '10:55 AM',
-    ),
-    (
-      AlertLevel.normal,
-      'ALL CLEAR',
-      'Water level has returned to normal. 38.2 cm. No immediate danger. Stay prepared.',
-      '8:12 PM',
-    ),
-    (
-      null,
-      'SYSTEM UPDATE',
-      'AGAPAY sensor calibration completed. STATION_001 is fully operational.',
-      '3:30 PM',
-    ),
-    (
-      AlertLevel.warning,
-      'FLOOD WARNING',
-      'Water level reached 88.5 cm at San Vicente Station. Residents in low-lying areas should prepare.',
-      '1:15 PM',
-    ),
-  ];
+  late bool _history = widget.initialHistory;
+  bool _started = false;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_started && widget.initialHistory) {
+      _started = true;
+      final controller = AppScope.of(context).communityAlerts;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(controller.refreshHistory(offset: 0));
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
+    final controller = app.communityAlerts;
+    final resource = _history ? controller.history : controller.active;
+    final page = resource.data;
     return PageContent(
       children: [
-        const PageHeading(
-          'Notifications',
-          'San Vicente, Urdaneta · All alerts',
+        const PageHeading('Notifications', 'AGAPAY community sensor episodes'),
+        tx(
+          'In-app alert feed · Push delivery and read receipts are not connected.',
+          size: 11,
+          color: AppColors.muted,
         ),
-        if (app.alert != AlertLevel.normal) ...[
-          Panel(
-            padding: 14,
-            radius: 14,
-            color: const Color(0x601c0000),
-            border: const Color(0x99dc2626),
-            child: Row(
-              spacing: 12,
-              children: [
-                const Dot(AppColors.red),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      tx(
-                        'ACTIVE ALERT IN EFFECT',
-                        size: 12,
-                        mono: true,
-                        weight: 700,
-                        color: const Color(0xfff87171),
-                      ),
-                      tx(
-                        'Tap any alert below for details',
-                        size: 11,
-                        color: AppColors.secondary,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          gap,
-        ],
+        gap,
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            caption('TODAY'),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.red,
-                borderRadius: BorderRadius.circular(20),
+            Expanded(
+              child: TextButton(
+                onPressed: () => setState(() => _history = false),
+                child: Text(_history ? 'Active' : 'Active •'),
               ),
-              child: tx(
-                '${_alerts.length - _read.length} unread',
-                size: 10,
-                mono: true,
-                weight: 600,
-                color: Colors.white,
+            ),
+            Expanded(
+              child: TextButton(
+                onPressed: () {
+                  setState(() => _history = true);
+                  unawaited(controller.refreshHistory(offset: 0));
+                },
+                child: Text(_history ? 'History •' : 'History'),
               ),
+            ),
+            TextButton(
+              onPressed: resource.loading
+                  ? null
+                  : () => _history
+                        ? controller.refreshHistory()
+                        : controller.refreshActive(),
+              child: const Text('Refresh'),
             ),
           ],
         ),
+        if (!_history && page != null)
+          tx('${page.total} active sensor alerts', size: 12, weight: 600),
+        if (_history)
+          tx(
+            'History includes active and resolved episodes. Resolved severity is the peak tier.',
+            size: 11,
+            color: AppColors.muted,
+          ),
         gap,
-        for (var i = 0; i < _alerts.length; i++) ...[
-          if (i == 4) ...[gap, caption('YESTERDAY'), gap],
-          _card(context, i),
+        if (resource.loading) tx('Loading community alerts…'),
+        if (resource.error != null) ...[
+          Panel(child: tx('Alert service is currently unavailable.')),
           gap,
+          tx(
+            'Current alert state cannot be confirmed. Refresh to retry; no offline copy is shown.',
+            size: 12,
+            color: AppColors.muted,
+          ),
         ],
-        tx(
-          'Showing last 7 days · All times local · AGAPAY EWS',
-          size: 10,
-          mono: true,
-          color: AppColors.faint,
-          align: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  Widget _card(BuildContext context, int index) {
-    final (level, title, body, time) = _alerts[index];
-    final color = level?.textColor ?? AppColors.link;
-    return Semantics(
-      button: true,
-      child: InkWell(
-        onTap: () {
-          setState(() => _read.add(index));
-          showModalBottomSheet<void>(
-            context: context,
-            backgroundColor: AppColors.background,
-            showDragHandle: true,
-            isScrollControlled: true,
-            builder: (context) => SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    tx(
-                      title,
-                      size: 18,
-                      weight: 700,
-                      display: true,
-                      color: color,
-                    ),
-                    gap,
-                    tx(body),
-                    gap,
-                    tx(
-                      '$time · Demo notification',
-                      size: 11,
-                      mono: true,
-                      color: AppColors.muted,
-                    ),
-                  ],
-                ),
+        if (page != null) ...[
+          if (page.items.isEmpty)
+            tx(
+              page.total == 0
+                  ? (_history
+                        ? 'No alert history available.'
+                        : 'No active AGAPAY sensor alerts.')
+                  : 'No alerts on this page. Return to the previous page or refresh.',
+            ),
+          for (final episode in page.items) ...[
+            Semantics(
+              button: true,
+              label: 'Open sensor alert for ${episode.stationName}',
+              child: InkWell(
+                key: ValueKey('community-alert-${episode.id}'),
+                onTap: () => app.showCommunityAlert(episode.id),
+                borderRadius: BorderRadius.circular(16),
+                child: CommunityEpisodeSummary(episode: episode),
               ),
             ),
-          );
-        },
-        borderRadius: BorderRadius.circular(14),
-        child: Panel(
-          padding: 14,
-          radius: 14,
-          color: (level?.background ?? const Color(0xff0d1f3c)).withValues(
-            alpha: .42,
+            gap,
+          ],
+          CommunityPagination(
+            offset: _history
+                ? controller.historyOffset
+                : controller.activeOffset,
+            total: page.total,
+            loading: resource.loading,
+            onPage: (offset) => _history
+                ? controller.refreshHistory(offset: offset)
+                : controller.refreshActive(offset: offset),
           ),
-          border: color.withValues(alpha: .68),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 12,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: Dot(color, size: 10, glow: !_read.contains(index)),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: 8,
-                      children: [
-                        Expanded(
-                          child: tx(
-                            title,
-                            size: 13,
-                            mono: true,
-                            weight: 700,
-                            color: color,
-                            spacing: 1.2,
-                          ),
-                        ),
-                        Row(
-                          spacing: 6,
-                          children: [
-                            if (!_read.contains(index))
-                              const Dot(AppColors.red, size: 6),
-                            tx(
-                              time,
-                              size: 10,
-                              mono: true,
-                              color: AppColors.muted,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    tx(body, size: 12, color: AppColors.label, height: 1.55),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        ],
+        gap,
+        tx(
+          'Times shown in Philippine time (PHT). Device/simulator origin is not recorded for these episodes. Last valid depths may be stale; invalid readings do not resolve alerts.',
+          size: 11,
+          color: AppColors.muted,
         ),
-      ),
+      ],
     );
   }
 }

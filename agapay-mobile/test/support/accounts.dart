@@ -5,6 +5,7 @@ import 'package:agapay_mobile/services/sos_drafts.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'predictions.dart';
+import 'community_alerts.dart';
 
 class MemoryTokens implements TokenStore {
   String? value;
@@ -74,6 +75,22 @@ AppController fixtureController() {
   final storage = MemoryTokens();
   final requests = <Map<String, dynamic>>[];
   final client = MockClient((request) async {
+    if (request.url.path.startsWith('/api/community-alerts')) {
+      final path = request.url.path;
+      return http.Response(
+        jsonEncode(
+          path.endsWith('/501')
+              ? communityDetail()
+              : path.endsWith('/502')
+              ? communityDetail(id: 502, resolved: true)
+              : communityPage(
+                  id: path == '/api/community-alerts' ? 502 : 501,
+                  resolved: path == '/api/community-alerts',
+                ),
+        ),
+        200,
+      );
+    }
     if (request.url.path == '/api/monitoring/stations') {
       final now = DateTime.now().toUtc().toIso8601String();
       return http.Response(

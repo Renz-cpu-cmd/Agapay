@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/alert_level.dart';
 import '../models/account.dart';
@@ -6,6 +7,7 @@ import '../services/sos_drafts.dart';
 import 'sos_controller.dart';
 import 'forecast_controller.dart';
 import 'monitoring_controller.dart';
+import 'community_alert_controller.dart';
 
 enum AppTab { home, map, sos, alerts, profile }
 
@@ -16,11 +18,15 @@ class AppController extends ChangeNotifier {
     sos = SosController(auth, storage: sosStorage);
     forecasts = ForecastController(auth);
     monitoring = MonitoringController(auth)..addListener(_monitoringChanged);
+    communityAlerts = CommunityAlertController(auth)
+      ..addListener(_communityChanged);
     auth.onExpired = () {
       user = null;
       sos.setOwner(null);
       forecasts.setOwner(null);
       monitoring.setOwner(null);
+      communityAlerts.setOwner(null);
+      details = false;
       notifyListeners();
     };
   }
@@ -28,6 +34,7 @@ class AppController extends ChangeNotifier {
   late final SosController sos;
   late final ForecastController forecasts;
   late final MonitoringController monitoring;
+  late final CommunityAlertController communityAlerts;
   Account? user;
   String? authError;
   Future<void>? _restoring;
@@ -50,6 +57,7 @@ class AppController extends ChangeNotifier {
     sos.setOwner(account.id);
     forecasts.setOwner(account.id);
     monitoring.setOwner(account.id);
+    communityAlerts.setOwner(account.id);
     barangay = account.barangay;
     authError = null;
     notifyListeners();
@@ -73,6 +81,8 @@ class AppController extends ChangeNotifier {
       sos.setOwner(null);
       forecasts.setOwner(null);
       monitoring.setOwner(null);
+      communityAlerts.setOwner(null);
+      details = false;
       notifyListeners();
     }
   }
@@ -83,8 +93,8 @@ class AppController extends ChangeNotifier {
     sos.setOwner(null);
     forecasts.setOwner(null);
     monitoring.setOwner(null);
+    communityAlerts.setOwner(null);
     details = false;
-    historyAlert = null;
     tab = AppTab.home;
     notifications = true;
     location = true;
@@ -100,6 +110,8 @@ class AppController extends ChangeNotifier {
     forecasts.dispose();
     monitoring.removeListener(_monitoringChanged);
     monitoring.dispose();
+    communityAlerts.removeListener(_communityChanged);
+    communityAlerts.dispose();
     auth.dispose();
     super.dispose();
   }
@@ -107,12 +119,13 @@ class AppController extends ChangeNotifier {
   AlertLevel alert = AlertLevel.warning;
   AppTab tab = AppTab.home;
   bool details = false;
-  AlertLevel? historyAlert;
   bool evacuationMap = false;
   bool notifications = true;
   bool location = true;
   String language = 'English';
   String barangay = 'San Vicente';
+
+  void _communityChanged() => notifyListeners();
 
   void _monitoringChanged() {
     final measuredLevel = monitoring.primary?.alertLevel;
@@ -128,20 +141,30 @@ class AppController extends ChangeNotifier {
   void navigate(AppTab value, {bool evacuation = false}) {
     tab = value;
     details = false;
-    historyAlert = null;
+    communityAlerts.closeDetail();
+    if (value == AppTab.alerts) {
+      unawaited(communityAlerts.refreshActive());
+      unawaited(communityAlerts.refreshHistory(offset: 0));
+    }
     evacuationMap = evacuation;
     notifyListeners();
   }
 
-  void showAlert([AlertLevel? value]) {
-    historyAlert = value;
+  void showAlert() {
+    communityAlerts.closeDetail();
     details = true;
+    notifyListeners();
+  }
+
+  void showCommunityAlert(int id) {
+    details = true;
+    unawaited(communityAlerts.openDetail(id));
     notifyListeners();
   }
 
   void closeDetails() {
     details = false;
-    historyAlert = null;
+    communityAlerts.closeDetail();
     notifyListeners();
   }
 

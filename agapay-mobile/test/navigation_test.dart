@@ -126,13 +126,23 @@ void main() {
 
       await tab(tester, 'Alerts');
       await capture(tester, 'notifications');
-      expect(find.text('2 unread'), findsOneWidget);
-      await tapText(tester, 'EVACUATION ALERT');
+      expect(find.text('1 active sensor alerts'), findsOneWidget);
+      expect(find.textContaining('unread'), findsNothing);
+      await tapText(tester, 'Community Test Station');
       await tester.pumpAndSettle();
-      expect(find.text('11:45 AM · Demo notification'), findsOneWidget);
-      Navigator.pop(tester.element(find.text('11:45 AM · Demo notification')));
+      expect(find.text('Sensor alert details'), findsOneWidget);
+      await capture(tester, 'community_alert_details');
+      expect(find.text('Latest depth: 102.3 cm'), findsOneWidget);
+      expect(find.text('NORMAL → EVACUATE'), findsOneWidget);
+      expect(find.textContaining('Demo notification'), findsNothing);
+      await tester.tap(find.bySemanticsLabel('Back').last);
       await tester.pumpAndSettle();
-      expect(find.text('1 unread'), findsOneWidget);
+      expect(find.text('1 active sensor alerts'), findsOneWidget);
+
+      await tapText(tester, 'History');
+      await capture(tester, 'community_alert_history');
+      expect(find.text('EVACUATE · Peak tier'), findsOneWidget);
+      expect(find.text('Recovery depth: 35.2 cm'), findsOneWidget);
 
       await tab(tester, 'SOS');
       await capture(tester, 'sos');

@@ -162,12 +162,6 @@ class AgapayBottomNav extends StatelessWidget {
                                       ),
                                     ],
                                   ),
-                                  if (i == 3 && app.alert != AlertLevel.normal)
-                                    const Positioned(
-                                      top: 8,
-                                      right: 12,
-                                      child: Dot(AppColors.red),
-                                    ),
                                   if (app.tab.index == i)
                                     const Positioned(
                                       bottom: 4,

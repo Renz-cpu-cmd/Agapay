@@ -95,15 +95,7 @@ class HomeScreen extends StatelessWidget {
                       child: Stack(
                         clipBehavior: Clip.none,
                         alignment: Alignment.center,
-                        children: [
-                          const SvgIcon('bell', size: 20),
-                          if (level != AlertLevel.normal)
-                            const Positioned(
-                              top: 7,
-                              right: 7,
-                              child: Dot(AppColors.red, size: 8, glow: true),
-                            ),
-                        ],
+                        children: [const SvgIcon('bell', size: 20)],
                       ),
                     ),
                   ),

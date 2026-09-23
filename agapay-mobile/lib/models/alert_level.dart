@@ -27,13 +27,13 @@ extension AlertValues on AlertLevel {
     'Water level is within normal range.',
     'Water level is increasing. Stay alert.',
     'Flood water is rising. Prepare for possible evacuation.',
-    'Immediate action required. Proceed to nearest shelter.',
+    'High flood risk detected. Follow official local authority instructions.',
   ][index];
   String get action => const [
     'Continue daily activities. Monitor updates.',
     'Stay alert and monitor updates. Prepare emergency supplies.',
     'Prepare for possible evacuation. Move valuables to higher ground.',
-    'EVACUATE IMMEDIATELY. Proceed to the nearest designated evacuation shelter.',
+    'AGAPAY EVACUATE-level sensor alert. Prepare to evacuate and follow official local authority instructions. Confirm shelter activation and safe access.',
   ][index];
   String get trend =>
       const ['→ STABLE', '↗ RISING', '↗ RISING', '↑ RAPIDLY RISING'][index];
