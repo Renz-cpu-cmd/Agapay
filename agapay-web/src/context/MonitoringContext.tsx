@@ -9,6 +9,7 @@ type DataMode = "simulator" | "device" | "no_data" | "demo";
 
 type MonitoringState = {
   stations: Station[];
+  // Dashboard current-tier summary only; never persistent alert history.
   sensorAlerts: Alert[];
   snapshot: MonitoringSnapshot | null;
   loading: boolean;

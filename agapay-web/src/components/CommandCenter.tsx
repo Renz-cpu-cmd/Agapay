@@ -6,7 +6,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { LogoutDialog } from "./DesignUI";
 import { pageFromPath } from "@/lib/navigation";
-import { DemoProvider, useDemo } from "@/context/DemoContext";
+import { DemoProvider } from "@/context/DemoContext";
 import { AccountProvider } from "@/context/AccountContext";
 import { SosProvider, useSos } from "@/context/SosContext";
 import { MonitoringProvider, useMonitoring } from "@/context/MonitoringContext";
@@ -17,7 +17,6 @@ function Shell({ children }: { children: ReactNode }) {
   const current = pageFromPath(pathname);
   const contentRef = useRef<HTMLElement>(null);
   const [showLogout, setShowLogout] = useState(false);
-  const { alerts } = useDemo();
   const { page, error: sosError } = useSos();
   const { error: monitoringError } = useMonitoring();
 
@@ -28,8 +27,7 @@ function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="command-center flex h-dvh overflow-hidden" style={{ background: "#000000" }}>
       <Sidebar current={current} onLogout={() => setShowLogout(true)}
-        sosCount={page?.counts.ACTIVE ?? 0}
-        alertCount={alerts.filter((a) => a.status === "ACTIVE").length} />
+        sosCount={page?.counts.ACTIVE ?? 0} />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header current={current} />
         {monitoringError && <p role="alert" className="px-4 py-2 text-xs text-amber-400">Live monitoring unavailable. The last received values may be out of date.</p>}

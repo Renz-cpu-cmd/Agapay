@@ -25,7 +25,7 @@ npm run typecheck
 - `/register` — one-time local administrator registration; disabled in production
 - `/dashboard` — monitoring summary, station map, alert queue, water-level chart
 - `/stations` and `/stations/STATION_001` — station cards and directly addressable details
-- `/alerts` — active/historical filters, manual alert creation and resolution
+- `/alerts` — persistent sensor episodes and transitions; separate session-only manual demos
 - `/sos` — beacon list, details, acknowledgment and resolution
 - `/analytics` — station/period controls, charts and CSV report download
 - `/system-health` — connectivity and stale sensor data
@@ -37,8 +37,8 @@ npm run typecheck
 Monitoring pages poll the authenticated backend snapshot every five seconds. A
 simulator feed displays VIRTUAL STATION, physical-device telemetry displays LIVE,
 and the UI reports no data or connection failures without turning them into a normal
-flood reading. Dashboard charts, station details, maps, system health, automatic
-sensor alerts, analytics history, interval rainfall, and CSV reports use the received
+flood reading. Dashboard charts, station details, maps, system health, current-tier
+summaries, analytics history, interval rainfall, and CSV reports use the received
 telemetry. The bundled records are shown only while the API is unavailable and are
 marked DEMO. SOS continues to display PRACTICE. The dashboard opens with Google's photorealistic 3D view centered on Urdaneta City and provides a matching dark vector view with terrain/satellite/hybrid modes, Street View, fullscreen, and touchpad gestures. Staff SOS details use the same Google Maps JavaScript integration to display submitted resident coordinates. The header clock shows current Philippine time.
 
@@ -49,7 +49,37 @@ Google Maps loads only when `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is configured. `NE
 Station forecasts use the authenticated [prediction API](../agapay-docs/PREDICTION_INTERFACE.md). Actual mode currently shows Model not trained; development previews explicitly label sample values. The panel handles unavailable, stale, invalid and expired results without retaining numeric forecasts. Forecasts do not change alert tiers.
 
 Manual alert changes remain in `src/context/DemoContext.tsx` and reset on reload;
-sensor-derived alerts come from the monitoring snapshot. Accounts, profiles and practice SOS persist through the backend. `SosContext` polls saved requests and server counts; officers acknowledge and resolve requests with an audit timeline. SOS location details can open an online coordinate map. See [Practice SOS setup](../agapay-docs/SOS_SETUP.md). Protected pages require staff sessions; user management additionally requires administrator access. The web session uses an HttpOnly cookie through same-origin API handlers. Push notifications and operational response mapping remain separate integration work.
+the Alerts screen reads persistent sensor episodes from the alert API. The Dashboard still uses monitoring-derived current-tier summaries, not persistent episode history. Accounts, profiles and practice SOS persist through the backend. `SosContext` polls saved requests and server counts; officers acknowledge and resolve requests with an audit timeline. SOS location details can open an online coordinate map. See [Practice SOS setup](../agapay-docs/SOS_SETUP.md). Protected pages require staff sessions; user management additionally requires administrator access. The web session uses an HttpOnly cookie through same-origin API handlers. Push notifications and operational response mapping remain separate integration work.
+
+## Persistent sensor Alerts screen
+
+- Active reads `GET /api/alerts/active`; Historical reads `GET /api/alerts?status=RESOLVED`. Browser requests use `accountRequest` through the same-origin, staff-only BFF. Backend bearer tokens stay server-side in the existing HttpOnly session flow. Only GET alert routes are forwarded.
+- Active rows show current severity and latest depth. Resolved rows show **peak tier** and **trigger depth**, not NORMAL as the incident tier or the recovery reading as a peak depth. The API does not store peak depth.
+- History opens the episode detail and paginated transitions, including direct tier jumps, Manila time, depth, and sequence. The detail labels recovery depth separately. Original UTC timestamps remain unchanged in state; display always uses `Asia/Manila`.
+- Lists and transitions retrieve 50 records per page. Station and active severity filters run on the backend. Search and historical peak-tier filters apply only to the current page, with explicit UI guidance. The backend's severity filter uses current severity, so it cannot filter resolved episodes by peak tier. Counts are before these page-local filters; offset pagination can shift while new episodes arrive.
+- Polling waits five seconds after each completed request, never overlaps within a resource, skips hidden documents, refreshes when visible, and aborts on query changes/unmount. Loading, outage, and successful empty responses have distinct states. Outages clear displayed sensor results and retry; demo incidents never replace unavailable sensor history.
+- Station names are optional monitoring metadata. Without that metadata the station ID is shown, and alert retrieval continues independently. Episode device/simulator origin is not persisted by the API and is not inferred from current station metadata. Persistent does not mean physically validated.
+- Manual demos occupy a separate labelled section: local/session-only, not delivered to residents, and not persistent sensor history. Only these demos have Resolve actions. Seeded mock incidents are excluded from this screen, and the sidebar no longer presents their count as an operational alert total. Sensor episodes resolve automatically from valid NORMAL telemetry; invalid telemetry preserves backend state.
+
+No backend lifecycle, thresholds, physical calibration, notifications, acknowledgment, or mobile behavior changes are included.
+
+### Reproduce alert validation
+
+```sh
+npm ci
+npm run typecheck
+npm run build
+```
+
+There is no installed web test framework. `tests/alerts-smoke.cjs` is an optional plain Node/Playwright browser smoke check using the production build and an isolated in-memory HTTP API fixture. It starts and stops its own servers on temporary loopback ports and uses synthetic HttpOnly sessions, not real accounts or databases. To run with an optional local Playwright installation:
+
+```sh
+npm install --no-save --package-lock=false playwright
+npx playwright install chromium
+node tests/alerts-smoke.cjs
+```
+
+Alternatively set `AGAPAY_PLAYWRIGHT_MODULE` to an existing Playwright module path, and optionally `AGAPAY_BROWSER_CHANNEL=msedge` to use installed Edge. The check covers rendering, peak tier/trigger depth, filters, list/transition pagination, direct transitions, local demo resolution, errors/empty/loading, Manila time with a different browser timezone, polling/visibility/unmount, station navigation, BFF authorization/read-only paths, and HttpOnly-cookie isolation. The existing five CI gates remain unchanged; this optional browser check is run locally.
 
 Google sign-in and push delivery are not configured. Their controls explain availability instead of simulating a successful connection. Location sharing is managed in the resident mobile app; the website currently supports English. About, privacy, and terms dialogs describe the prototype and are not published operational policies.
 

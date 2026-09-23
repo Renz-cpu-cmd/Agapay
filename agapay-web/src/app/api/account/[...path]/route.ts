@@ -13,7 +13,8 @@ function json(data: unknown, status = 200) {
 
 async function handle(request: NextRequest, context: Context) {
   const path = (await context.params).path.join("/");
-  const methods = /^users\/\d+$/.test(path) ? ["PATCH"] : /^sos\/\d+$/.test(path) ? ["GET", "PATCH"] : /^predictions\/[A-Z0-9_-]{3,50}$/.test(path) || path === "monitoring/stations" ? ["GET"] : allowed[path];
+  const alertRead = /^alerts(?:\/active|\/\d+(?:\/transitions)?)?$/.test(path);
+  const methods = alertRead ? ["GET"] : /^users\/\d+$/.test(path) ? ["PATCH"] : /^sos\/\d+$/.test(path) ? ["GET", "PATCH"] : /^predictions\/[A-Z0-9_-]{3,50}$/.test(path) || path === "monitoring/stations" ? ["GET"] : allowed[path];
   if (!methods?.includes(request.method)) return json({ detail: "Not found." }, 404);
   if (path === "setup") {
     // Setup is a local development feature. Production keeps the CLI bootstrap.
@@ -50,7 +51,16 @@ async function handle(request: NextRequest, context: Context) {
       const user = await check.json();
       if (!["admin", "officer"].includes(user.role)) return json({ detail: "Staff access is required." }, 403);
     }
-    let upstreamPath = /^(users|sos|predictions|monitoring)(\/|$)/.test(path) ? path : `auth/${path}`;
+    let upstreamPath = /^(users|sos|predictions|monitoring|alerts)(\/|$)/.test(path) ? path : `auth/${path}`;
+    if (alertRead) {
+      const query = new URLSearchParams();
+      const keys = path.endsWith("/transitions") ? ["limit", "offset"] : ["station_id", "status", "severity", "limit", "offset"];
+      for (const key of keys) {
+        const value = request.nextUrl.searchParams.get(key);
+        if (value !== null) query.set(key, value);
+      }
+      if (query.size) upstreamPath += `?${query}`;
+    }
     if (path === "sos") {
       const query = new URLSearchParams();
       for (const key of ["status", "limit", "offset"]) {

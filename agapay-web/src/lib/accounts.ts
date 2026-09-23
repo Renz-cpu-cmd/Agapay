@@ -10,11 +10,11 @@ export type Account = {
   updated_at: string;
 };
 
-export async function accountRequest<T>(path: string, method = "GET", body?: unknown): Promise<T> {
+export async function accountRequest<T>(path: string, method = "GET", body?: unknown, signal?: AbortSignal): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`/api/account/${path}`, {
-      method, credentials: "same-origin", cache: "no-store",
+      method, credentials: "same-origin", cache: "no-store", signal,
       headers: body === undefined ? undefined : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
