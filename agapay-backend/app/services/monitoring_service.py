@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Station, Telemetry
 from app.monitoring_schemas import MonitoringSample, MonitoringSnapshot, MonitoringStation
+from app.services.alert_classifier import classify_depth
 
 
 def _utc(value: datetime | None) -> datetime | None:
@@ -13,18 +14,6 @@ def _utc(value: datetime | None) -> datetime | None:
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc)
-
-
-def _tier(station: Station, depth: float | None) -> str | None:
-    if depth is None:
-        return None
-    if depth >= station.threshold_evacuate_cm:
-        return "EVACUATE"
-    if depth >= station.threshold_warning_cm:
-        return "WARNING"
-    if depth >= station.threshold_advisory_cm:
-        return "ADVISORY"
-    return "NORMAL"
 
 
 def _trend(valid: list[Telemetry]) -> str:
@@ -113,7 +102,7 @@ def monitoring_snapshot(
                 is_online=connection == "online",
                 is_stale=connection == "offline",
                 age_seconds=age_seconds,
-                alert_tier=_tier(
+                alert_tier=classify_depth(
                     station,
                     last_valid.water_depth_cm if last_valid is not None else None,
                 ),

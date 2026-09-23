@@ -91,3 +91,72 @@ Do not send sensitive or real deployment data through a public anonymous broker.
 pip install -r requirements-dev.txt
 python -m pytest -q
 ```
+
+## Persistent sensor alerts
+
+Sensor flood alerts are stored in `alerts` as episodes and in `alert_transitions`
+as an audit trail. The shared `classify_depth()` function uses each station's
+existing advisory/warning/evacuate depth thresholds; monitoring uses that same
+function. Thresholds remain **provisional development settings pending physical
+and site calibration**. No new thresholds, hysteresis, or multi-sample
+confirmation delays are introduced; valid escalations are immediate.
+
+A VALID non-NORMAL reading starts an ACTIVE episode, including a direct jump to
+WARNING or EVACUATE. Further valid readings update that episode's current severity
+and latest depth/reference. Its highest severity never decreases. Only severity
+changes create transitions. A VALID NORMAL reading records the final transition
+and marks the episode RESOLVED. A later rise starts a distinct episode. Resolved
+episodes retain their original trigger, peak, final depth, and timestamps.
+
+INVALID telemetry is stored but does not create, resolve, downgrade, or otherwise
+modify an episode. Missing data is not NORMAL. Station `inactive`/`maintenance`
+status and connectivity are administrative concerns: changing them cannot rewrite
+sensor history; valid telemetry received in those states still follows the same
+lifecycle. Existing monitoring freshness/history behavior is preserved, including
+unknown severity when no valid reading is available in its requested history window.
+
+Both HTTP and MQTT call the same ingestion service. Telemetry is flushed first,
+then its episode/transition changes are committed **in the same transaction**.
+A processing failure rolls everything back, including the station's last ping.
+A station write lock serializes concurrent ingestion; a database unique index
+allows at most one ACTIVE episode per station. The existing station/sequence
+constraint rejects duplicate telemetry (HTTP 409; MQTT ignores duplicates), and
+a unique telemetry reference prevents duplicate transitions. Even a retry with
+changed content under the same sequence cannot alter alert history.
+
+Processing follows serialized server receipt order, matching existing monitoring
+semantics; sequence numbers identify duplicates rather than enforcing source-time
+ordering. Timestamps are server UTC receive times, not physical measurement times.
+`source="sensor"` means telemetry-generated rather than manually authored; accepted
+simulator telemetry also exercises this engine and is not proof of physical data.
+
+### Staff read API
+
+Every route requires an active authenticated **admin or officer** bearer session.
+Missing/invalid/expired sessions return 401; residents return 403. Responses use
+explicit Pydantic contracts and `Cache-Control: no-store`. No alert mutation or
+acknowledgment endpoints are exposed; SOS acknowledgment remains separate.
+
+| Method | Path | Result |
+|---|---|---|
+| GET | `/api/alerts` | Episode history, newest trigger first |
+| GET | `/api/alerts/active` | ACTIVE episodes only |
+| GET | `/api/alerts/{alert_id}` | Episode details (404 if absent) |
+| GET | `/api/alerts/{alert_id}/transitions` | Transition history, oldest first (404 if episode absent) |
+
+Lists return `{items, total}` and accept `limit` (1–100, default 50) and `offset`
+(default 0). Episode lists support `station_id` and `severity` (current severity);
+`/api/alerts` additionally accepts `status=ACTIVE|RESOLVED`. An unknown station
+filter returns an empty page. Resolved episodes have current severity NORMAL and
+retain their highest severity separately. Transition pages include previous/new
+severity, depth, telemetry ID/sequence, and UTC timestamp. Episode details include
+trigger/latest telemetry IDs/sequences and depths, trigger/last-transition times,
+and optional resolution time. Use the existing `/docs` OpenAPI schemas for fields.
+
+The existing startup `Base.metadata.create_all()` creates the two new tables in
+existing development databases. No old telemetry is backfilled/replayed: persistent
+history starts with newly accepted samples after this version is deployed. Restarting
+the service preserves episodes; it does not reclassify them without new valid data.
+Manual/demo web alerts are not imported. Production migrations, calibrated hysteresis,
+notifications, WebSockets, and web/mobile alert integration remain separate work.
+**No push notification delivery or production-readiness claim is included.**

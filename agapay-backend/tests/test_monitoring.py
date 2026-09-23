@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 
 from app.database import SessionLocal
-from app.models import Station, Telemetry, utc_now
+from app.models import Alert, AlertTransition, Station, Telemetry, utc_now
 from test_accounts import account, headers, reset_accounts
 
 
@@ -14,6 +14,8 @@ STATION = "MONITOR_TEST"
 @pytest.fixture
 def access(client):
     with SessionLocal() as db:
+        db.query(AlertTransition).filter(AlertTransition.station_id == STATION).delete()
+        db.query(Alert).filter(Alert.station_id == STATION).delete()
         db.query(Telemetry).filter(Telemetry.station_id == STATION).delete()
         station = db.scalar(select(Station).where(Station.station_id == STATION))
         if station is None:

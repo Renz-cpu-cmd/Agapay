@@ -8,8 +8,10 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    Index,
     String,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -77,6 +79,66 @@ class Telemetry(Base):
     recorded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, index=True
     )
+
+
+class Alert(Base):
+    """One continuous sensor flood episode, including recovery to NORMAL."""
+
+    __tablename__ = "alerts"
+    __table_args__ = (
+        CheckConstraint("source = 'sensor'", name="ck_alert_source"),
+        CheckConstraint("current_severity IN ('NORMAL', 'ADVISORY', 'WARNING', 'EVACUATE')", name="ck_alert_severity"),
+        CheckConstraint("highest_severity IN ('ADVISORY', 'WARNING', 'EVACUATE')", name="ck_alert_highest_severity"),
+        CheckConstraint(
+            "(status = 'ACTIVE' AND current_severity <> 'NORMAL' AND resolved_at IS NULL) OR "
+            "(status = 'RESOLVED' AND current_severity = 'NORMAL' AND resolved_at IS NOT NULL)",
+            name="ck_alert_lifecycle",
+        ),
+        Index("ix_alert_station_status", "station_id", "status"),
+        Index("ix_alert_status_triggered", "status", "triggered_at"),
+        Index(
+            "uq_alert_active_station", "station_id", unique=True,
+            sqlite_where=text("status = 'ACTIVE'"),
+            postgresql_where=text("status = 'ACTIVE'"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(sqlite_bigint, primary_key=True)
+    station_id: Mapped[str] = mapped_column(String(50), ForeignKey("stations.station_id"))
+    current_severity: Mapped[str] = mapped_column(String(20))
+    highest_severity: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE")
+    source: Mapped[str] = mapped_column(String(20), default="sensor")
+    trigger_telemetry_id: Mapped[int] = mapped_column(ForeignKey("telemetry.id"), unique=True)
+    latest_telemetry_id: Mapped[int] = mapped_column(ForeignKey("telemetry.id"))
+    trigger_sequence_no: Mapped[int] = mapped_column(BigInteger)
+    latest_sequence_no: Mapped[int] = mapped_column(BigInteger)
+    trigger_depth_cm: Mapped[float] = mapped_column(Float)
+    latest_depth_cm: Mapped[float] = mapped_column(Float)
+    triggered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    last_transition_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AlertTransition(Base):
+    __tablename__ = "alert_transitions"
+    __table_args__ = (
+        CheckConstraint("previous_severity IN ('NORMAL', 'ADVISORY', 'WARNING', 'EVACUATE')", name="ck_transition_previous"),
+        CheckConstraint("new_severity IN ('NORMAL', 'ADVISORY', 'WARNING', 'EVACUATE')", name="ck_transition_new"),
+        CheckConstraint("previous_severity <> new_severity", name="ck_transition_changed"),
+        Index("ix_alert_transition_history", "alert_id", "id"),
+    )
+
+    id: Mapped[int] = mapped_column(sqlite_bigint, primary_key=True)
+    alert_id: Mapped[int] = mapped_column(ForeignKey("alerts.id"))
+    station_id: Mapped[str] = mapped_column(String(50), ForeignKey("stations.station_id"), index=True)
+    # A persisted sample can cause at most one flood transition, even on retry.
+    telemetry_id: Mapped[int] = mapped_column(ForeignKey("telemetry.id"), unique=True)
+    sequence_no: Mapped[int] = mapped_column(BigInteger)
+    previous_severity: Mapped[str] = mapped_column(String(20))
+    new_severity: Mapped[str] = mapped_column(String(20))
+    water_depth_cm: Mapped[float] = mapped_column(Float)
+    transitioned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
 class User(Base):
