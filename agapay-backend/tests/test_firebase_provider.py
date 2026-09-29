@@ -1,3 +1,9 @@
+from contextlib import contextmanager
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import json
+import socket
+from threading import Thread
+from time import sleep
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -6,9 +12,11 @@ import pytest
 from firebase_admin import credentials, exceptions, messaging
 from google.auth.credentials import AnonymousCredentials
 import requests
+from urllib3.connection import HTTPConnection
+from urllib3.exceptions import NewConnectionError, ReadTimeoutError
 
 from app.config import Settings
-from app.services.firebase_provider import FirebaseNotificationProvider
+from app.services.firebase_provider import FirebaseNotificationProvider, _presend_retry_policy
 from app.services.notification_provider import PushTarget, SendOutcome, configured_provider
 from app.services.notification_service import message_for
 
@@ -28,9 +36,114 @@ def payload():
 def test_sdk_transport_bounded_and_no_automatic_replays(provider):
     service = messaging._get_messaging_service(provider._app)
     assert service._client.timeout == 15
-    assert service._client.session.get_adapter("https://").max_retries.total == 0
+    retry = service._client.session.get_adapter("https://").max_retries
+    assert retry.total == retry.connect == 1
+    assert retry.read is False
+    assert retry.redirect == retry.status == retry.other == 0
+    assert not retry.status_forcelist
+    assert not retry.respect_retry_after_header
+    assert "POST" not in retry.allowed_methods
     assert service._client.session._max_refresh_attempts == 0
     assert service._client.session._refresh_timeout == 15
+
+
+def test_only_presend_connection_errors_can_retry():
+    retry = _presend_retry_policy()
+    after_connect = retry.increment(method="POST", error=NewConnectionError(None, "before send"))
+    assert after_connect.total == after_connect.connect == 0
+    with pytest.raises(ReadTimeoutError):
+        retry.increment(method="POST", error=ReadTimeoutError(None, None, "after send"))
+    assert not retry.is_retry("POST", 503, has_retry_after=True)
+    assert not retry.is_retry("POST", 429, has_retry_after=True)
+
+
+@contextmanager
+def local_fcm(mode):
+    """Exercise the real SDK/Requests path with fake tokens and no Firebase calls."""
+    received = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            received.append(self.path)
+            if mode == "reset":
+                self.connection.shutdown(socket.SHUT_RDWR)
+                self.connection.close()
+                return
+            if mode == "timeout":
+                sleep(0.2)
+            if mode == "redirect":
+                self.send_response(307)
+                self.send_header("Location", self.path)
+                self.end_headers()
+                return
+            status = mode if isinstance(mode, int) else 200
+            body = (json.dumps({"error": {"code": status, "message": "rejected",
+                                          "status": "RESOURCE_EXHAUSTED" if status == 429 else "UNAVAILABLE"}})
+                    if status != 200 else json.dumps({"name": "projects/test/messages/accepted"}))
+            try:
+                self.send_response(status)
+                self.send_header("Content-Type", "application/json")
+                if status == 429:
+                    self.send_header("Retry-After", "1")
+                self.end_headers()
+                self.wfile.write(body.encode())
+            except OSError:  # The timeout test closes its client connection first.
+                pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    server.daemon_threads = True
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_port}/messages:send", received
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=1)
+
+
+@pytest.mark.parametrize("mode,expected", [
+    (200, SendOutcome.ACCEPTED),
+    (429, SendOutcome.RETRYABLE_REJECTION),
+    (503, SendOutcome.RETRYABLE_REJECTION),
+    ("timeout", SendOutcome.UNKNOWN),
+    ("reset", SendOutcome.UNKNOWN),
+    ("redirect", SendOutcome.UNKNOWN),
+])
+def test_real_sdk_http_path_never_replays_a_post(provider, monkeypatch, caplog, mode, expected):
+    service = messaging._get_messaging_service(provider._app)
+    with local_fcm(mode) as (url, received):
+        monkeypatch.setattr(service, "_fcm_url", url)
+        if mode == "timeout":
+            monkeypatch.setattr(service._client, "_timeout", 0.05)
+        result = provider.send(PushTarget("fcm", "secret-test-token"), payload(), delivery_key="one")
+    assert result == expected
+    assert len(received) == 1
+    assert "secret-test-token" not in caplog.text
+
+
+def test_pre_send_connection_failure_retries_without_duplicate_post(provider, monkeypatch):
+    service = messaging._get_messaging_service(provider._app)
+    connect = HTTPConnection._new_conn
+    attempts = []
+
+    def fail_first_connect(connection):
+        attempts.append(1)
+        if len(attempts) == 1:
+            raise NewConnectionError(connection, "connection not established")
+        return connect(connection)
+
+    monkeypatch.setattr(HTTPConnection, "_new_conn", fail_first_connect)
+    with local_fcm(200) as (url, received):
+        monkeypatch.setattr(service, "_fcm_url", url)
+        result = provider.send(PushTarget("fcm", "test-token"), payload(), delivery_key="one")
+    assert result == SendOutcome.ACCEPTED
+    assert len(attempts) == 2
+    assert len(received) == 1
 
 
 def test_acceptance_and_safe_payload(provider, monkeypatch):

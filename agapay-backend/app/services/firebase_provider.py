@@ -5,9 +5,26 @@ from uuid import uuid4
 import firebase_admin
 from firebase_admin import credentials, exceptions, messaging, _http_client
 from google.auth.transport.requests import AuthorizedSession
+from urllib3.util.retry import Retry
 
 from app.config import Settings
 from app.services.notification_provider import PushMessage, PushTarget, SendOutcome
+
+
+class _NoReplayJsonHttpClient(_http_client.JsonHttpClient):
+    def request(self, method, url, **kwargs):
+        # Requests follows 307/308 with another POST unless redirects are disabled.
+        if method.lower() == "post":
+            kwargs["allow_redirects"] = False
+        return super().request(method, url, **kwargs)
+
+
+def _presend_retry_policy() -> Retry:
+    # urllib3 treats ConnectTimeoutError (including NewConnectionError) as
+    # connection errors assumed to occur before the request is sent. Read,
+    # status, redirect and other failures may follow acceptance.
+    return Retry(total=1, connect=1, read=False, redirect=0, status=0,
+                 other=0, respect_retry_after_header=False)
 
 
 class FirebaseNotificationProvider:
@@ -29,15 +46,18 @@ class FirebaseNotificationProvider:
                 credential, {"projectId": settings.firebase_project_id, "httpTimeout": 15},
                 name=f"agapay-push-{uuid4()}",
             )
-            # Admin SDK 7.6.0 has no public per-send retry option. Its default retries
-            # POSTs after read errors/500/503, which can duplicate accepted pushes.
-            # Isolate this pinned, tested private seam; all serialization/auth/send
-            # still uses the official SDK. No transport or 401 replay is permitted.
+            # Admin SDK 7.6.0 has no public per-send retry option. Its default
+            # retries reads and 500/503 responses, which can duplicate a push.
+            # Keep its official serialization/auth/send path, but permit one
+            # retry only for a connection failure urllib3 classifies as occurring
+            # before the request is sent. Never follow POST redirects.
             service = messaging._get_messaging_service(self._app)
             session = AuthorizedSession(
                 google_credential, refresh_timeout=15, max_refresh_attempts=0,
             )
-            client = _http_client.JsonHttpClient(session=session, retries=False, timeout=15)
+            client = _NoReplayJsonHttpClient(
+                session=session, retries=_presend_retry_policy(), timeout=15,
+            )
             service._client.close()
             service._client = client
         except Exception:
@@ -69,9 +89,10 @@ class FirebaseNotificationProvider:
                 exceptions.UnauthenticatedError):
             # InvalidArgument can mean a malformed payload, not an invalid token.
             return SendOutcome.PERMANENT_REJECTION
-        except (messaging.QuotaExceededError, exceptions.UnavailableError) as error:
-            # Only an explicit provider rejection is retryable. A synthesized
-            # SDK exception without an HTTP response may follow acceptance.
+        except exceptions.FirebaseError as error:
+            # SDK error types vary with the provider response body. Only a
+            # confirmed 429/503 response can be retried by the bounded worker.
+            # A transport error without a response may follow acceptance.
             response = error.http_response
             if response is not None and response.status_code in (429, 503):
                 return SendOutcome.RETRYABLE_REJECTION
