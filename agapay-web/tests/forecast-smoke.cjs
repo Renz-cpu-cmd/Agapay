@@ -70,7 +70,7 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
  await page.setViewportSize({width:1280,height:800});await page.evaluate(()=>document.documentElement.style.fontSize='');
  console.log('PASS: both-theme axe, keyboard skip/dialog/focus return, reduced-motion and narrow large-text checks');
  mode='withdrawn';await page.reload();await page.getByText('Historical, expired or withdrawn — do not use as a current forecast',{exact:true}).waitFor();assert.equal(await page.locator('tbody tr').count(),3,'original values retained as history');
- mode='error';await page.reload();await page.getByRole('alert').waitFor();assert.equal(await page.locator('tbody tr').count(),0,'outage does not fabricate numbers');
+ mode='error';await page.reload();await page.locator('[role="alert"]:not(#__next-route-announcer__)').waitFor();assert.equal(await page.locator('tbody tr').count(),0,'outage does not fabricate numbers');
  const guest=await browser.newContext();const resident=await guest.newPage();await resident.goto(record);await resident.waitForURL('**/login**');await guest.addCookies([{name:'agapay_session',value:'resident-ci',url:base,httpOnly:true}]);await resident.goto(base+'/ml-evaluation');await resident.waitForURL('**/login**');
  assert.deepEqual(errors,[]);console.log('PASS: published zero/interval, withdrawal history, outage, anonymous and resident staff-access browser flows');
  }finally{if(browser)await browser.close();if(next){next.kill();await new Promise(resolve=>{if(next.exitCode!==null)return resolve();next.once('exit',resolve);setTimeout(resolve,5000).unref();});}fixture.closeAllConnections();await new Promise(r=>fixture.close(r));}
