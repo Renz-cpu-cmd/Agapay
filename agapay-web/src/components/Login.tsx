@@ -4,6 +4,7 @@ import Link from "next/link";
 import { accountRequest } from "@/lib/accounts";
 import { FigmaIcon,InformationDialog } from "./DesignUI";
 import { figmaAssets } from "@/lib/figma-assets";
+import { ThemeSelector } from "@/context/ThemeContext";
 export default function Login({onLogin}:{onLogin:()=>void}) {
   const [email,setEmail]=useState(""),[password,setPassword]=useState("");
   const [showPassword,setShowPassword]=useState(false),[loading,setLoading]=useState(false);
@@ -15,7 +16,7 @@ export default function Login({onLogin}:{onLogin:()=>void}) {
     try{await accountRequest("login","POST",{email:email.trim(),password});onLogin();}
     catch(e){setError(e instanceof Error?e.message:"Unable to sign in.");}finally{setLoading(false);}
   }
-  return <div className="auth-screen"><section className="auth-card">
+  return <div className="auth-screen"><div className="auth-theme"><ThemeSelector/></div><section className="auth-card">
     <div className="auth-brand"><img src={figmaAssets.logo} alt="AGAPAY logo" width={39} height={39}/><h1>AGAPAY</h1></div>
     <p className="auth-caption">Sign in to Continue</p>
     <form onSubmit={submit} className="auth-form">

@@ -120,7 +120,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           tx(
             'Enter your current password to change your email or password. A new password signs you out on all devices.',
             size: 12,
-            color: AppColors.muted,
+            color: context.colors.muted,
           ),
           gap,
           AuthField(

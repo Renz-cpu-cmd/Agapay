@@ -25,7 +25,7 @@ function Shell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <div className="command-center flex h-dvh overflow-hidden" style={{ background: "#000000" }}>
+    <div className="command-center flex h-dvh overflow-hidden" style={{ background: "var(--adaptive-background, #000000)" }}>
       <Sidebar current={current} onLogout={() => setShowLogout(true)}
         sosCount={page?.counts.ACTIVE ?? 0} />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">

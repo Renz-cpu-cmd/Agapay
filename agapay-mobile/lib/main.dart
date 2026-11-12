@@ -6,12 +6,10 @@ import 'services/firebase_push.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final push = await FirebasePushRuntime.initialize();
-  runApp(
-    AgapayApp(
-      controller: AppController(
-        pushTokenProvider: push.provider,
-        pushMessages: push.messages,
-      ),
-    ),
+  final controller = AppController(
+    pushTokenProvider: push.provider,
+    pushMessages: push.messages,
   );
+  await controller.theme.restore();
+  runApp(AgapayApp(controller: controller));
 }

@@ -52,45 +52,55 @@ class _AgapayAppState extends State<AgapayApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) => AppScope(
     controller: _controller,
-    child: MaterialApp(
-      title: 'AGAPAY',
-      navigatorKey: _navigator,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
-      initialRoute: AppRoutes.splash,
-      builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
-          systemNavigationBarColor: AppColors.background,
-          systemNavigationBarIconBrightness: Brightness.light,
-        ),
-        child: ColoredBox(
-          color: const Color(0xff020508),
-          child: LayoutBuilder(
-            builder: (context, box) => Center(
-              child: SizedBox(
-                width: box.maxWidth >= 600 ? 390 : box.maxWidth,
-                child: ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(
-                    context,
-                  ).copyWith(scrollbars: false),
-                  child: child!,
+    child: ListenableBuilder(
+      listenable: _controller.theme,
+      builder: (context, _) => MaterialApp(
+        title: 'AGAPAY',
+        navigatorKey: _navigator,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: _controller.theme.mode,
+        initialRoute: AppRoutes.splash,
+        builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: context.colors.isDark
+                ? Brightness.light
+                : Brightness.dark,
+            statusBarBrightness: Theme.of(context).brightness,
+            systemNavigationBarColor: context.colors.background,
+            systemNavigationBarIconBrightness: context.colors.isDark
+                ? Brightness.light
+                : Brightness.dark,
+          ),
+          child: ColoredBox(
+            color: context.colors.background,
+            child: LayoutBuilder(
+              builder: (context, box) => Center(
+                child: SizedBox(
+                  width: box.maxWidth >= 600 ? 390 : box.maxWidth,
+                  child: ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(
+                      context,
+                    ).copyWith(scrollbars: false),
+                    child: child!,
+                  ),
                 ),
               ),
             ),
           ),
         ),
+        routes: {
+          AppRoutes.splash: (_) => const SplashScreen(),
+          AppRoutes.login: (_) => const LoginScreen(),
+          AppRoutes.register: (_) => const RegisterScreen(),
+          AppRoutes.main: (_) =>
+              const _AccountGate(child: MainNavigationShell()),
+          AppRoutes.notificationHistory: (_) =>
+              const _AccountGate(child: NotificationHistoryScreen()),
+        },
       ),
-      routes: {
-        AppRoutes.splash: (_) => const SplashScreen(),
-        AppRoutes.login: (_) => const LoginScreen(),
-        AppRoutes.register: (_) => const RegisterScreen(),
-        AppRoutes.main: (_) => const _AccountGate(child: MainNavigationShell()),
-        AppRoutes.notificationHistory: (_) =>
-            const _AccountGate(child: NotificationHistoryScreen()),
-      },
     ),
   );
 }

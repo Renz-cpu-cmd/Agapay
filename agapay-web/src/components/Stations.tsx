@@ -9,14 +9,14 @@ import {
   AreaChart, Area
 } from "recharts";
 import { useMonitoring } from "@/context/MonitoringContext";
-import { tierColor, tierBg, trendLabel, type Station } from "../data/mockData";
+import { tierColor, tierTextColor, tierBg, trendLabel, type Station } from "../data/mockData";
 
 function TierBadge({ tier, label }: { tier: string; label?: string }) {
-  const color = tierColor[tier as keyof typeof tierColor] ?? "#6b7280";
+  const color = tierTextColor[tier as keyof typeof tierTextColor] ?? "var(--adaptive-muted, #6b7280)";
   return (
     <span
       className="font-ui font-700 text-xs px-2 py-0.5 rounded-sm"
-      style={{ background: `${color}18`, color, border: `1px solid ${color}35`, letterSpacing: "0.08em" }}
+      style={{ background: `color-mix(in srgb, ${color} 9%, transparent)`, color, border: `1px solid color-mix(in srgb, ${color} 21%, transparent)`, letterSpacing: "0.08em" }}
     >
       {label ?? tier}
     </span>
@@ -36,52 +36,52 @@ function StationDetail({ station, onBack }: { station: Station; onBack: () => vo
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 font-ui text-xs transition-colors"
-          style={{ color: "#8190a4" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#0ea5e9")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#8190a4")}
+          style={{ color: "var(--adaptive-muted, #8190a4)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--adaptive-blue, #0ea5e9)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--adaptive-muted, #8190a4)")}
         >
           ← Back
         </button>
-        <span style={{ color: "#002967" }}>|</span>
-        <span className="font-data text-xs" style={{ color: "#64748b" }}>{station.id}</span>
+        <span style={{ color: "var(--adaptive-border, #002967)" }}>|</span>
+        <span className="font-data text-xs" style={{ color: "var(--adaptive-secondary, #64748b)" }}>{station.id}</span>
       </div>
 
       <div className="card-grid grid-cols-3">
         {/* Station info */}
         <div className="col-span-2 card-stack">
           {/* Header card */}
-          <div className="p-4 flex flex-col gap-3" style={{ background: "#00112e", border: "1px solid #002967", borderRadius: "4px" }}>
+          <div className="p-4 flex flex-col gap-3" style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: "4px" }}>
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="font-ui font-700 text-base" style={{ color: "#ffffff" }}>{station.name}</h2>
-                <p className="text-xs mt-0.5" style={{ color: "#8190a4" }}>{station.location}</p>
+                <h2 className="font-ui font-700 text-base" style={{ color: "var(--adaptive-text, #ffffff)" }}>{station.name}</h2>
+                <p className="text-xs mt-0.5" style={{ color: "var(--adaptive-muted, #8190a4)" }}>{station.location}</p>
               </div>
               <TierBadge tier={station.status} />
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full" style={{ background: station.isOnline ? "#00e83a" : "#ff0000" }} />
-              <span className="font-data text-xs" style={{ color: station.isOnline ? "#00e83a" : "#ff0000" }}>
+              <div className="w-2 h-2 rounded-full" style={{ background: station.isOnline ? "var(--adaptive-success, #00e83a)" : "var(--adaptive-danger, #ff0000)" }} />
+              <span className="font-data text-xs" style={{ color: station.isOnline ? "var(--adaptive-success, #00e83a)" : "var(--adaptive-danger, #ff0000)" }}>
                 {station.isOnline ? "ONLINE" : "OFFLINE"}
               </span>
-              <span className="font-data text-xs" style={{ color: "#64748b" }}>· Last ping: {station.lastPing}</span>
+              <span className="font-data text-xs" style={{ color: "var(--adaptive-secondary, #64748b)" }}>· Last ping: {station.lastPing}</span>
             </div>
 
             {/* Offline warning */}
             {!station.isOnline && (
               <div className="p-3" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "4px" }}>
-                <p className="font-ui font-700 text-xs" style={{ color: "#ff0000" }}>🔴 STATION OFFLINE</p>
-                <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+                <p className="font-ui font-700 text-xs" style={{ color: "var(--adaptive-danger, #ff0000)" }}>🔴 STATION OFFLINE</p>
+                <p className="text-xs mt-1" style={{ color: "var(--adaptive-muted, #94a3b8)" }}>
                   Last communication: {station.lastPing} · Last known level: {station.waterLevel} cm
                 </p>
-                <p className="font-ui font-700 text-xs mt-1" style={{ color: "#f97316" }}>DATA IS STALE</p>
+                <p className="font-ui font-700 text-xs mt-1" style={{ color: "var(--adaptive-orange, #f97316)" }}>DATA IS STALE</p>
               </div>
             )}
 
             {/* Sensor error */}
             {!station.sensorValid && station.isOnline && (
               <div className="p-3" style={{ background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.25)", borderRadius: "4px" }}>
-                <p className="font-ui font-700 text-xs" style={{ color: "#f5df00" }}>⚠ SENSOR ERROR</p>
-                <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+                <p className="font-ui font-700 text-xs" style={{ color: "var(--adaptive-warning, #f5df00)" }}>⚠ SENSOR ERROR</p>
+                <p className="text-xs mt-1" style={{ color: "var(--adaptive-muted, #94a3b8)" }}>
                   Water-level measurement unavailable. Last valid: {station.waterLevel} cm — Data state: INVALID
                 </p>
               </div>
@@ -89,9 +89,9 @@ function StationDetail({ station, onBack }: { station: Station; onBack: () => vo
           </div>
 
           {/* Water level + chart */}
-          <div className="p-4 flex flex-col gap-3" style={{ background: "#00112e", border: "1px solid #002967", borderRadius: "4px" }}>
+          <div className="p-4 flex flex-col gap-3" style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: "4px" }}>
             <div className="flex items-center justify-between">
-              <span className="font-ui font-700 text-xs tracking-widest uppercase" style={{ color: "#8190a4", letterSpacing: "0.12em" }}>
+              <span className="font-ui font-700 text-xs tracking-widest uppercase" style={{ color: "var(--adaptive-muted, #8190a4)", letterSpacing: "0.12em" }}>
                 Water Depth — Live
               </span>
               <div className="flex gap-1.5">
@@ -101,10 +101,10 @@ function StationDetail({ station, onBack }: { station: Station; onBack: () => vo
                     onClick={() => setTimeRange(r)}
                     className="font-data text-xs px-2 py-0.5 transition-all"
                     style={{
-                      background: timeRange === r ? "#0ea5e9" : "transparent",
-                      color: timeRange === r ? "#fff" : "#8190a4",
+                      background: timeRange === r ? "var(--adaptive-blue, #0ea5e9)" : "transparent",
+                      color: timeRange === r ? "var(--adaptive-action-foreground, #000)" : "var(--adaptive-muted, #8190a4)",
                       borderRadius: "3px",
-                      border: `1px solid ${timeRange === r ? "#0ea5e9" : "#002967"}`,
+                      border: `1px solid ${timeRange === r ? "var(--adaptive-blue, #0ea5e9)" : "var(--adaptive-border, #002967)"}`,
                     }}
                   >
                     {r}
@@ -115,27 +115,27 @@ function StationDetail({ station, onBack }: { station: Station; onBack: () => vo
 
             <div className="flex items-end gap-6">
               <div>
-                <span className="font-data text-4xl font-bold" style={{ color: tierColor[station.status] }}>
+                <span className="font-data text-4xl font-bold" style={{ color: tierTextColor[station.status] }}>
                   {station.waterLevel}
                 </span>
-                <span className="font-data text-xl ml-1" style={{ color: "#8190a4" }}>cm</span>
+                <span className="font-data text-xl ml-1" style={{ color: "var(--adaptive-muted, #8190a4)" }}>cm</span>
               </div>
-              <span className="font-ui font-700 text-sm mb-1" style={{ color: tierColor[station.status] }}>
+              <span className="font-ui font-700 text-sm mb-1" style={{ color: tierTextColor[station.status] }}>
                 {trendLabel[station.trend]}
               </span>
             </div>
 
             {/* Gauge bar */}
-            <div className="relative h-2 rounded-sm overflow-hidden" style={{ background: "#002052" }}>
+            <div className="relative h-2 rounded-sm overflow-hidden" style={{ background: "var(--adaptive-border, #002052)" }}>
               <div
                 className="h-full transition-all"
                 style={{ width: `${levelPct}%`, background: tierColor[station.status], boxShadow: `0 0 8px ${tierColor[station.status]}60` }}
               />
               {/* Threshold markers */}
               {[
-                { val: station.thresholds.advisory, color: "#f5df00" },
-                { val: station.thresholds.warning, color: "#f97316" },
-                { val: station.thresholds.evacuate, color: "#ff0000" },
+                { val: station.thresholds.advisory, color: "var(--adaptive-warning, #f5df00)" },
+                { val: station.thresholds.warning, color: "var(--adaptive-orange, #f97316)" },
+                { val: station.thresholds.evacuate, color: "var(--adaptive-danger, #ff0000)" },
               ].map(({ val, color }) => (
                 <div
                   key={val}
@@ -154,15 +154,15 @@ function StationDetail({ station, onBack }: { station: Station; onBack: () => vo
                       <stop offset="95%" stopColor={tierColor[station.status]} stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="#002967" strokeDasharray="3 3" vertical={false}/>
-                  <XAxis dataKey="time" tick={{ fill: "#64748b", fontSize: 9, fontFamily: "Inter" }} interval={Math.ceil(chartData.length / 6)} tickLine={false} axisLine={false}/>
-                  <YAxis tick={{ fill: "#64748b", fontSize: 9, fontFamily: "Inter" }} tickLine={false} axisLine={false} width={30} domain={["auto","auto"]}/>
-                  <ReferenceLine y={station.thresholds.evacuate} stroke="#ff0000" strokeDasharray="4 2" strokeWidth={1} label={{ value: "EVACUATE", position: "insideTopRight", fill: "#ff0000", fontSize: 8, fontFamily: "Inter" }}/>
-                  <ReferenceLine y={station.thresholds.warning} stroke="#f97316" strokeDasharray="4 2" strokeWidth={1}/>
-                  <ReferenceLine y={station.thresholds.advisory} stroke="#f5df00" strokeDasharray="4 2" strokeWidth={1}/>
+                  <CartesianGrid stroke="var(--adaptive-border, #002967)" strokeDasharray="3 3" vertical={false}/>
+                  <XAxis dataKey="time" tick={{ fill: "var(--adaptive-secondary, #64748b)", fontSize: 9, fontFamily: "Inter" }} interval={Math.ceil(chartData.length / 6)} tickLine={false} axisLine={false}/>
+                  <YAxis tick={{ fill: "var(--adaptive-secondary, #64748b)", fontSize: 9, fontFamily: "Inter" }} tickLine={false} axisLine={false} width={30} domain={["auto","auto"]}/>
+                  <ReferenceLine y={station.thresholds.evacuate} stroke="var(--adaptive-danger, #ff0000)" strokeDasharray="4 2" strokeWidth={1} label={{ value: "EVACUATE", position: "insideTopRight", fill: "var(--adaptive-danger, #ff0000)", fontSize: 8, fontFamily: "Inter" }}/>
+                  <ReferenceLine y={station.thresholds.warning} stroke="var(--adaptive-orange, #f97316)" strokeDasharray="4 2" strokeWidth={1}/>
+                  <ReferenceLine y={station.thresholds.advisory} stroke="var(--adaptive-warning, #f5df00)" strokeDasharray="4 2" strokeWidth={1}/>
                   <Tooltip
-                    contentStyle={{ background: "#00112e", border: "1px solid #002967", borderRadius: "4px", fontSize: 10, fontFamily: "Inter", color: "#ffffff" }}
-                    itemStyle={{ color: tierColor[station.status] }}
+                    contentStyle={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: "4px", fontSize: 10, fontFamily: "Inter", color: "var(--adaptive-text, #ffffff)" }}
+                    itemStyle={{ color: tierTextColor[station.status] }}
                   />
                   <Area type="monotone" dataKey="level" stroke={tierColor[station.status]} strokeWidth={1.8} fill="url(#wlGrad)" dot={false}/>
                 </AreaChart>
@@ -176,24 +176,24 @@ function StationDetail({ station, onBack }: { station: Station; onBack: () => vo
         {/* Right column */}
         <div className="card-stack">
           {/* Rainfall */}
-          <div className="p-4 flex flex-col gap-2" style={{ background: "#00112e", border: "1px solid #002967", borderRadius: "4px" }}>
-            <span className="font-ui font-700 text-xs tracking-widest uppercase" style={{ color: "#8190a4", letterSpacing: "0.12em" }}>Rainfall</span>
-            <span className="font-data text-3xl font-bold" style={{ color: "#0ea5e9" }}>{station.rainfall}</span>
-            <span className="font-data text-sm" style={{ color: "#8190a4" }}>mm this reporting interval</span>
+          <div className="p-4 flex flex-col gap-2" style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: "4px" }}>
+            <span className="font-ui font-700 text-xs tracking-widest uppercase" style={{ color: "var(--adaptive-muted, #8190a4)", letterSpacing: "0.12em" }}>Rainfall</span>
+            <span className="font-data text-3xl font-bold" style={{ color: "var(--adaptive-blue, #0ea5e9)" }}>{station.rainfall}</span>
+            <span className="font-data text-sm" style={{ color: "var(--adaptive-muted, #8190a4)" }}>mm this reporting interval</span>
           </div>
 
           {/* Thresholds */}
-          <div className="p-4 flex flex-col gap-3" style={{ background: "#00112e", border: "1px solid #002967", borderRadius: "4px" }}>
-            <span className="font-ui font-700 text-xs tracking-widest uppercase" style={{ color: "#8190a4", letterSpacing: "0.12em" }}>Alert Thresholds</span>
+          <div className="p-4 flex flex-col gap-3" style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: "4px" }}>
+            <span className="font-ui font-700 text-xs tracking-widest uppercase" style={{ color: "var(--adaptive-muted, #8190a4)", letterSpacing: "0.12em" }}>Alert Thresholds</span>
             {[
-              { label: "Advisory", val: station.thresholds.advisory, color: "#f5df00" },
-              { label: "Warning", val: station.thresholds.warning, color: "#f97316" },
-              { label: "Evacuate", val: station.thresholds.evacuate, color: "#ff0000" },
+              { label: "Advisory", val: station.thresholds.advisory, color: "var(--adaptive-warning, #f5df00)" },
+              { label: "Warning", val: station.thresholds.warning, color: "var(--adaptive-orange, #f97316)" },
+              { label: "Evacuate", val: station.thresholds.evacuate, color: "var(--adaptive-danger, #ff0000)" },
             ].map(({ label, val, color }) => (
               <div key={label} className="flex items-center justify-between py-1.5" style={{ borderBottom: "1px solid #001637" }}>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ background: color }} />
-                  <span className="font-ui text-xs" style={{ color: "#64748b" }}>{label}</span>
+                  <span className="font-ui text-xs" style={{ color: "var(--adaptive-secondary, #64748b)" }}>{label}</span>
                 </div>
                 <span className="font-data font-bold text-sm" style={{ color }}>{val}.0 cm</span>
               </div>
@@ -201,23 +201,23 @@ function StationDetail({ station, onBack }: { station: Station; onBack: () => vo
           </div>
 
           {/* Sensor status */}
-          <div className="p-4 flex flex-col gap-3" style={{ background: "#00112e", border: "1px solid #002967", borderRadius: "4px" }}>
-            <span className="font-ui font-700 text-xs tracking-widest uppercase" style={{ color: "#8190a4", letterSpacing: "0.12em" }}>Sensor Status</span>
+          <div className="p-4 flex flex-col gap-3" style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: "4px" }}>
+            <span className="font-ui font-700 text-xs tracking-widest uppercase" style={{ color: "var(--adaptive-muted, #8190a4)", letterSpacing: "0.12em" }}>Sensor Status</span>
             {[
               { label: "Water Level Sensor", ok: station.sensorValid },
               { label: "Rain Gauge", ok: station.isOnline },
               { label: "Connection", ok: station.isOnline },
             ].map(({ label, ok }) => (
               <div key={label} className="flex items-center justify-between">
-                <span className="text-xs" style={{ color: "#64748b" }}>{label}</span>
-                <span className="font-data text-xs font-bold" style={{ color: ok ? "#00e83a" : "#ff0000" }}>
+                <span className="text-xs" style={{ color: "var(--adaptive-secondary, #64748b)" }}>{label}</span>
+                <span className="font-data text-xs font-bold" style={{ color: ok ? "var(--adaptive-success, #00e83a)" : "var(--adaptive-danger, #ff0000)" }}>
                   {ok ? "✓ Valid" : "✗ Error"}
                 </span>
               </div>
             ))}
             <div className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: "#64748b" }}>Firmware</span>
-              <span className="font-data text-xs" style={{ color: "#8190a4" }}>{station.firmware}</span>
+              <span className="text-xs" style={{ color: "var(--adaptive-secondary, #64748b)" }}>Firmware</span>
+              <span className="font-data text-xs" style={{ color: "var(--adaptive-muted, #8190a4)" }}>{station.firmware}</span>
             </div>
           </div>
         </div>
@@ -237,10 +237,10 @@ export default function Stations({ initialStationId }: { initialStationId?: stri
   }
 
   return <div className="design-page stations-screen"><p className="subtle-note">{stations.length} STATIONS · {stations.filter(s => s.isOnline).length} ONLINE · {loading ? "CONNECTING" : dataMode === "simulator" ? "VIRTUAL STATION" : dataMode.replace("_", " ").toUpperCase()}</p>
-    <div className="stations-grid">{stations.map(st => <button key={st.id} onClick={() => router.push(`/stations/${encodeURIComponent(st.id)}`)} className="station-card design-panel" style={{borderColor:st.status === "EVACUATE" ? "#db0000" : undefined}}>
-      <header><div><h2>{st.name}</h2><small>{st.id}</small></div><span className="design-badge" style={{color:tierColor[st.status],background:tierColor[st.status]+"25"}}>{st.status}</span></header>
-      <div className="station-connection"><span style={{color:st.isOnline?"#00ff24":"#ff0000"}}>• {st.isOnline?"ONLINE":"OFFLINE"}</span><small>· {st.lastPing}{!st.isOnline&&" · Last known reading"}</small></div>
-      <dl className="station-values"><div><dt>Water Level</dt><dd className="depth" style={{color:tierColor[st.status]}}>{st.waterLevel} cm</dd></div><div><dt>Rainfall</dt><dd>{st.rainfall} mm</dd></div></dl>
+    <div className="stations-grid">{stations.map(st => <button key={st.id} onClick={() => router.push(`/stations/${encodeURIComponent(st.id)}`)} className="station-card design-panel" style={{borderColor:st.status === "EVACUATE" ? "var(--adaptive-danger, #db0000)" : undefined}}>
+      <header><div><h2>{st.name}</h2><small>{st.id}</small></div><span className="design-badge" style={{color:tierTextColor[st.status],background:tierColor[st.status]+"25"}}>{st.status}</span></header>
+      <div className="station-connection"><span style={{color:st.isOnline?"var(--adaptive-success, #00ff24)":"var(--adaptive-danger, #ff0000)"}}>• {st.isOnline?"ONLINE":"OFFLINE"}</span><small>· {st.lastPing}{!st.isOnline&&" · Last known reading"}</small></div>
+      <dl className="station-values"><div><dt>Water Level</dt><dd className="depth" style={{color:tierTextColor[st.status]}}>{st.waterLevel} cm</dd></div><div><dt>Rainfall</dt><dd>{st.rainfall} mm</dd></div></dl>
       <p className="station-trend">{trendLabel[st.trend]}</p><div className="water-bar"><div style={{width:Math.min(100,st.waterLevel/130*100)+"%",background:tierColor[st.status]}}/></div>
     </button>)}</div>
   </div>;

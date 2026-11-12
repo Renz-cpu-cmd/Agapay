@@ -82,11 +82,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.colors.surface,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Center(
-                      child: SvgIcon('back', size: 16, color: AppColors.label),
+                    child: Center(
+                      child: SvgIcon(
+                        'back',
+                        size: 16,
+                        color: context.colors.label,
+                      ),
                     ),
                   ),
                 ),
@@ -107,7 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     tx(
                       'Join the AGAPAY community network',
                       size: 12,
-                      color: AppColors.muted,
+                      color: context.colors.muted,
                     ),
                   ],
                 ),
@@ -125,7 +129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 weight: 700,
                 size: 16,
                 spacing: .8,
-                color: AppColors.link,
+                color: context.colors.link,
               ),
             ],
           ),
@@ -154,7 +158,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     'BARANGAY',
                     size: 11,
                     weight: 600,
-                    color: AppColors.label,
+                    color: context.colors.label,
                     display: true,
                     spacing: 1.1,
                   ),
@@ -190,18 +194,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 20),
           Text.rich(
             TextSpan(
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 height: 16 / 12,
-                color: AppColors.muted,
+                color: context.colors.muted,
               ),
-              children: const [
+              children: [
                 TextSpan(
                   text: 'By creating an account you agree to the AGAPAY ',
                 ),
                 TextSpan(
                   text: 'Terms of Service',
-                  style: TextStyle(color: AppColors.link),
+                  style: TextStyle(color: context.colors.link),
                 ),
               ],
             ),

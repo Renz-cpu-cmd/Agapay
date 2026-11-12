@@ -6,10 +6,10 @@ export 'theme/app_theme.dart';
 export '../controllers/app_controller.dart';
 export '../models/alert_level.dart';
 
-Text tx(
+Widget tx(
   String value, {
   double size = 14,
-  Color color = AppColors.text,
+  Color? color,
   int weight = 400,
   bool display = false,
   bool mono = false,
@@ -17,35 +17,44 @@ Text tx(
   double spacing = 0,
   TextAlign? align,
   int? lines,
-}) => Text(
-  value,
-  textAlign: align,
-  maxLines: lines,
-  overflow: lines == null ? null : TextOverflow.ellipsis,
-  style: TextStyle(
-    fontFamily: mono
-        ? 'JetBrainsMono'
-        : display
-        ? 'Outfit'
-        : 'Inter',
-    fontSize: size,
-    // The bundled variable fonts set weight through their wght axis. Avoid
-    // synthetic bold on top of that axis when an asset is registered as 400.
-    fontWeight: FontWeight.w400,
-    fontVariations: [FontVariation('wght', weight.toDouble())],
-    color: color,
-    height: height ?? 1.5,
-    letterSpacing: spacing,
+  bool adaptive = true,
+}) => Builder(
+  builder: (context) => Text(
+    value,
+    textAlign: align,
+    maxLines: lines,
+    overflow: lines == null ? null : TextOverflow.ellipsis,
+    style: TextStyle(
+      fontFamily: mono
+          ? 'JetBrainsMono'
+          : display
+          ? 'Outfit'
+          : 'Inter',
+      fontSize: size,
+      // The bundled variable fonts set weight through their wght axis. Avoid
+      // synthetic bold on top of that axis when an asset is registered as 400.
+      fontWeight: FontWeight.w400,
+      fontVariations: [FontVariation('wght', weight.toDouble())],
+      color: color == null
+          ? context.colors.text
+          : adaptive
+          ? context.colors.resolve(color)
+          : color,
+      height: height ?? 1.5,
+      letterSpacing: spacing,
+    ),
   ),
 );
 
-Widget caption(String value) => tx(
-  value,
-  size: 10,
-  color: AppColors.muted,
-  mono: true,
-  weight: 600,
-  spacing: 1,
+Widget caption(String value) => Builder(
+  builder: (context) => tx(
+    value,
+    size: 10,
+    color: context.colors.muted,
+    mono: true,
+    weight: 600,
+    spacing: 1,
+  ),
 );
 const gap = SizedBox(height: 12);
 
@@ -63,25 +72,28 @@ class Panel extends StatelessWidget {
   final Color color, border;
   @override
   Widget build(BuildContext context) {
+    final palette = context.colors;
     final useDefaultSurface = color == AppColors.surface;
     return Container(
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        color: useDefaultSurface ? null : color,
+        color: useDefaultSurface ? null : palette.resolve(color),
         gradient: useDefaultSurface
-            ? const LinearGradient(
+            ? LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [AppColors.surfaceRaised, AppColors.surface],
+                colors: [context.colors.surfaceRaised, context.colors.surface],
               )
             : null,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: border),
-        boxShadow: const [
+        border: Border.all(color: palette.resolve(border)),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x26000000),
+            color: context.colors.isDark
+                ? const Color(0x26000000)
+                : const Color(0x090f2748),
             blurRadius: 14,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -136,12 +148,16 @@ class PageHeading extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border.all(color: AppColors.border),
+                  color: context.colors.surface,
+                  border: Border.all(color: context.colors.border),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: SvgIcon('back', size: 18, color: AppColors.secondary),
+                  child: SvgIcon(
+                    'back',
+                    size: 18,
+                    color: context.colors.secondary,
+                  ),
                 ),
               ),
             ),
@@ -157,9 +173,14 @@ class PageHeading extends StatelessWidget {
                 size: 24,
                 weight: 700,
                 display: true,
-                color: Colors.white,
+                color: context.colors.text,
               ),
-              tx(subtitle, size: 11, mono: true, color: subtitleColor),
+              tx(
+                subtitle,
+                size: 11,
+                mono: true,
+                color: context.colors.resolve(subtitleColor),
+              ),
             ],
           ),
         ),
@@ -197,15 +218,20 @@ class ActionButton extends StatelessWidget {
       opacity: onPressed == null ? .7 : 1,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: endColor == null ? color : null,
+          color: endColor == null ? context.colors.resolve(color) : null,
           gradient: endColor == null
               ? null
               : LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [color, endColor!],
+                  colors: [
+                    context.colors.resolve(color),
+                    context.colors.resolve(endColor!),
+                  ],
                 ),
-          border: border == null ? null : Border.all(color: border!),
+          border: border == null
+              ? null
+              : Border.all(color: context.colors.resolve(border!)),
           borderRadius: BorderRadius.circular(12),
           boxShadow: glow
               ? [
@@ -230,7 +256,10 @@ class ActionButton extends StatelessWidget {
                   size: fontSize,
                   weight: weight,
                   display: true,
-                  color: textColor,
+                  color: textColor == Colors.white
+                      ? Colors.white
+                      : context.colors.resolve(textColor),
+                  adaptive: false,
                   spacing: .7,
                   align: TextAlign.center,
                 ),
@@ -293,7 +322,10 @@ class SvgIcon extends StatelessWidget {
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="${name == 'back' ? 2.5 : 1.8}" stroke-linecap="round" stroke-linejoin="round">${paths[name]}</svg>',
     width: size,
     height: size,
-    colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+    colorFilter: ColorFilter.mode(
+      color == Colors.white ? color : context.colors.resolve(color),
+      BlendMode.srcIn,
+    ),
   );
 }
 
@@ -339,7 +371,7 @@ class DataRow extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 3),
     child: Row(
       children: [
-        tx(label, size: 11, color: AppColors.muted, display: true),
+        tx(label, size: 11, color: context.colors.muted, display: true),
         const SizedBox(width: 12),
         Expanded(
           child: tx(

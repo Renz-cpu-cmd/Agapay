@@ -1,3 +1,4 @@
+import 'package:agapay_mobile/controllers/theme_controller.dart';
 import 'dart:convert';
 import 'package:agapay_mobile/controllers/app_controller.dart';
 import 'package:agapay_mobile/services/auth_api.dart';
@@ -70,7 +71,7 @@ Map<String, dynamic> resident() => {
   'is_active': true,
 };
 
-AppController fixtureController() {
+AppController fixtureController({ThemePreferenceStore? themeStorage}) {
   var user = resident();
   final storage = MemoryTokens();
   final requests = <Map<String, dynamic>>[];
@@ -226,6 +227,7 @@ AppController fixtureController() {
     );
   });
   return AppController(
+    themeStorage: themeStorage,
     sosStorage: MemorySosDrafts(),
     authApi: AuthApi(client: client, storage: storage),
   );

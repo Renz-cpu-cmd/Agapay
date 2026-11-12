@@ -21,10 +21,10 @@ class HomeScreen extends StatelessWidget {
         ? 'DEMO'
         : 'WAITING FOR DATA';
     final sourceColor = activeStation?.isOnline == true
-        ? AppColors.green
+        ? context.colors.green
         : usingMonitoring
         ? const Color(0xfffbbf24)
-        : AppColors.muted;
+        : context.colors.muted;
     final trend = activeStation != null
         ? switch (activeStation.trend) {
             'rising_rapidly' => '↑ RAPIDLY RISING',
@@ -61,15 +61,15 @@ class HomeScreen extends StatelessWidget {
                 Row(
                   spacing: 6,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.location_on,
                       size: 12,
-                      color: AppColors.muted,
+                      color: context.colors.muted,
                     ),
                     tx(
                       'San Vicente, Urdaneta',
                       size: 11,
-                      color: AppColors.muted,
+                      color: context.colors.muted,
                     ),
                   ],
                 ),
@@ -88,8 +88,8 @@ class HomeScreen extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        border: Border.all(color: AppColors.border),
+                        color: context.colors.surface,
+                        border: Border.all(color: context.colors.border),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Stack(
@@ -110,8 +110,8 @@ class HomeScreen extends StatelessWidget {
                       height: 40,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        color: AppColors.surface,
-                        border: Border.all(color: AppColors.border),
+                        color: context.colors.surface,
+                        border: Border.all(color: context.colors.border),
                       ),
                       child: const Center(child: SvgIcon('user', size: 18)),
                     ),
@@ -206,7 +206,7 @@ class HomeScreen extends StatelessWidget {
                         : 'Start the virtual station · ${station.id}',
                     size: 10,
                     mono: true,
-                    color: AppColors.muted,
+                    color: context.colors.muted,
                     align: TextAlign.right,
                   ),
                 ),
@@ -251,7 +251,7 @@ class HomeScreen extends StatelessWidget {
                             display: true,
                             size: 18,
                             weight: 600,
-                            color: AppColors.secondary,
+                            color: context.colors.secondary,
                           ),
                           const SizedBox(height: 16),
                           FittedBox(
@@ -272,14 +272,14 @@ class HomeScreen extends StatelessWidget {
                                 : level.rate,
                             size: 11,
                             mono: true,
-                            color: AppColors.muted,
+                            color: context.colors.muted,
                           ),
                           const SizedBox(height: 16),
                           tx(
                             'Threshold',
                             size: 10,
                             mono: true,
-                            color: AppColors.muted,
+                            color: context.colors.muted,
                           ),
                           const SizedBox(height: 4),
                           SizedBox(
@@ -297,7 +297,7 @@ class HomeScreen extends StatelessWidget {
                                             .toDouble(),
                                         minHeight: 6,
                                         color: level.color,
-                                        backgroundColor: AppColors.border,
+                                        backgroundColor: context.colors.border,
                                       ),
                                     ),
                                     for (final t in [60, 85, 100])
@@ -307,7 +307,7 @@ class HomeScreen extends StatelessWidget {
                                         child: Container(
                                           width: 2,
                                           height: 12,
-                                          color: AppColors.background,
+                                          color: context.colors.background,
                                         ),
                                       ),
                                   ],
@@ -353,10 +353,10 @@ class HomeScreen extends StatelessWidget {
                     Row(
                       spacing: 7,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.water_drop_outlined,
                           size: 17,
-                          color: AppColors.link,
+                          color: context.colors.link,
                         ),
                         caption('RAINFALL'),
                       ],
@@ -377,7 +377,7 @@ class HomeScreen extends StatelessWidget {
                           : 'Demonstration rainfall',
                       size: 10,
                       mono: true,
-                      color: AppColors.muted,
+                      color: context.colors.muted,
                     ),
                   ],
                 ),
@@ -393,10 +393,10 @@ class HomeScreen extends StatelessWidget {
                     Row(
                       spacing: 7,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.sensors_rounded,
                           size: 17,
-                          color: AppColors.link,
+                          color: context.colors.link,
                         ),
                         caption('STATION'),
                       ],
@@ -417,8 +417,8 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         Dot(
                           station?.isOnline == true
-                              ? AppColors.green
-                              : AppColors.muted,
+                              ? context.colors.green
+                              : context.colors.muted,
                           size: 6,
                         ),
                         tx(
@@ -426,8 +426,8 @@ class HomeScreen extends StatelessWidget {
                           size: 10,
                           mono: true,
                           color: station?.isOnline == true
-                              ? AppColors.green
-                              : AppColors.muted,
+                              ? context.colors.green
+                              : context.colors.muted,
                         ),
                       ],
                     ),
@@ -449,8 +449,8 @@ class HomeScreen extends StatelessWidget {
                 fontSize: 12,
                 vertical: 14,
                 color: const Color(0xff0d1f3c),
-                border: AppColors.blue.withValues(alpha: .25),
-                textColor: AppColors.link,
+                border: context.colors.blue.withValues(alpha: .25),
+                textColor: context.colors.link,
                 onPressed: () => app.navigate(AppTab.map, evacuation: true),
               ),
             ),
@@ -459,9 +459,9 @@ class HomeScreen extends StatelessWidget {
                 'VIEW HISTORY',
                 fontSize: 12,
                 vertical: 14,
-                color: AppColors.surface,
-                border: AppColors.border,
-                textColor: AppColors.secondary,
+                color: context.colors.surface,
+                border: context.colors.border,
+                textColor: context.colors.secondary,
                 onPressed: () => _showTelemetryHistory(context, station),
               ),
             ),
@@ -480,7 +480,7 @@ class HomeScreen extends StatelessWidget {
                   mono: true,
                   weight: 600,
                   spacing: 1,
-                  color: AppColors.faint,
+                  color: context.colors.faint,
                 ),
                 gap,
                 Row(
@@ -529,13 +529,13 @@ class HomeScreen extends StatelessWidget {
                       'Simulated: ${level.water} cm',
                       size: 9,
                       mono: true,
-                      color: AppColors.faint,
+                      color: context.colors.faint,
                     ),
                     tx(
                       'For thesis defense use',
                       size: 9,
                       mono: true,
-                      color: AppColors.faint,
+                      color: context.colors.faint,
                     ),
                   ],
                 ),
@@ -554,7 +554,7 @@ void _showTelemetryHistory(BuildContext context, MonitoringStation? station) {
   }
   showModalBottomSheet<void>(
     context: context,
-    backgroundColor: AppColors.background,
+    backgroundColor: context.colors.background,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (context) => SafeArea(
@@ -578,7 +578,7 @@ void _showTelemetryHistory(BuildContext context, MonitoringStation? station) {
                   : 'Monitoring station readings',
               size: 11,
               mono: true,
-              color: AppColors.muted,
+              color: context.colors.muted,
             ),
             gap,
             ConstrainedBox(

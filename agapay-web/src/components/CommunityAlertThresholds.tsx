@@ -1,10 +1,10 @@
 import type { Station } from "@/data/mockData";
 
 const tiers = [
-  { key: "normal", label: "Normal", color: "#57ff7b", height: 73, guidance: "Safe, routine flow" },
-  { key: "advisory", label: "Advisory", color: "#ffe57b", height: 148, guidance: "Caution, rising waters" },
-  { key: "warning", label: "Warning", color: "#ffb06b", height: 219, guidance: "Standby for evacuation" },
-  { key: "evacuate", label: "Evacuate", color: "#ff5d5d", height: 263, guidance: "Mandatory evacuation" },
+  { key: "normal", label: "Normal", color: "var(--adaptive-success, #57ff7b)", height: 73, guidance: "Safe, routine flow" },
+  { key: "advisory", label: "Advisory", color: "var(--adaptive-warning, #ffe57b)", height: 148, guidance: "Caution, rising waters" },
+  { key: "warning", label: "Warning", color: "var(--adaptive-orange, #ffb06b)", height: 219, guidance: "Standby for evacuation" },
+  { key: "evacuate", label: "Evacuate", color: "var(--adaptive-danger, #ff5d5d)", height: 263, guidance: "Mandatory evacuation" },
 ] as const;
 
 export default function CommunityAlertThresholds({ station }: { station: Station }) {
@@ -21,12 +21,12 @@ export default function CommunityAlertThresholds({ station }: { station: Station
     <section
       aria-labelledby="community-threshold-title"
       className="shrink-0 px-4 pt-[22px] pb-5"
-      style={{ background: "#00112e", border: "1px solid #004aba", borderRadius: 10 }}
+      style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #004aba", borderRadius: 10 }}
     >
-      <h2 id="community-threshold-title" className="text-center text-[13px] font-medium leading-[17px]" style={{ color: "#60a5fa" }}>
+      <h2 id="community-threshold-title" className="text-center text-[13px] font-medium leading-[17px]" style={{ color: "var(--adaptive-blue, #60a5fa)" }}>
         Community Alert Threshold Tiers
       </h2>
-      <p className="mt-1 text-center text-[11px] leading-[14px]" style={{ color: "#94a3b8" }}>
+      <p className="mt-1 text-center text-[11px] leading-[14px]" style={{ color: "var(--adaptive-muted, #94a3b8)" }}>
         {sourceLabel} thresholds · {station.id}
       </p>
 
@@ -53,7 +53,7 @@ export default function CommunityAlertThresholds({ station }: { station: Station
       <img src="/figma/alert-thresholds/divider.svg" alt="" width={221} height={1} className="mt-[14px] h-px w-full" />
       <ul className="mt-2.5 flex flex-col gap-2.5">
         {tiers.map((tier) => (
-          <li key={tier.key} className="flex items-center gap-2.5 text-[11px] leading-4" style={{ color: "#d5dce6" }}>
+          <li key={tier.key} className="flex items-center gap-2.5 text-[11px] leading-4" style={{ color: "var(--adaptive-text, #d5dce6)" }}>
             <img src={`/figma/alert-thresholds/${tier.key}.svg`} alt="" width={6} height={6} className="size-1.5 shrink-0" />
             <span><span className="sr-only">{tier.label}: </span>{tier.guidance}</span>
           </li>

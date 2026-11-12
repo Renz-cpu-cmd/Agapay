@@ -13,9 +13,9 @@ function displayUser(user: Account): User {
 }
 
 const roleColor: Record<User["role"], string> = {
-  admin: "#0ea5e9",
-  officer: "#f5df00",
-  resident: "#00e83a",
+  admin: "var(--adaptive-blue, #0ea5e9)",
+  officer: "var(--adaptive-warning, #f5df00)",
+  resident: "var(--adaptive-success, #00e83a)",
 };
 
 function AddUserModal({ onClose, onSave, user }: { onClose: () => void; onSave: (user: SaveUser) => Promise<void>; user?: User }) {
@@ -36,10 +36,10 @@ function AddUserModal({ onClose, onSave, user }: { onClose: () => void; onSave: 
   }
   return (
     <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="User details" tabIndex={-1} className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.8)" }}>
-      <form onSubmit={submit} className="w-96 p-6 flex flex-col gap-4" style={{ background: "#00112e", border: "1px solid #002967", borderRadius: "4px" }}>
+      <form onSubmit={submit} className="w-96 p-6 flex flex-col gap-4" style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: "4px" }}>
         <div className="flex items-center justify-between">
-          <h3 className="font-ui font-700 text-sm" style={{ color: "#ffffff" }}>{user ? "Edit User" : "Add User"}</h3>
-          <button aria-label="Close dialog" type="button" onClick={onClose} style={{ color: "#8190a4" }}>✕</button>
+          <h3 className="font-ui font-700 text-sm" style={{ color: "var(--adaptive-text, #ffffff)" }}>{user ? "Edit User" : "Add User"}</h3>
+          <button aria-label="Close dialog" type="button" onClick={onClose} style={{ color: "var(--adaptive-muted, #8190a4)" }}>✕</button>
         </div>
         {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
         {[
@@ -49,7 +49,7 @@ function AddUserModal({ onClose, onSave, user }: { onClose: () => void; onSave: 
           { label: "Password", placeholder: user ? "Leave blank to keep password" : "At least 12 characters" },
         ].map(({ label, placeholder }) => (
           <div key={label} className="flex flex-col gap-1.5">
-            <label htmlFor={`user-${label}`} className="font-ui text-xs tracking-wide" style={{ color: "#8190a4" }}>{label}</label>
+            <label htmlFor={`user-${label}`} className="font-ui text-xs tracking-wide" style={{ color: "var(--adaptive-muted, #8190a4)" }}>{label}</label>
             <input
               id={`user-${label}`}
               name={label}
@@ -61,25 +61,25 @@ function AddUserModal({ onClose, onSave, user }: { onClose: () => void; onSave: 
               placeholder={placeholder}
               type={label === "Password" ? "password" : label === "Email" ? "email" : "text"}
               className="px-3 py-2 text-sm outline-none"
-              style={{ background: "#001434", border: "1px solid #002967", borderRadius: "4px", color: "#ffffff" }}
+              style={{ background: "var(--adaptive-surface, #001434)", border: "1px solid #002967", borderRadius: "4px", color: "var(--adaptive-text, #ffffff)" }}
             />
           </div>
         ))}
         <div className="flex flex-col gap-1.5">
-          <label className="font-ui text-xs tracking-wide" style={{ color: "#8190a4" }}>Role</label>
-          <select aria-label="Role" name="role" defaultValue={user?.role ?? "officer"} className="px-3 py-2 text-sm outline-none" style={{ background: "#001434", border: "1px solid #002967", borderRadius: "4px", color: "#ffffff" }}>
+          <label className="font-ui text-xs tracking-wide" style={{ color: "var(--adaptive-muted, #8190a4)" }}>Role</label>
+          <select aria-label="Role" name="role" defaultValue={user?.role ?? "officer"} className="px-3 py-2 text-sm outline-none" style={{ background: "var(--adaptive-surface, #001434)", border: "1px solid #002967", borderRadius: "4px", color: "var(--adaptive-text, #ffffff)" }}>
             <option>officer</option>
             <option>resident</option>
             <option>admin</option>
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="font-ui text-xs tracking-wide" style={{ color: "#8190a4" }}>Barangay</label>
-          <input required aria-label="Barangay" name="barangay" defaultValue={user?.barangay ?? ""} placeholder="San Vicente" className="px-3 py-2 text-sm outline-none" style={{ background: "#001434", border: "1px solid #002967", borderRadius: "4px", color: "#ffffff" }}/>
+          <label className="font-ui text-xs tracking-wide" style={{ color: "var(--adaptive-muted, #8190a4)" }}>Barangay</label>
+          <input required aria-label="Barangay" name="barangay" defaultValue={user?.barangay ?? ""} placeholder="San Vicente" className="px-3 py-2 text-sm outline-none" style={{ background: "var(--adaptive-surface, #001434)", border: "1px solid #002967", borderRadius: "4px", color: "var(--adaptive-text, #ffffff)" }}/>
         </div>
         <div className="flex gap-3 mt-2">
-          <button type="button" onClick={onClose} className="flex-1 py-2 font-ui text-xs font-700" style={{ background: "#001637", color: "#64748b", borderRadius: "4px" }}>CANCEL</button>
-          <button disabled={busy} type="submit" className="flex-1 py-2 font-ui text-xs font-700 hover:opacity-80 disabled:opacity-50" style={{ background: "#0ea5e9", color: "#fff", borderRadius: "4px" }}>{busy ? "SAVING..." : user ? "SAVE CHANGES" : "CREATE USER"}</button>
+          <button type="button" onClick={onClose} className="flex-1 py-2 font-ui text-xs font-700" style={{ background: "var(--adaptive-surface, #001637)", color: "var(--adaptive-secondary, #64748b)", borderRadius: "4px" }}>CANCEL</button>
+          <button disabled={busy} type="submit" className="flex-1 py-2 font-ui text-xs font-700 hover:brightness-90 disabled:opacity-50" style={{ background: "var(--adaptive-blue, #0ea5e9)", color: "var(--adaptive-action-foreground, #000)", borderRadius: "4px" }}>{busy ? "SAVING..." : user ? "SAVE CHANGES" : "CREATE USER"}</button>
         </div>
       </form>
     </div>
@@ -129,21 +129,21 @@ export default function Users() {
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Search users" placeholder="Search users..."
             className="px-3 py-1.5 text-xs outline-none w-52"
-            style={{ background: "#00112e", border: "1px solid #002967", borderRadius: "4px", color: "#ffffff" }}
+            style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: "4px", color: "var(--adaptive-text, #ffffff)" }}
           />
           <select
             aria-label="User role filter" value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             className="px-3 py-1.5 text-xs outline-none"
-            style={{ background: "#00112e", border: "1px solid #002967", borderRadius: "4px", color: "#64748b" }}
+            style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: "4px", color: "var(--adaptive-secondary, #64748b)" }}
           >
             {["All","admin","officer","resident"].map(o => <option key={o}>{o}</option>)}
           </select>
         </div>
         <button
           onClick={() => { setEditing(undefined); setShowAdd(true); }}
-          className="flex items-center gap-2 font-ui text-xs font-700 px-4 py-1.5 transition-opacity hover:opacity-80"
-          style={{ background: "#0ea5e9", color: "#fff", borderRadius: "4px" }}
+          className="flex items-center gap-2 font-ui text-xs font-700 px-4 py-1.5 transition-[filter] hover:brightness-90"
+          style={{ background: "var(--adaptive-blue, #0ea5e9)", color: "var(--adaptive-action-foreground, #000)", borderRadius: "4px" }}
         >
           + Add User
         </button>
@@ -152,26 +152,26 @@ export default function Users() {
       {/* Summary by role */}
       <div className="card-grid grid-cols-3">
         {(["admin","officer","resident"] as const).map((role) => (
-          <div key={role} className="p-3 flex items-center gap-3" style={{ background: "#00112e", border: "1px solid #002967", borderRadius: "4px" }}>
+          <div key={role} className="p-3 flex items-center gap-3" style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: "4px" }}>
             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-ui font-bold text-xs"
-              style={{ background: `${roleColor[role]}18`, color: roleColor[role] }}>
+              style={{ background: `color-mix(in srgb, ${roleColor[role]} 9%, transparent)`, color: roleColor[role] }}>
               {users.filter(u=>u.role===role).length}
             </div>
             <div>
               <p className="font-ui font-700 text-xs capitalize" style={{ color: roleColor[role] }}>{role}s</p>
-              <p className="text-xs" style={{ color: "#64748b" }}>{users.filter(u=>u.role===role && u.status==="Active").length} active</p>
+              <p className="text-xs" style={{ color: "var(--adaptive-secondary, #64748b)" }}>{users.filter(u=>u.role===role && u.status==="Active").length} active</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Table */}
-      <div style={{ background: "#00112e", border: "1px solid #002967", borderRadius: "4px", overflow: "hidden" }}>
+      <div style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: "4px", overflow: "hidden" }}>
         <table className="w-full">
           <thead>
             <tr style={{ borderBottom: "1px solid #002967" }}>
               {["Name","Email","Role","Barangay","Joined","Status","Action"].map(h => (
-                <th key={h} className="text-left px-4 py-2.5 font-ui font-700 text-xs tracking-wide" style={{ color: "#8190a4", letterSpacing: "0.1em" }}>
+                <th key={h} className="text-left px-4 py-2.5 font-ui font-700 text-xs tracking-wide" style={{ color: "var(--adaptive-muted, #8190a4)", letterSpacing: "0.1em" }}>
                   {h}
                 </th>
               ))}
@@ -183,34 +183,34 @@ export default function Users() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2.5">
                     <FigmaIcon name="account" size={24}/>
-                    <span className="font-ui text-xs font-600" style={{ color: "#ffffff" }}>{u.name}</span>
+                    <span className="font-ui text-xs font-600" style={{ color: "var(--adaptive-text, #ffffff)" }}>{u.name}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 font-data text-xs" style={{ color: "#8190a4" }}>{u.email}</td>
+                <td className="px-4 py-3 font-data text-xs" style={{ color: "var(--adaptive-muted, #8190a4)" }}>{u.email}</td>
                 <td className="px-4 py-3">
                   <span className="font-ui font-700 text-xs px-2 py-0.5 rounded-sm capitalize"
-                    style={{ background: `${roleColor[u.role]}18`, color: roleColor[u.role], border: `1px solid ${roleColor[u.role]}35` }}>
+                    style={{ background: `color-mix(in srgb, ${roleColor[u.role]} 9%, transparent)`, color: roleColor[u.role], border: `1px solid color-mix(in srgb, ${roleColor[u.role]} 21%, transparent)` }}>
                     {u.role}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs" style={{ color: "#64748b" }}>{u.barangay}</td>
-                <td className="px-4 py-3 font-data text-xs" style={{ color: "#8190a4" }}>{u.joinedAt}</td>
+                <td className="px-4 py-3 text-xs" style={{ color: "var(--adaptive-secondary, #64748b)" }}>{u.barangay}</td>
+                <td className="px-4 py-3 font-data text-xs" style={{ color: "var(--adaptive-muted, #8190a4)" }}>{u.joinedAt}</td>
                 <td className="px-4 py-3">
-                  <span className="design-badge" style={{ padding:"3px 10px", color: u.status === "Active" ? "#00e83a" : "#6b7280" }}>
+                  <span className="design-badge" style={{ padding:"3px 10px", color: u.status === "Active" ? "var(--adaptive-success, #00e83a)" : "var(--adaptive-muted, #6b7280)" }}>
                     {u.status}
                   </span>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1.5">
-                    <button onClick={() => { setEditing(u); setShowAdd(true); }} className="font-ui text-xs px-2 py-0.5 transition-opacity hover:opacity-80" style={{ background: "#001637", color: "#64748b", borderRadius: "3px" }}>Edit</button>
-                    <button disabled={updating !== null || u.id === viewer.id} onClick={() => toggleUser(u)} className="font-ui text-xs px-2 py-0.5 transition-opacity hover:opacity-80 disabled:opacity-30" style={{ background: "rgba(239,68,68,0.1)", color: "#ff0000", borderRadius: "3px" }}>
+                    <button onClick={() => { setEditing(u); setShowAdd(true); }} className="font-ui text-xs px-2 py-0.5 transition-opacity hover:opacity-80" style={{ background: "var(--adaptive-surface, #001637)", color: "var(--adaptive-secondary, #64748b)", borderRadius: "3px" }}>Edit</button>
+                    <button disabled={updating !== null || u.id === viewer.id} onClick={() => toggleUser(u)} className="font-ui text-xs px-2 py-0.5 transition-opacity hover:opacity-80 disabled:opacity-30" style={{ background: "rgba(239,68,68,0.1)", color: "var(--adaptive-danger, #ff0000)", borderRadius: "3px" }}>
                       {u.status === "Active" ? "Deactivate" : "Activate"}
                     </button>
                   </div>
                 </td>
               </tr>
             ))}
-          {!loading && !error && filtered.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-xs" style={{ color: "#64748b" }}>No users found.</td></tr>}
+          {!loading && !error && filtered.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-xs" style={{ color: "var(--adaptive-secondary, #64748b)" }}>No users found.</td></tr>}
           </tbody>
         </table>
       </div>

@@ -8,11 +8,11 @@ import { accountRequest } from "@/lib/accounts";
 import { sosTime, type SosRequest, type SosStatus } from "@/lib/sos";
 import GoogleSosLocationMap from "./GoogleSosLocationMap";
 
-const statusColor: Record<SosStatus, string> = { ACTIVE: "#00ff24", ACKNOWLEDGED: "#f5df00", RESOLVED: "#00e83a" };
-const panel = { background: "#00112e", border: "1px solid #002967", borderRadius: 4 };
-const button = "px-4 py-2 font-ui text-xs font-bold rounded transition-opacity hover:opacity-80 disabled:opacity-50";
+const statusColor: Record<SosStatus, string> = { ACTIVE: "var(--adaptive-success, #00ff24)", ACKNOWLEDGED: "var(--adaptive-warning, #f5df00)", RESOLVED: "var(--adaptive-success, #00e83a)" };
+const panel = { background: "var(--adaptive-surface, #00112e)", border: "1px solid #002967", borderRadius: 4 };
+const button = "px-4 py-2 font-ui text-xs font-bold rounded transition-[filter] hover:brightness-90 disabled:opacity-50";
 function Status({ status }: { status: SosStatus }) {
-  return <span className="design-badge" style={{ color: statusColor[status], background: `${statusColor[status]}18` }}>{status}</span>;
+  return <span className="design-badge" style={{ color: statusColor[status], background: `color-mix(in srgb, ${statusColor[status]} 9%, transparent)` }}>{status}</span>;
 }
 
 function LocationMap({ item, initialShow = false }: { item: SosRequest; initialShow?: boolean }) {
@@ -26,7 +26,7 @@ function LocationMap({ item, initialShow = false }: { item: SosRequest; initialS
     <p className="font-data text-xs text-slate-400">{lat.toFixed(6)}, {lon.toFixed(6)} · {item.location_source === "gps" ? `Device location · ±${Math.round(item.accuracy_m ?? 0)} m` : "Manually entered"}</p>
     {item.location_recorded_at && <p className="text-xs text-slate-500">Last device fix {sosTime(item.location_recorded_at)} PHT</p>}
     {live && <p className="text-xs font-bold text-green-400">● FOREGROUND LOCATION SHARING · Map refreshes about every 5 seconds</p>}
-    {show ? <GoogleSosLocationMap key={`${lat}-${lon}`} apiKey={googleApiKey} mapId={googleMapId} latitude={lat} longitude={lon} label={`Location of practice SOS ${item.id}`}/> : <button className={button} style={{ background: "#001637", color: "#38bdf8" }} onClick={() => setShow(true)}>SHOW LOCATION ON MAP</button>}
+    {show ? <GoogleSosLocationMap key={`${lat}-${lon}`} apiKey={googleApiKey} mapId={googleMapId} latitude={lat} longitude={lon} label={`Location of practice SOS ${item.id}`}/> : <button className={button} style={{ background: "var(--adaptive-surface, #001637)", color: "var(--adaptive-blue, #38bdf8)" }} onClick={() => setShow(true)}>SHOW LOCATION ON MAP</button>}
     <a className="text-xs text-sky-400 underline" target="_blank" rel="noopener noreferrer" href={`https://www.google.com/maps/search/?api=1&query=${lat},${lon}`}>Open in Google Maps</a>
     <p className="text-xs text-slate-500">Online map · Coordinates are shared with Google Maps when opened. GPS updates arrive only while the resident keeps foreground sharing active.</p>
   </div>;
@@ -83,7 +83,7 @@ function SOSDetailModal({ initial, onClose, openMap }: { initial: SosRequest; on
         <div className="grid grid-cols-2 gap-3">
           {[["Resident", item.resident_name], ["Phone", item.phone], ["Barangay", item.barangay], ["Location", item.location], ["Received (PHT)", sosTime(item.created_at)]].map(([k,v]) => <div key={k} className="min-w-0"><p className="text-xs text-slate-500">{k}</p><p className="font-ui text-xs font-bold text-slate-300 break-words whitespace-pre-wrap">{v}</p></div>)}
         </div>
-        <p className="p-3 text-xs text-slate-400 whitespace-pre-wrap break-words" style={{ ...panel, background: "#001434" }}>{item.message || "No additional message."}</p>
+        <p className="p-3 text-xs text-slate-400 whitespace-pre-wrap break-words" style={{ ...panel, background: "var(--adaptive-surface, #001434)" }}>{item.message || "No additional message."}</p>
         <div className="flex justify-between items-center"><span className="text-xs text-slate-500">Status</span><Status status={item.status}/></div>
         <div className="text-xs text-slate-400 flex flex-col gap-2 border-l-2 border-slate-700 pl-3">
           <p>Received · {sosTime(item.created_at)} PHT</p>
@@ -95,9 +95,9 @@ function SOSDetailModal({ initial, onClose, openMap }: { initial: SosRequest; on
         {item.status === "ACKNOWLEDGED" && <label className="text-xs text-slate-400">Resolution note (optional)<textarea maxLength={500} value={note} disabled={busy} onChange={(e) => setNote(e.target.value)} className="mt-2 w-full rounded border border-slate-700 bg-slate-950 p-2" rows={2}/></label>}
         {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
         <div className="flex gap-3">
-          {item.status === "ACTIVE" && <button disabled={busy} onClick={() => void change("ACKNOWLEDGED")} className={`${button} flex-1`} style={{ background: "#f5df00", color: "#000" }}>{busy ? "SAVING…" : "ACKNOWLEDGE"}</button>}
-          {item.status === "ACKNOWLEDGED" && <button disabled={busy} onClick={() => void change("RESOLVED")} className={`${button} flex-1`} style={{ background: "#00e83a", color: "#000" }}>{busy ? "SAVING…" : "MARK RESOLVED"}</button>}
-          <button onClick={onClose} className={button} style={{ background: "#001637", color: "#94a3b8" }}>CLOSE</button>
+          {item.status === "ACTIVE" && <button disabled={busy} onClick={() => void change("ACKNOWLEDGED")} className={`${button} flex-1`} style={{ background: "var(--adaptive-warning, #f5df00)", color: "var(--adaptive-action-foreground, #000)" }}>{busy ? "SAVING…" : "ACKNOWLEDGE"}</button>}
+          {item.status === "ACKNOWLEDGED" && <button disabled={busy} onClick={() => void change("RESOLVED")} className={`${button} flex-1`} style={{ background: "var(--adaptive-success, #00e83a)", color: "var(--adaptive-action-foreground, #000)" }}>{busy ? "SAVING…" : "MARK RESOLVED"}</button>}
+          <button onClick={onClose} className={button} style={{ background: "var(--adaptive-surface, #001637)", color: "var(--adaptive-muted, #94a3b8)" }}>CLOSE</button>
         </div>
       </div>
     </div>

@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   center: Alignment.topCenter,
                   radius: .8,
                   colors: [
-                    AppColors.blue.withValues(alpha: .2),
+                    context.colors.blue.withValues(alpha: .2),
                     Colors.transparent,
                   ],
                   stops: const [0, .7],
@@ -101,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             tx(
                               'EARLY-WARNING SYSTEM',
                               size: 11,
-                              color: AppColors.muted,
+                              color: context.colors.muted,
                               spacing: 1.1,
                             ),
                           ],
@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 4),
                           tx(
                             'Stay informed. Stay safe.',
-                            color: AppColors.secondary,
+                            color: context.colors.secondary,
                             height: 20 / 14,
                           ),
                         ],
@@ -152,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: tx(
                                 'Forgot password?',
                                 size: 12,
-                                color: AppColors.link,
+                                color: context.colors.link,
                                 height: 16 / 12,
                               ),
                             ),
@@ -180,7 +180,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           const Expanded(child: Divider(height: 1)),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: tx('OR', size: 11, color: AppColors.muted),
+                            child: tx(
+                              'OR',
+                              size: 11,
+                              color: context.colors.muted,
+                            ),
                           ),
                           const Expanded(child: Divider(height: 1)),
                         ],
@@ -190,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           tx(
                             "Don't have an account? ",
-                            color: AppColors.secondary,
+                            color: context.colors.secondary,
                           ),
                           InkWell(
                             onTap: () => Navigator.pushNamed(
@@ -199,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: tx(
                               'Register',
-                              color: AppColors.link,
+                              color: context.colors.link,
                               weight: 600,
                             ),
                           ),
@@ -215,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'AGAPAY v1.0.0 · URDANETA CITY, PANGASINAN',
                   size: 10,
                   mono: true,
-                  color: AppColors.faint,
+                  color: context.colors.faint,
                   align: TextAlign.center,
                 ),
               ),

@@ -11,6 +11,7 @@ import 'sos_controller.dart';
 import 'forecast_controller.dart';
 import 'monitoring_controller.dart';
 import 'community_alert_controller.dart';
+import 'theme_controller.dart';
 
 enum AppTab { home, map, sos, alerts, profile }
 
@@ -21,7 +22,10 @@ class AppController extends ChangeNotifier {
     SosDraftStore? sosStorage,
     PushTokenProvider? pushTokenProvider,
     PushMessages? pushMessages,
+    ThemePreferenceStore? themeStorage,
   }) : auth = authApi ?? AuthApi() {
+    theme = ThemeController(store: themeStorage)..addListener(_themeChanged);
+    unawaited(theme.restore());
     notificationRegistration = NotificationRegistrationController(
       auth,
       provider: pushTokenProvider ?? const DisabledPushTokenProvider(),
@@ -60,6 +64,8 @@ class AppController extends ChangeNotifier {
     };
   }
   final AuthApi auth;
+  late final ThemeController theme;
+  void _themeChanged() => notifyListeners();
   VoidCallback? onPushOpened;
   bool _disposed = false;
   final _pushSubscriptions = <StreamSubscription<Map<String, Object?>>>[];
@@ -168,6 +174,8 @@ class AppController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    theme.removeListener(_themeChanged);
+    theme.dispose();
     onPushOpened = null;
     for (final subscription in _pushSubscriptions) {
       unawaited(subscription.cancel());

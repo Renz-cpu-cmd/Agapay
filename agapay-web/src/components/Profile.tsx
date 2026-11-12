@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useAccount } from "@/context/AccountContext";
+import { ThemeSelector } from "@/context/ThemeContext";
 import { accountRequest,type Account } from "@/lib/accounts";
 import { FigmaIcon,Modal,LogoutDialog,InformationDialog } from "./DesignUI";
 function EditProfile({onClose,onSaved}:{onClose:()=>void;onSaved:()=>void}) {
@@ -29,6 +30,7 @@ export default function Profile() {
       <div className="account-info"><div><FigmaIcon name="email" size={35}/><span>Email: {user.email}</span></div><div><FigmaIcon name="barangay" size={32}/><span>Barangay: {user.barangay}</span></div><div><FigmaIcon name="phone" size={33}/><span>Contact no. {user.phone}</span></div><div><FigmaIcon name="calendar" size={32}/><span>Member since: {new Date(user.created_at).toLocaleDateString("en-PH",{month:"long",year:"numeric",timeZone:"Asia/Manila"})}</span></div></div>
     </section>
     <section className="design-panel settings-group" aria-label="Preferences">
+      <div className="settings-row"><FigmaIcon name="settings" size={32}/><div className="row-label"><strong>Appearance</strong><small>The map follows your theme. Saved in this browser.</small></div><ThemeSelector/></div>
       <div className="settings-row"><FigmaIcon name="notifications" size={34}/><div className="row-label"><strong>Flood Alerts</strong><small>Push notifications are not connected yet</small></div><button className="settings-switch" role="switch" aria-label="Flood alert push notifications" aria-checked={false} disabled title="Push delivery is not configured"><span/></button></div>
       <div className="settings-row"><FigmaIcon name="location" size={32}/><div className="row-label"><strong>Location Services</strong><small>Resident SOS location is managed in the mobile app</small></div><button className="settings-switch" role="switch" aria-label="Resident location services" aria-checked={false} disabled title="Use the resident mobile app to grant location access"><span/></button></div>
       <button className="settings-row" onClick={()=>setInfo("language")}><FigmaIcon name="language" size={33}/><div className="row-label"><strong>Language</strong><small>Display Language for content</small></div><span className="row-value">English &gt;</span></button>

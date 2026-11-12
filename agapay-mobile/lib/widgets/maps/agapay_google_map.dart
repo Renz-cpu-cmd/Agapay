@@ -126,6 +126,7 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
   String? _error;
   bool _pageLoaded = false;
   bool _ready = false;
+  bool _dark = false;
 
   @override
   void initState() {
@@ -141,7 +142,7 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
 
   Future<void> _configure(WebViewController controller) async {
     await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
-    await controller.setBackgroundColor(const Color(0xff00112e));
+    await controller.setBackgroundColor(AppPalette(_dark).surface);
     await controller.addJavaScriptChannel(
       'AgapayBridge',
       onMessageReceived: _onJavaScriptMessage,
@@ -249,6 +250,7 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
     if (controller == null || !_pageLoaded || key == null) return;
     final config = {
       'apiKey': key,
+      'theme': _dark ? 'dark' : 'light',
       'center': widget.center.toJson(),
       'zoom': widget.zoom,
       'tilt': widget.tilt,
@@ -281,6 +283,17 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
   });
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final next = context.colors.isDark;
+    if (next == _dark) return;
+    _dark = next;
+    _ready = false;
+    _controller?.setBackgroundColor(context.colors.surface);
+    _render();
+  }
+
+  @override
   void didUpdateWidget(covariant AgapayGoogleMap oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_signature(widget) == _signature(oldWidget)) return;
@@ -293,13 +306,13 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
     final controller = _controller;
     if (controller == null) {
       return ColoredBox(
-        color: const Color(0xff00112e),
+        color: context.colors.surface,
         child: Center(
           child: Semantics(
             label: 'Google map preview',
-            child: const Icon(
+            child: Icon(
               Icons.map_outlined,
-              color: AppColors.secondary,
+              color: context.colors.secondary,
               size: 34,
             ),
           ),
@@ -309,23 +322,23 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
     final error = _error;
     if (error != null) {
       return ColoredBox(
-        color: const Color(0xff00112e),
+        color: context.colors.surface,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.map_outlined,
-                  color: AppColors.secondary,
+                  color: context.colors.secondary,
                   size: 34,
                 ),
                 const SizedBox(height: 10),
                 tx(
                   error,
                   size: 12,
-                  color: AppColors.secondary,
+                  color: context.colors.secondary,
                   align: TextAlign.center,
                 ),
                 const SizedBox(height: 10),
@@ -352,9 +365,9 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
           },
         ),
         if (!_ready)
-          const IgnorePointer(
+          IgnorePointer(
             child: ColoredBox(
-              color: Color(0xb800112e),
+              color: context.colors.surface.withValues(alpha: .72),
               child: Center(child: CircularProgressIndicator()),
             ),
           ),

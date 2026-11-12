@@ -20,7 +20,7 @@ class AuthField extends StatelessWidget {
       tx(
         label.toUpperCase(),
         size: 11,
-        color: AppColors.label,
+        color: context.colors.label,
         weight: 600,
         display: true,
         spacing: 1.1,
@@ -34,12 +34,12 @@ class AuthField extends StatelessWidget {
         autocorrect: false,
         keyboardType: keyboardType,
         textInputAction: TextInputAction.next,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 14,
           fontWeight: FontWeight.w400,
           height: 20 / 14,
-          color: AppColors.text,
+          color: context.colors.text,
         ),
         decoration: InputDecoration(
           constraints: const BoxConstraints(minHeight: 46),
@@ -74,13 +74,13 @@ class BarangayPicker extends StatelessWidget {
     builder: (context, constraints) {
       return MenuAnchor(
         style: MenuStyle(
-          backgroundColor: const WidgetStatePropertyAll(Color(0xff111d33)),
+          backgroundColor: WidgetStatePropertyAll(context.colors.surfaceRaised),
           surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
           padding: const WidgetStatePropertyAll(EdgeInsets.zero),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: AppColors.border),
+              side: BorderSide(color: context.colors.border),
             ),
           ),
           minimumSize: WidgetStatePropertyAll(Size(constraints.maxWidth, 0)),
@@ -119,15 +119,15 @@ class BarangayPicker extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.surface,
-                border: Border.all(color: AppColors.border),
+                color: context.colors.surface,
+                border: Border.all(color: context.colors.border),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   tx(value, height: 20 / 14),
-                  const SvgIcon('down', size: 14, color: AppColors.text),
+                  SvgIcon('down', size: 14, color: context.colors.text),
                 ],
               ),
             ),

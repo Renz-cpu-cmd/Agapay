@@ -17,6 +17,37 @@ abstract final class AppColors {
 }
 
 abstract final class AppTheme {
+  static final light = dark.copyWith(
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: const Color(0xfff3f6fb),
+    colorScheme: const ColorScheme.light(
+      primary: Color(0xff2462b7),
+      surface: Colors.white,
+      onSurface: Color(0xff172b49),
+    ),
+    textTheme: dark.textTheme.apply(
+      bodyColor: const Color(0xff172b49),
+      displayColor: const Color(0xff172b49),
+    ),
+    dividerColor: const Color(0xffcbd8e8),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xffcbd8e8),
+      thickness: 1,
+      space: 1,
+    ),
+    inputDecorationTheme: dark.inputDecorationTheme.copyWith(
+      fillColor: Colors.white,
+      hintStyle: const TextStyle(color: Color(0xff63758e), fontSize: 14),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xffcbd8e8)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xff2462b7), width: 1.5),
+      ),
+    ),
+  );
   static final dark = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
@@ -55,4 +86,73 @@ abstract final class AppTheme {
       ),
     ),
   );
+}
+
+/// Shared palette used by every screen; the original constants remain dark tokens.
+class AppPalette {
+  const AppPalette(this.isDark);
+  final bool isDark;
+  Color get background =>
+      isDark ? AppColors.background : const Color(0xfff3f6fb);
+  Color get surface => isDark ? AppColors.surface : Colors.white;
+  Color get surfaceRaised =>
+      isDark ? AppColors.surfaceRaised : const Color(0xfff8faff);
+  Color get border => isDark ? AppColors.border : const Color(0xffcbd8e8);
+  Color get muted => isDark ? AppColors.muted : const Color(0xff526581);
+  Color get secondary => isDark ? AppColors.secondary : const Color(0xff405775);
+  Color get label => isDark ? AppColors.label : const Color(0xff405775);
+  Color get text => isDark ? AppColors.text : const Color(0xff172b49);
+  Color get faint => isDark ? AppColors.faint : const Color(0xff63758e);
+  Color get blue => AppColors.blue;
+  Color get link => isDark ? AppColors.link : const Color(0xff2462b7);
+  Color get green => isDark ? AppColors.green : const Color(0xff15803d);
+  Color get red => AppColors.red;
+
+  Color resolve(Color color) {
+    if (isDark) return color;
+    const dark = [
+      AppColors.background,
+      AppColors.surface,
+      AppColors.surfaceRaised,
+      AppColors.border,
+      AppColors.muted,
+      AppColors.secondary,
+      AppColors.label,
+      AppColors.text,
+      AppColors.faint,
+      AppColors.link,
+      AppColors.green,
+    ];
+    final light = [
+      background,
+      surface,
+      surfaceRaised,
+      border,
+      muted,
+      secondary,
+      label,
+      text,
+      faint,
+      link,
+      green,
+    ];
+    final index = dark.indexOf(color);
+    if (index >= 0) return light[index];
+    if (color == Colors.white) return text;
+    if (light.contains(color)) return color;
+    final hsv = HSVColor.fromColor(color);
+    if (hsv.value < .3 && hsv.saturation > .3 && color.a > .1) {
+      return hsv.withSaturation(.08).withValue(.99).withAlpha(1).toColor();
+    }
+    if (hsv.value < .25 && color.a > .8) return surfaceRaised;
+    if (hsv.saturation > .3 && hsv.value > .65) {
+      return hsv.withValue(.58).toColor();
+    }
+    return color;
+  }
+}
+
+extension ThemePalette on BuildContext {
+  AppPalette get colors =>
+      AppPalette(Theme.of(this).brightness == Brightness.dark);
 }

@@ -23,9 +23,9 @@ class CommunityEpisodeSummary extends StatelessWidget {
           tx(a.status.name.toUpperCase(), size: 11, mono: true),
           gap,
           tx(a.stationName, display: true, weight: 600, size: 18),
-          tx(a.stationId, size: 11, color: AppColors.muted),
+          tx(a.stationId, size: 11, color: context.colors.muted),
           if (a.area.isNotEmpty)
-            tx(a.area, size: 12, color: AppColors.secondary),
+            tx(a.area, size: 12, color: context.colors.secondary),
           gap,
           tx(
             'Trigger depth: ${a.triggerDepthCm.toStringAsFixed(1)} cm',
@@ -43,7 +43,7 @@ class CommunityEpisodeSummary extends StatelessWidget {
           if (a.resolvedAt != null)
             tx('Resolved: ${communityAlertTime(a.resolvedAt!)}', size: 11),
           gap,
-          tx('AGAPAY sensor alert', size: 11, color: AppColors.secondary),
+          tx('AGAPAY sensor alert', size: 11, color: context.colors.secondary),
         ],
       ),
     );
@@ -67,7 +67,7 @@ class CommunityPagination extends StatelessWidget {
       tx(
         'Page ${offset ~/ CommunityAlertController.pageSize + 1} · $total records',
         size: 11,
-        color: AppColors.muted,
+        color: context.colors.muted,
       ),
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

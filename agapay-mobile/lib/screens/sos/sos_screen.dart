@@ -309,10 +309,10 @@ class _SosScreenState extends State<SosScreen>
     ),
   );
   Color _statusColor(String value) => value == 'RESOLVED'
-      ? AppColors.green
+      ? context.colors.green
       : value == 'ACKNOWLEDGED'
       ? const Color(0xfffbbf24)
-      : AppColors.red;
+      : context.colors.red;
 
   Future<void> _openGoogleLocation(double latitude, double longitude) async {
     final uri = Uri.https('www.google.com', '/maps/search/', {
@@ -339,7 +339,7 @@ class _SosScreenState extends State<SosScreen>
             ? 'Waiting for the server…'
             : 'Last synced ${sosTime(sos.syncedAt!)} · Local time',
         size: 10,
-        color: AppColors.muted,
+        color: context.colors.muted,
       ),
       const SizedBox(height: 12),
       if (sos.items.isEmpty)
@@ -350,7 +350,7 @@ class _SosScreenState extends State<SosScreen>
               ? 'History unavailable. Retry when connected.'
               : 'No saved practice requests yet.',
           size: 12,
-          color: AppColors.secondary,
+          color: context.colors.secondary,
         ),
       for (final item in sos.items)
         Padding(
@@ -375,7 +375,7 @@ class _SosScreenState extends State<SosScreen>
                         'PRACTICE #${item.id}',
                         size: 12,
                         mono: true,
-                        color: AppColors.secondary,
+                        color: context.colors.secondary,
                       ),
                       tx(
                         item.status,
@@ -386,7 +386,11 @@ class _SosScreenState extends State<SosScreen>
                     ],
                   ),
                   tx(item.location, size: 13, weight: 600),
-                  tx(sosTime(item.createdAt), size: 11, color: AppColors.muted),
+                  tx(
+                    sosTime(item.createdAt),
+                    size: 11,
+                    color: context.colors.muted,
+                  ),
                 ],
               ),
             ),
@@ -429,8 +433,12 @@ class _SosScreenState extends State<SosScreen>
                       width: 2,
                     ),
                   ),
-                  child: const Center(
-                    child: SvgIcon('check', size: 40, color: AppColors.green),
+                  child: Center(
+                    child: SvgIcon(
+                      'check',
+                      size: 40,
+                      color: context.colors.green,
+                    ),
                   ),
                 ),
               ),
@@ -452,7 +460,7 @@ class _SosScreenState extends State<SosScreen>
                     ? 'A staff member has acknowledged your practice request.'
                     : 'Your practice request has been marked resolved.',
                 align: TextAlign.center,
-                color: AppColors.secondary,
+                color: context.colors.secondary,
               ),
               gap,
               Panel(
@@ -536,13 +544,13 @@ class _SosScreenState extends State<SosScreen>
                         '● LIVE LOCATION SHARING',
                         size: 12,
                         weight: 700,
-                        color: AppColors.green,
+                        color: context.colors.green,
                       ),
                       const SizedBox(height: 4),
                       tx(
                         'Your latest device position is sent to AGAPAY while this app is open. Sharing stops when you stop it, close the app, or staff resolve the SOS.',
                         size: 11,
-                        color: AppColors.secondary,
+                        color: context.colors.secondary,
                         height: 1.5,
                       ),
                       const SizedBox(height: 8),
@@ -565,7 +573,7 @@ class _SosScreenState extends State<SosScreen>
                     tx(
                       'Received · ${sosTime(item.createdAt)}',
                       size: 12,
-                      color: AppColors.secondary,
+                      color: context.colors.secondary,
                     ),
                     if (item.acknowledgedAt != null)
                       tx(
@@ -577,13 +585,13 @@ class _SosScreenState extends State<SosScreen>
                       tx(
                         'Resolved · ${item.resolvedBy} · ${sosTime(item.resolvedAt!)}',
                         size: 12,
-                        color: AppColors.green,
+                        color: context.colors.green,
                       ),
                     if (item.resolutionNote?.isNotEmpty ?? false)
                       tx(
                         'Resolution: ${item.resolutionNote}',
                         size: 12,
-                        color: AppColors.secondary,
+                        color: context.colors.secondary,
                       ),
                   ],
                 ),
@@ -595,7 +603,7 @@ class _SosScreenState extends State<SosScreen>
                     ? 'Status has not refreshed yet.'
                     : 'Last synced ${sosTime(sos.syncedAt!)} · Local time',
                 size: 10,
-                color: AppColors.muted,
+                color: context.colors.muted,
               ),
               gap,
               ActionButton('BACK TO SOS HISTORY', onPressed: _back),
@@ -629,13 +637,13 @@ class _SosScreenState extends State<SosScreen>
                       tx(
                         pending['message'] as String? ?? '',
                         size: 12,
-                        color: AppColors.secondary,
+                        color: context.colors.secondary,
                       ),
                       tx(
                         'Reference: ${pending['request_id']}',
                         size: 10,
                         mono: true,
-                        color: AppColors.muted,
+                        color: context.colors.muted,
                       ),
                     ],
                   ),
@@ -657,9 +665,9 @@ class _SosScreenState extends State<SosScreen>
                 const SizedBox(height: 8),
                 ActionButton(
                   _locating ? 'GETTING LOCATION…' : 'USE MY DEVICE LOCATION',
-                  color: AppColors.surface,
-                  border: AppColors.border,
-                  textColor: AppColors.link,
+                  color: context.colors.surface,
+                  border: context.colors.border,
+                  textColor: context.colors.link,
                   onPressed: locked || _locating || !app.location
                       ? null
                       : _capture,
@@ -670,7 +678,7 @@ class _SosScreenState extends State<SosScreen>
                       ? 'Location sharing is off in your profile. You can enter a location manually.'
                       : 'Optional. Location is requested only when you tap above and included only after you confirm sending.',
                   size: 11,
-                  color: AppColors.muted,
+                  color: context.colors.muted,
                 ),
                 gap,
                 Row(
@@ -715,7 +723,7 @@ class _SosScreenState extends State<SosScreen>
                       ? 'Manual location · No GPS accuracy claimed'
                       : 'Device location · ±${_position!.accuracy.round()} m · Captured ${sosTime(_position!.timestamp)}',
                   size: 11,
-                  color: AppColors.muted,
+                  color: context.colors.muted,
                 ),
                 if (_position != null && app.location) ...[
                   const SizedBox(height: 8),
@@ -733,7 +741,7 @@ class _SosScreenState extends State<SosScreen>
                     subtitle: tx(
                       'After you send, AGAPAY receives a new device fix when you move. Sharing runs only while the app is open and stops when the request is resolved.',
                       size: 10,
-                      color: AppColors.muted,
+                      color: context.colors.muted,
                       height: 1.45,
                     ),
                   ),
@@ -763,7 +771,7 @@ class _SosScreenState extends State<SosScreen>
                     : 'RETRY SAME REQUEST',
                 fontSize: 18,
                 weight: 800,
-                color: AppColors.red,
+                color: context.colors.red,
                 glow: true,
                 onPressed: sos.sending || !sos.ready || _locating
                     ? null
@@ -772,16 +780,16 @@ class _SosScreenState extends State<SosScreen>
               gap,
               ActionButton(
                 pending == null ? 'CANCEL' : 'BACK TO HISTORY',
-                color: AppColors.surface,
-                border: AppColors.border,
-                textColor: AppColors.secondary,
+                color: context.colors.surface,
+                border: context.colors.border,
+                textColor: context.colors.secondary,
                 onPressed: sos.sending ? null : _back,
               ),
               gap,
               tx(
                 'Success appears only after the server accepts the request. Live sharing, when selected, runs only in the foreground.',
                 size: 11,
-                color: AppColors.muted,
+                color: context.colors.muted,
                 align: TextAlign.center,
               ),
             ],
@@ -823,7 +831,7 @@ class _SosScreenState extends State<SosScreen>
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: AppColors.red,
+                                          color: context.colors.red,
                                           width: delay == 0 ? 2 : 1,
                                         ),
                                       ),
@@ -876,6 +884,7 @@ class _SosScreenState extends State<SosScreen>
                                     display: true,
                                     weight: 900,
                                     color: Colors.white,
+                                    adaptive: false,
                                     spacing: 1.5,
                                   ),
                                 ],
@@ -898,7 +907,7 @@ class _SosScreenState extends State<SosScreen>
                       const SizedBox(height: 8),
                       tx(
                         'Review your location and message, then send a practice request to the AGAPAY command center.',
-                        color: AppColors.secondary,
+                        color: context.colors.secondary,
                         height: 1.625,
                         align: TextAlign.center,
                       ),
@@ -918,7 +927,7 @@ class _SosScreenState extends State<SosScreen>
                           tx(
                             'Your request reference is saved. Check history or retry the same request.',
                             size: 12,
-                            color: AppColors.secondary,
+                            color: context.colors.secondary,
                           ),
                           ActionButton(
                             'REVIEW SAVED REQUEST',
@@ -959,11 +968,13 @@ class _SosScreenState extends State<SosScreen>
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: AppColors.blue.withValues(alpha: .16),
+            color: context.colors.blue.withValues(alpha: .16),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.link.withValues(alpha: .35)),
+            border: Border.all(
+              color: context.colors.link.withValues(alpha: .35),
+            ),
           ),
-          child: Icon(icon, size: 19, color: AppColors.link),
+          child: Icon(icon, size: 19, color: context.colors.link),
         ),
         Expanded(
           child: Column(
@@ -974,7 +985,7 @@ class _SosScreenState extends State<SosScreen>
               tx(
                 description,
                 size: 11,
-                color: AppColors.secondary,
+                color: context.colors.secondary,
                 height: 1.625,
               ),
             ],

@@ -304,7 +304,7 @@ class _MapScreenState extends State<MapScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 9),
                         decoration: BoxDecoration(
                           color: evacuation == entry.$1
-                              ? AppColors.border
+                              ? context.colors.border
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -314,8 +314,8 @@ class _MapScreenState extends State<MapScreen> {
                           display: true,
                           weight: 600,
                           color: evacuation == entry.$1
-                              ? AppColors.text
-                              : AppColors.muted,
+                              ? context.colors.text
+                              : context.colors.muted,
                           align: TextAlign.center,
                         ),
                       ),
@@ -365,10 +365,10 @@ class _MapScreenState extends State<MapScreen> {
                       onPressed: () => _selectStation(station),
                       style: TextButton.styleFrom(
                         foregroundColor: _station?.id == station.id
-                            ? Colors.white
-                            : AppColors.secondary,
+                            ? context.colors.text
+                            : context.colors.secondary,
                         backgroundColor: _station?.id == station.id
-                            ? AppColors.border
+                            ? context.colors.border
                             : Colors.transparent,
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         textStyle: const TextStyle(
@@ -414,7 +414,7 @@ class _MapScreenState extends State<MapScreen> {
                 tx(
                   'Urdaneta City University · San Vicente West',
                   size: 11,
-                  color: AppColors.secondary,
+                  color: context.colors.secondary,
                 ),
                 gap,
                 Row(
@@ -446,14 +446,14 @@ class _MapScreenState extends State<MapScreen> {
                 tx(
                   'Urdaneta City’s ecological profile lists UCU Gym as an evacuation-use facility. The pin marks the campus location; confirm that the shelter is activated and which entrance is safe before traveling.',
                   size: 11,
-                  color: AppColors.muted,
+                  color: context.colors.muted,
                   height: 1.5,
                 ),
                 const SizedBox(height: 8),
                 tx(
                   'The cyan path follows Google’s walking route from your latest GPS position. Refresh your location if you move, and follow official evacuation instructions if they differ from the map.',
                   size: 11,
-                  color: AppColors.muted,
+                  color: context.colors.muted,
                   height: 1.5,
                 ),
                 if (_routeStatus == 'loading') ...[
@@ -461,7 +461,7 @@ class _MapScreenState extends State<MapScreen> {
                   tx(
                     'Calculating the current walking route…',
                     size: 11,
-                    color: AppColors.secondary,
+                    color: context.colors.secondary,
                   ),
                 ],
                 if (_routeError != null) ...[
@@ -526,7 +526,7 @@ class _MapScreenState extends State<MapScreen> {
                       tx(
                         'No deployed monitoring station has verified coordinates in the backend yet. Sample pins have been removed.',
                         size: 12,
-                        color: AppColors.secondary,
+                        color: context.colors.secondary,
                         height: 1.5,
                       ),
                       const SizedBox(height: 8),
@@ -540,7 +540,7 @@ class _MapScreenState extends State<MapScreen> {
                 ? tx(
                     'Tap a deployed monitoring-station marker to see its latest backend reading.',
                     size: 12,
-                    color: AppColors.secondary,
+                    color: context.colors.secondary,
                   )
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

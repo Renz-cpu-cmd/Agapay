@@ -36,7 +36,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
         tx(
           'In-app alert feed · Push delivery and read receipts are not connected.',
           size: 11,
-          color: AppColors.muted,
+          color: context.colors.muted,
         ),
         gap,
         Row(
@@ -72,7 +72,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
           tx(
             'History includes active and resolved episodes. Resolved severity is the peak tier.',
             size: 11,
-            color: AppColors.muted,
+            color: context.colors.muted,
           ),
         gap,
         if (resource.loading) tx('Loading community alerts…'),
@@ -82,7 +82,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
           tx(
             'Current alert state cannot be confirmed. Refresh to retry; no offline copy is shown.',
             size: 12,
-            color: AppColors.muted,
+            color: context.colors.muted,
           ),
         ],
         if (page != null) ...[
@@ -122,7 +122,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
         tx(
           'Times shown in Philippine time (PHT). Device/simulator origin is not recorded for these episodes. Last valid depths may be stale; invalid readings do not resolve alerts.',
           size: 11,
-          color: AppColors.muted,
+          color: context.colors.muted,
         ),
       ],
     );

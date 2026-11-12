@@ -292,6 +292,16 @@ export const tierColor: Record<AlertTier, string> = {
   UNKNOWN: "#a855f7",
 };
 
+// Text uses semantic theme tokens; map markers and fills retain their raw colors.
+export const tierTextColor: Record<AlertTier, string> = {
+  EVACUATE: "var(--severity-evacuate-text, #ff0000)",
+  WARNING: "var(--severity-warning-text, #f97316)",
+  ADVISORY: "var(--severity-advisory-text, #f5df00)",
+  NORMAL: "var(--severity-normal-text, #00e83a)",
+  OFFLINE: "var(--severity-offline-text, #6b7280)",
+  UNKNOWN: "var(--severity-unknown-text, #a855f7)",
+};
+
 export const tierBg: Record<AlertTier, string> = {
   EVACUATE: "rgba(239,68,68,0.12)",
   WARNING: "rgba(249,115,22,0.12)",

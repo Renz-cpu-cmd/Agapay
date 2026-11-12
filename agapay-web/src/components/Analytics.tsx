@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { tierColor, type AlertTier, type Station } from "@/data/mockData";
+import { tierColor, tierTextColor, type AlertTier, type Station } from "@/data/mockData";
 import { useMonitoring } from "@/context/MonitoringContext";
 
-const colors = ["#ff0000", "#ff7a00", "#f5df00", "#00e83a"];
+const colors = ["var(--adaptive-danger, #ff0000)", "var(--adaptive-orange, #ff7a00)", "var(--adaptive-warning, #f5df00)", "var(--adaptive-success, #00e83a)"];
 const demoRain = [7.1, 5.3, 3.1, 0.3, 4.2, 2.3, 12, 7.2, 1.8, 0.7, 9.3, 5.9];
-const chartTick = { fill: "#8292ab", fontSize: 10, fontFamily: "Inter" };
-const tooltipStyle = { background: "#00112e", border: "1px solid #6496db", fontSize: 12 };
+const chartTick = { fill: "var(--adaptive-muted, #8292ab)", fontSize: 10, fontFamily: "Inter" };
+const tooltipStyle = { background: "var(--adaptive-surface, #00112e)", border: "1px solid #6496db", fontSize: 12 };
 
 function tierForDepth(station: Station, depth: number): AlertTier {
   if (depth >= station.thresholds.evacuate) return "EVACUATE";
@@ -91,13 +91,13 @@ export default function Analytics() {
     </div>
     <section className="design-panel chart-card">
       <div className="chart-heading"><h2>WATER-LEVEL HISTORY</h2><span className="subtle-note">{dataMode === "demo" ? period.toUpperCase() : `${history.length} RECEIVED SAMPLES`}</span></div>
-      <div className="chart-canvas"><ResponsiveContainer width="100%" height="100%"><LineChart data={history} margin={{ top: 4, right: 8, bottom: 6, left: 0 }}><CartesianGrid stroke="#15395e" vertical={false}/><XAxis dataKey="time" tick={chartTick} interval="preserveStartEnd" tickLine={false}/><YAxis tick={chartTick} width={34} tickLine={false}/><Tooltip contentStyle={tooltipStyle}/><Legend wrapperStyle={{ fontSize: 10, paddingTop: 15 }}/>{visible.map((station, index) => <Line key={station.id} type="monotone" dataKey={station.id} stroke={colors[index % colors.length]} connectNulls dot={false} strokeWidth={1.5} isAnimationActive={false}/>)}</LineChart></ResponsiveContainer></div>
+      <div className="chart-canvas"><ResponsiveContainer width="100%" height="100%"><LineChart data={history} margin={{ top: 4, right: 8, bottom: 6, left: 0 }}><CartesianGrid stroke="var(--adaptive-border, #15395e)" vertical={false}/><XAxis dataKey="time" tick={chartTick} interval="preserveStartEnd" tickLine={false}/><YAxis tick={chartTick} width={34} tickLine={false}/><Tooltip contentStyle={tooltipStyle}/><Legend wrapperStyle={{ fontSize: 10, paddingTop: 15 }}/>{visible.map((station, index) => <Line key={station.id} type="monotone" dataKey={station.id} stroke={colors[index % colors.length]} connectNulls dot={false} strokeWidth={1.5} isAnimationActive={false}/>)}</LineChart></ResponsiveContainer></div>
     </section>
     <section className="design-panel chart-card">
       <div className="chart-heading"><h2>RAINFALL PER REPORTING INTERVAL (MM)</h2></div>
-      <div className="chart-canvas"><ResponsiveContainer width="100%" height="100%"><BarChart data={rainfall} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}><CartesianGrid stroke="#15395e" vertical={false}/><XAxis dataKey="time" tick={chartTick} tickLine={false}/><YAxis tick={chartTick} width={34} tickLine={false}/><Tooltip contentStyle={tooltipStyle}/><Bar dataKey="rain" name="Rainfall (mm)" isAnimationActive={false}>{rainfall.map((_, index) => <Cell key={index} fill={index % 6 === 0 ? "#0fa7e6" : "#00516c"}/>)}</Bar></BarChart></ResponsiveContainer></div>
+      <div className="chart-canvas"><ResponsiveContainer width="100%" height="100%"><BarChart data={rainfall} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}><CartesianGrid stroke="var(--adaptive-border, #15395e)" vertical={false}/><XAxis dataKey="time" tick={chartTick} tickLine={false}/><YAxis tick={chartTick} width={34} tickLine={false}/><Tooltip contentStyle={tooltipStyle}/><Bar dataKey="rain" name="Rainfall (mm)" isAnimationActive={false}>{rainfall.map((_, index) => <Cell key={index} fill={index % 6 === 0 ? "var(--adaptive-blue, #0fa7e6)" : "var(--adaptive-border, #00516c)"}/>)}</Bar></BarChart></ResponsiveContainer></div>
     </section>
-    <section className="design-panel report-card"><h2>CURRENT WATER LEVEL - STATION COMPARISON</h2>{visible.map(station => <div className="comparison-row" key={station.id}><header><span style={{ color: tierColor[station.status] }}>● {station.id}</span><span className="text-slate-500">{station.name.replace(" Station", "")}</span><strong style={{ color: tierColor[station.status] }}>{station.waterLevel.toFixed(1)} cm</strong></header><div className="water-bar"><div style={{ width: `${Math.min(100, station.waterLevel / 120 * 100)}%`, background: tierColor[station.status] }}/></div></div>)}</section>
-    <section className="design-panel report-card"><h2>FLOOD EVENT REPORT</h2><dl className="report-grid">{report.map(([key, value]) => <div key={key}><dt>{key}</dt><dd style={{ color: key === "Max Alert Tier" ? tierColor[maxTier] : undefined }}>{value}</dd></div>)}</dl><div className="text-center mt-5"><button className="design-button primary small" onClick={download}>DOWNLOAD REPORT</button></div></section>
+    <section className="design-panel report-card"><h2>CURRENT WATER LEVEL - STATION COMPARISON</h2>{visible.map(station => <div className="comparison-row" key={station.id}><header><span style={{ color: tierTextColor[station.status] }}>● {station.id}</span><span className="text-slate-500">{station.name.replace(" Station", "")}</span><strong style={{ color: tierTextColor[station.status] }}>{station.waterLevel.toFixed(1)} cm</strong></header><div className="water-bar"><div style={{ width: `${Math.min(100, station.waterLevel / 120 * 100)}%`, background: tierColor[station.status] }}/></div></div>)}</section>
+    <section className="design-panel report-card"><h2>FLOOD EVENT REPORT</h2><dl className="report-grid">{report.map(([key, value]) => <div key={key}><dt>{key}</dt><dd style={{ color: key === "Max Alert Tier" ? tierTextColor[maxTier] : undefined }}>{value}</dd></div>)}</dl><div className="text-center mt-5"><button className="design-button primary small" onClick={download}>DOWNLOAD REPORT</button></div></section>
   </div>;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTheme } from "@/context/ThemeContext";
 import { tierColor, type Station } from "@/data/mockData";
 import { loadGoogleMapLibraries } from "@/lib/google-maps";
 import { cityMapCenter, cityMapZoom, stationCoordinates, type MapTileStatus } from "@/lib/station-map";
@@ -34,15 +35,17 @@ export default function GoogleStationMapCanvas({
   onStatusChange,
   onFailure,
 }: Props) {
+  const { theme, ready } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const cameraRef = useRef<google.maps.MapOptions | null>(null);
   const selectedStationRef = useRef(selectedStationId);
 
   useEffect(() => { selectedStationRef.current = selectedStationId; }, [selectedStationId]);
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || !ready) return;
 
     let disposed = false;
     let map: google.maps.Map | null = null;
@@ -68,8 +71,8 @@ export default function GoogleStationMapCanvas({
         mapId: mapId || Map.DEMO_MAP_ID,
         mapTypeId: MapTypeId.ROADMAP,
         renderingType: RenderingType.VECTOR,
-        colorScheme: ColorScheme.DARK,
-        backgroundColor: "#00112e",
+        colorScheme: theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT,
+        backgroundColor: theme === "dark" ? "#00112e" : "#f3f6fb",
         gestureHandling: "greedy",
         headingInteractionEnabled: true,
         tiltInteractionEnabled: true,
@@ -88,6 +91,7 @@ export default function GoogleStationMapCanvas({
         },
         minZoom: 3,
         maxZoom: 21,
+        ...(cameraRef.current ?? {}),
       });
       mapRef.current = map;
 
@@ -121,7 +125,7 @@ export default function GoogleStationMapCanvas({
       readyTimer = setTimeout(() => {
         if (!disposed) onStatusChange("ready");
       }, 8000);
-      focusStation(map, stations, selectedStationRef.current);
+      if (!cameraRef.current) focusStation(map, stations, selectedStationRef.current);
     }).catch(fail);
 
     return () => {
@@ -129,11 +133,14 @@ export default function GoogleStationMapCanvas({
       clearTimeout(readyTimer);
       if (authWindow.gm_authFailure === fail) authWindow.gm_authFailure = previousAuthFailure;
       markers.forEach(marker => { marker.map = null; });
-      if (map && window.google?.maps) window.google.maps.event.clearInstanceListeners(map);
+      if (map && window.google?.maps) {
+        cameraRef.current = { center: map.getCenter(), zoom: map.getZoom(), tilt: map.getTilt(), heading: map.getHeading(), mapTypeId: map.getMapTypeId() };
+        window.google.maps.event.clearInstanceListeners(map);
+      }
       mapRef.current = null;
       container.replaceChildren();
     };
-  }, [apiKey, mapId, onFailure, onSelectStation, onStatusChange]);
+  }, [ready, theme, apiKey, mapId, onFailure, onSelectStation, onStatusChange]);
 
   useEffect(() => {
     const map = mapRef.current;

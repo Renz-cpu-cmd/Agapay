@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { accountRequest } from "@/lib/accounts";
 
 type SetupStatus = { available: boolean; reason: string };
-const fieldClass = "w-full rounded border border-[#002967] bg-[#001434] px-3 py-2.5 text-sm text-slate-200 outline-none transition-colors focus:border-sky-500 disabled:opacity-60";
+const fieldClass = "w-full rounded border border-[var(--adaptive-border,#002967)] bg-[var(--adaptive-surface,#001434)] px-3 py-2.5 text-sm text-slate-200 outline-none transition-colors focus:border-sky-500 disabled:opacity-60";
 const labelClass = "font-ui text-xs font-semibold uppercase tracking-widest text-slate-400";
 
 export default function Register() {

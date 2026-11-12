@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTheme } from "@/context/ThemeContext";
 import { loadGoogleMapLibraries } from "@/lib/google-maps";
 
 type Props = {
@@ -12,11 +13,13 @@ type Props = {
 };
 
 export default function GoogleSosLocationMap({ apiKey, mapId, latitude, longitude, label }: Props) {
+  const { theme, ready } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
+  const cameraRef = useRef<{ latitude: number; longitude: number; options: google.maps.MapOptions } | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !apiKey) return;
+    if (!container || !apiKey || !ready) return;
 
     let disposed = false;
     let map: google.maps.Map | null = null;
@@ -29,15 +32,16 @@ export default function GoogleSosLocationMap({ apiKey, mapId, latitude, longitud
         center: point,
         zoom: 17,
         mapId: mapId || maps.Map.DEMO_MAP_ID,
-        colorScheme: core.ColorScheme.DARK,
+        colorScheme: theme === "dark" ? core.ColorScheme.DARK : core.ColorScheme.LIGHT,
         renderingType: maps.RenderingType.VECTOR,
-        backgroundColor: "#00112e",
+        backgroundColor: theme === "dark" ? "#00112e" : "#f3f6fb",
         gestureHandling: "greedy",
         mapTypeControl: true,
         streetViewControl: true,
         fullscreenControl: true,
         cameraControl: true,
         zoomControl: true,
+        ...(cameraRef.current?.latitude === latitude && cameraRef.current.longitude === longitude ? cameraRef.current.options : {}),
       });
       const pin = new marker.PinElement({
         background: "#ef4444",
@@ -59,10 +63,13 @@ export default function GoogleSosLocationMap({ apiKey, mapId, latitude, longitud
     return () => {
       disposed = true;
       if (locationMarker) locationMarker.map = null;
-      if (map && window.google?.maps) window.google.maps.event.clearInstanceListeners(map);
+      if (map && window.google?.maps) {
+        cameraRef.current = { latitude, longitude, options: { center: map.getCenter(), zoom: map.getZoom(), tilt: map.getTilt(), heading: map.getHeading(), mapTypeId: map.getMapTypeId() } };
+        window.google.maps.event.clearInstanceListeners(map);
+      }
       container.replaceChildren();
     };
-  }, [apiKey, mapId, latitude, longitude, label]);
+  }, [ready, theme, apiKey, mapId, latitude, longitude, label]);
 
   if (!apiKey) {
     return <div className="station-map-loading h-48" role="status">Google Maps is not configured for this deployment.</div>;

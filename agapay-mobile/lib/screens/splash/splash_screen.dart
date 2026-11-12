@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen>
               decoration: BoxDecoration(
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.blue.withValues(alpha: .2),
+                    context.colors.blue.withValues(alpha: .2),
                     Colors.transparent,
                   ],
                   radius: .65,
@@ -89,7 +89,7 @@ class _SplashScreenState extends State<SplashScreen>
                             width: 96,
                             height: 96,
                             decoration: BoxDecoration(
-                              border: Border.all(color: AppColors.blue),
+                              border: Border.all(color: context.colors.blue),
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
@@ -115,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen>
                   size: 13,
                   weight: 500,
                   display: true,
-                  color: AppColors.link,
+                  color: context.colors.link,
                   spacing: 1.3,
                 ),
                 tx(
@@ -123,7 +123,7 @@ class _SplashScreenState extends State<SplashScreen>
                   size: 13,
                   weight: 500,
                   display: true,
-                  color: AppColors.link,
+                  color: context.colors.link,
                   spacing: 1.3,
                 ),
                 const SizedBox(height: 40),

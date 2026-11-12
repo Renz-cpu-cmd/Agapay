@@ -61,13 +61,15 @@ class AgapayBottomNav extends StatelessWidget {
     const labels = ['Home', 'Map', 'SOS', 'Alerts', 'Profile'];
     const icons = ['home', 'map', 'sos', 'bell', 'user'];
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppColors.surfaceRaised, AppColors.background],
+          colors: [context.colors.surfaceRaised, context.colors.background],
         ),
-        border: Border(top: BorderSide(color: AppColors.border, width: 1.25)),
+        border: Border(
+          top: BorderSide(color: context.colors.border, width: 1.25),
+        ),
         boxShadow: [
           BoxShadow(
             color: Color(0x66000000),
@@ -104,7 +106,7 @@ class AgapayBottomNav extends StatelessWidget {
                                           width: 62,
                                           height: 62,
                                           decoration: BoxDecoration(
-                                            color: AppColors.red,
+                                            color: context.colors.red,
                                             shape: BoxShape.circle,
                                             boxShadow:
                                                 app.alert != AlertLevel.normal
@@ -148,8 +150,8 @@ class AgapayBottomNav extends StatelessWidget {
                                         icons[i],
                                         size: 23,
                                         color: app.tab.index == i
-                                            ? AppColors.link
-                                            : AppColors.muted,
+                                            ? context.colors.link
+                                            : context.colors.muted,
                                       ),
                                       tx(
                                         labels[i],
@@ -157,15 +159,15 @@ class AgapayBottomNav extends StatelessWidget {
                                         weight: app.tab.index == i ? 700 : 500,
                                         display: true,
                                         color: app.tab.index == i
-                                            ? AppColors.link
-                                            : AppColors.muted,
+                                            ? context.colors.link
+                                            : context.colors.muted,
                                       ),
                                     ],
                                   ),
                                   if (app.tab.index == i)
-                                    const Positioned(
+                                    Positioned(
                                       bottom: 4,
-                                      child: Dot(AppColors.link, size: 4),
+                                      child: Dot(context.colors.link, size: 4),
                                     ),
                                 ],
                               ),

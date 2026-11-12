@@ -41,7 +41,7 @@ class ForecastPanel extends StatelessWidget {
                     mono: true,
                     color: forecast.preview
                         ? const Color(0xfffbbf24)
-                        : AppColors.faint,
+                        : context.colors.label,
                   ),
                 ],
               ),
@@ -55,7 +55,7 @@ class ForecastPanel extends StatelessWidget {
                         title,
                         size: 12,
                         weight: 600,
-                        color: AppColors.secondary,
+                        color: context.colors.label,
                       ),
                     ),
                   ),
@@ -76,7 +76,7 @@ class ForecastPanel extends StatelessWidget {
                             '+${(i + 1) * 30} min',
                             size: 12,
                             mono: true,
-                            color: AppColors.secondary,
+                            color: context.colors.secondary,
                           ),
                         ),
                         if (forecast.available)
@@ -86,8 +86,8 @@ class ForecastPanel extends StatelessWidget {
                               value: (data!.points[i].waterDepthCm! / 120)
                                   .clamp(0.0, 1.0),
                               minHeight: 4,
-                              color: AppColors.link,
-                              backgroundColor: AppColors.border,
+                              color: context.colors.link,
+                              backgroundColor: context.colors.border,
                             ),
                           ),
                         const SizedBox(width: 8),
@@ -99,8 +99,8 @@ class ForecastPanel extends StatelessWidget {
                           mono: true,
                           weight: 700,
                           color: forecast.available
-                              ? AppColors.link
-                              : AppColors.muted,
+                              ? context.colors.link
+                              : context.colors.muted,
                         ),
                       ],
                     ),
@@ -114,14 +114,14 @@ class ForecastPanel extends StatelessWidget {
                         child: Panel(
                           padding: 8,
                           radius: 12,
-                          color: AppColors.background,
+                          color: context.colors.background,
                           child: Column(
                             children: [
                               tx(
                                 '${(i + 1) * 30} min',
                                 size: 10,
                                 mono: true,
-                                color: AppColors.muted,
+                                color: context.colors.muted,
                               ),
                               const SizedBox(height: 4),
                               tx(
@@ -133,14 +133,14 @@ class ForecastPanel extends StatelessWidget {
                                 mono: true,
                                 weight: 700,
                                 color: forecast.available
-                                    ? AppColors.link
-                                    : AppColors.muted,
+                                    ? context.colors.link
+                                    : context.colors.muted,
                               ),
                               tx(
                                 'cm',
                                 size: 9,
                                 mono: true,
-                                color: AppColors.faint,
+                                color: context.colors.secondary,
                               ),
                             ],
                           ),
@@ -156,7 +156,7 @@ class ForecastPanel extends StatelessWidget {
                   height: 1.5,
                   color: forecast.error != null
                       ? const Color(0xfff87171)
-                      : AppColors.secondary,
+                      : context.colors.secondary,
                 ),
               ],
               if (data != null) ...[
@@ -165,28 +165,28 @@ class ForecastPanel extends StatelessWidget {
                   '${forecast.preview ? 'Synthetic input' : 'Latest input'}: ${predictionTime(data.latestInputAt)} · Local time',
                   size: 10,
                   mono: true,
-                  color: AppColors.muted,
+                  color: context.colors.muted,
                 ),
                 if (forecast.available)
                   tx(
                     'Generated ${predictionTime(data.generatedAt)} · Valid until ${predictionTime(data.validUntil)}',
                     size: 10,
                     mono: true,
-                    color: AppColors.muted,
+                    color: context.colors.muted,
                   ),
                 if (data.modelVersion != null)
                   tx(
                     'Model: ${data.modelVersion}',
                     size: 10,
                     mono: true,
-                    color: AppColors.muted,
+                    color: context.colors.muted,
                   ),
               ],
               const SizedBox(height: 10),
               tx(
                 'Advisory only. Measured thresholds determine alert levels.',
                 size: 10,
-                color: AppColors.muted,
+                color: context.colors.muted,
               ),
               if (forecast.previewAllowed || forecast.preview) ...[
                 const SizedBox(height: 8),

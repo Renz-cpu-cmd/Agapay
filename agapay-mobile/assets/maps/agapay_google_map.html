@@ -4,12 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <style>
+    :root { --surface: #f3f6fb; --raised: #ffffff; --text: #2462b7; color-scheme: light; }
+    :root[data-theme="dark"] { --surface: #00112e; --raised: #071a37; --text: #93c5fd; color-scheme: dark; }
     html, body, #map {
       width: 100%;
       height: 100%;
       margin: 0;
       overflow: hidden;
-      background: #00112e;
+      background: var(--surface);
       font-family: Arial, sans-serif;
     }
 
@@ -21,8 +23,8 @@
       padding: 6px 9px;
       border: 1px solid rgba(96, 165, 250, .55);
       border-radius: 7px;
-      background: rgba(0, 17, 46, .9);
-      color: #93c5fd;
+      background: var(--raised);
+      color: var(--text);
       font-size: 10px;
       font-weight: 700;
       letter-spacing: .12em;
@@ -35,8 +37,8 @@
       z-index: 5;
       display: grid;
       place-items: center;
-      background: #00112e;
-      color: #93c5fd;
+      background: var(--surface);
+      color: var(--text);
       font-size: 12px;
       letter-spacing: .08em;
       transition: opacity .2s ease;
@@ -49,18 +51,19 @@
 
     .gm-style .gm-style-iw-c,
     .gm-style .gm-style-iw-tc::after {
-      background: #071a37;
-      color: #f8fafc;
+      background: var(--raised);
+      color: var(--text);
     }
   </style>
 </head>
 <body>
   <div id="map" role="application" aria-label="Interactive Google map"></div>
-  <div id="provider">GOOGLE DEMO · DARK</div>
+  <div id="provider">GOOGLE DEMO · DEFAULT</div>
   <div id="status" role="status">LOADING GOOGLE MAP…</div>
 
   <script>
     let map = null;
+    let mapTheme = null;
     let mapMarkers = [];
     let routeLines = [];
     let loaderPromise = null;
@@ -120,6 +123,9 @@
     window.agapayRender = async function (config) {
       const revision = ++renderRevision;
       latestConfig = config;
+      const theme = config.theme === 'dark' ? 'dark' : 'light';
+      document.documentElement.dataset.theme = theme;
+      document.getElementById('provider').textContent = 'GOOGLE DEMO · ' + (theme === 'dark' ? 'DARK' : 'DEFAULT');
       showStatus('LOADING GOOGLE MAP…');
 
       try {
@@ -141,6 +147,15 @@
         const Route = routesLibrary && routesLibrary.Route;
         const center = { lat: config.center.latitude, lng: config.center.longitude };
 
+        let camera = null;
+        if (map && mapTheme !== theme) {
+          camera = { center: map.getCenter(), zoom: map.getZoom(), tilt: map.getTilt(), heading: map.getHeading(), mapTypeId: map.getMapTypeId() };
+          clearTimeout(readyTimer);
+          clearOverlays();
+          google.maps.event.clearInstanceListeners(map);
+          map = null;
+          document.getElementById('map').replaceChildren();
+        }
         if (!map) {
           map = new Map(document.getElementById('map'), {
             center,
@@ -149,8 +164,8 @@
             heading: 0,
             mapId: 'DEMO_MAP_ID',
             renderingType: RenderingType.VECTOR,
-            colorScheme: ColorScheme.DARK,
-            backgroundColor: '#00112e',
+            colorScheme: theme === 'dark' ? ColorScheme.DARK : ColorScheme.LIGHT,
+            backgroundColor: theme === 'dark' ? '#00112e' : '#f3f6fb',
             gestureHandling: 'greedy',
             keyboardShortcuts: false,
             cameraControl: true,
@@ -166,9 +181,11 @@
             },
             minZoom: 3,
             maxZoom: 21,
+            ...(camera || {}),
           });
         }
 
+        mapTheme = theme;
         clearOverlays();
         const markerPositions = [];
 
@@ -250,7 +267,9 @@
         }
 
         const selected = config.markers.find(item => item.id === config.selectedMarkerId);
-        if (selected) {
+        if (camera) {
+          map.moveCamera(camera);
+        } else if (selected) {
           map.moveCamera({
             center: { lat: selected.position.latitude, lng: selected.position.longitude },
             zoom: 17,

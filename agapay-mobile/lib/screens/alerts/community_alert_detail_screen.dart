@@ -46,7 +46,7 @@ class CommunityAlertDetailScreen extends StatelessWidget {
           tx(
             'Sensor tiers are not official LGU evacuation orders. Physical/site calibration is pending. Historical device/simulator origin is unknown.',
             size: 11,
-            color: AppColors.muted,
+            color: context.colors.muted,
           ),
           gap,
           caption('SEVERITY TIMELINE'),
@@ -83,7 +83,7 @@ class CommunityAlertDetailScreen extends StatelessWidget {
           tx(
             'Trigger depth is not peak depth. Latest/recovery depth is the last valid episode reading and may be stale.',
             size: 11,
-            color: AppColors.muted,
+            color: context.colors.muted,
           ),
           gap,
           tx(

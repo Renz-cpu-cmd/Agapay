@@ -3,11 +3,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDemo } from "@/context/DemoContext";
 import { useMonitoring } from "@/context/MonitoringContext";
-import { tierColor,type Alert,type AlertTier,type Station } from "@/data/mockData";
+import { tierColor, tierTextColor,type Alert,type AlertTier,type Station } from "@/data/mockData";
 import { Modal,FigmaIcon } from "./DesignUI";
 import { useAlertResource } from "@/hooks/useAlertResource";
 import { ALERT_PAGE_SIZE, alertListPath, alertTime, incidentSeverity, type AlertPage, type AlertTransition, type SensorAlert } from "@/lib/alerts";
-function Badge({tier}:{tier:AlertTier}) {return <span className="design-badge" style={{color:tierColor[tier],background:tierColor[tier]+"25"}}>{tier}</span>;}
+function Badge({tier}:{tier:AlertTier}) {return <span className="design-badge" style={{color:tierTextColor[tier],background:tierColor[tier]+"25"}}>{tier}</span>;}
 function ManualAlert({stations,onClose,onCreate}:{stations:Station[];onClose:()=>void;onCreate:(stationId:string,tier:AlertTier,message:string,reason:string)=>void}) {
   const [confirm,setConfirm]=useState(false),[station,setStation]=useState(stations[0]?.id ?? ""),[tier,setTier]=useState<AlertTier>("WARNING");
   const [message,setMessage]=useState("Heavy rainfall and rising water detected."),[reason,setReason]=useState("Officer manual intervention");
@@ -89,7 +89,7 @@ export default function AlertsPage() {
       <div className="design-table-wrap"><table className="design-table"><thead><tr>{[tab==="Historical"?"Peak Tier":"Current Tier","Station",tab==="Historical"?"Trigger Depth":"Latest Depth","Time (PHT)","Status","Action"].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>
         {resource.loading&&<tr><td colSpan={6} className="design-empty" role="status">Loading alerts…</td></tr>}
         {resource.error&&<tr><td colSpan={6} className="design-empty" role="alert">Alert service unavailable. Sensor alert state cannot be confirmed. Retrying automatically.</td></tr>}
-        {rows.map(a=><tr key={a.id}><td><Badge tier={incidentSeverity(a)}/></td><td>{a.station_id}{names.get(a.station_id)&&<small>{names.get(a.station_id)}</small>}</td><td className="data-strong" style={{color:tierColor[incidentSeverity(a)]}}>{a.status==="RESOLVED"?a.trigger_depth_cm:a.latest_depth_cm} cm</td><td><small>Triggered {alertTime(a.triggered_at)}</small><small>{a.status==="RESOLVED"?`Resolved ${alertTime(a.resolved_at)}`:`Changed ${alertTime(a.last_transition_at)}`}</small></td><td><span className="design-badge">{a.status}</span></td><td><div className="actions"><button className="design-button small" onClick={()=>setSelected(a)}>History</button><button className="design-button small" onClick={()=>router.push(`/stations/${encodeURIComponent(a.station_id)}`)}>View</button>{a.status==="ACTIVE"&&<span className="subtle-note">AUTO</span>}</div></td></tr>)}
+        {rows.map(a=><tr key={a.id}><td><Badge tier={incidentSeverity(a)}/></td><td>{a.station_id}{names.get(a.station_id)&&<small>{names.get(a.station_id)}</small>}</td><td className="data-strong" style={{color:tierTextColor[incidentSeverity(a)]}}>{a.status==="RESOLVED"?a.trigger_depth_cm:a.latest_depth_cm} cm</td><td><small>Triggered {alertTime(a.triggered_at)}</small><small>{a.status==="RESOLVED"?`Resolved ${alertTime(a.resolved_at)}`:`Changed ${alertTime(a.last_transition_at)}`}</small></td><td><span className="design-badge">{a.status}</span></td><td><div className="actions"><button className="design-button small" onClick={()=>setSelected(a)}>History</button><button className="design-button small" onClick={()=>router.push(`/stations/${encodeURIComponent(a.station_id)}`)}>View</button>{a.status==="ACTIVE"&&<span className="subtle-note">AUTO</span>}</div></td></tr>)}
         {resource.data&&!rows.length&&<tr><td colSpan={6} className="design-empty">{resource.data.total===0?`No ${tab==="Active"?"active":"historical"} sensor alerts${station!=="All"||tier!=="All"?" matching the filters":""}.`:"No matching sensor alerts on this page. Change filters or use another page."}</td></tr>}
       </tbody></table></div>
       {resource.data&&<Pagination offset={offset} total={resource.data.total} busy={resource.loading} onChange={setOffset}/>}

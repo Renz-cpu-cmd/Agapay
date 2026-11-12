@@ -66,7 +66,7 @@ class AlertDetailsScreen extends StatelessWidget {
                         size: 16,
                         display: true,
                         weight: 600,
-                        color: AppColors.secondary,
+                        color: context.colors.secondary,
                       ),
                     ],
                   ),
@@ -87,7 +87,7 @@ class AlertDetailsScreen extends StatelessWidget {
                             observedTime,
                             size: 11,
                             mono: true,
-                            color: AppColors.muted,
+                            color: context.colors.muted,
                           ),
                         ],
                       ),
@@ -144,8 +144,8 @@ class AlertDetailsScreen extends StatelessWidget {
                     ? 'Demonstration state'
                     : station.firmwareVersion ?? 'Firmware unavailable',
                 color: station?.sensorQuality == 'valid'
-                    ? AppColors.green
-                    : AppColors.muted,
+                    ? context.colors.green
+                    : context.colors.muted,
               ),
             ),
             Expanded(
@@ -185,7 +185,7 @@ class AlertDetailsScreen extends StatelessWidget {
           ActionButton(
             '🔴  SEND EMERGENCY SOS',
             color: const Color(0xff7f1d1d),
-            border: AppColors.red.withValues(alpha: .38),
+            border: context.colors.red.withValues(alpha: .38),
             onPressed: () => app.navigate(AppTab.sos),
           ),
         ],
@@ -225,7 +225,7 @@ class _Stat extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 2),
-        tx(sub, size: 10, mono: true, color: AppColors.muted),
+        tx(sub, size: 10, mono: true, color: context.colors.muted),
       ],
     ),
   );

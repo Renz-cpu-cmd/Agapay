@@ -31,10 +31,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     height: 56,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [AppColors.blue, Color(0xff7c3aed)],
+                        colors: [context.colors.blue, Color(0xff7c3aed)],
                       ),
                     ),
                     child: Center(
@@ -68,21 +68,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.border,
+                                color: context.colors.border,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: tx(
                                 'Resident',
                                 size: 10,
                                 mono: true,
-                                color: AppColors.link,
+                                color: context.colors.link,
                               ),
                             ),
                             tx(
                               'Active account',
                               size: 10,
                               mono: true,
-                              color: AppColors.muted,
+                              color: context.colors.muted,
                             ),
                           ],
                         ),
@@ -130,6 +130,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             children: [
               _setting(
+                Icons.palette_outlined,
+                'Appearance',
+                'Map follows your theme',
+                _link(
+                  app.theme.mode == ThemeMode.dark ? 'Dark' : 'Default',
+                  () => showModalBottomSheet<void>(
+                    context: context,
+                    showDragHandle: true,
+                    builder: (context) => SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final choice in [
+                            (ThemeMode.light, 'Default (Light)'),
+                            (ThemeMode.dark, 'Dark (Current theme)'),
+                          ])
+                            ListTile(
+                              title: tx(choice.$2),
+                              selected: app.theme.mode == choice.$1,
+                              trailing: app.theme.mode == choice.$1
+                                  ? Icon(
+                                      Icons.check,
+                                      color: context.colors.link,
+                                    )
+                                  : null,
+                              onTap: () {
+                                Navigator.pop(context);
+                                app.theme.setMode(choice.$1);
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (app.theme.saveError != null)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: tx(
+                    app.theme.saveError!,
+                    size: 11,
+                    color: context.colors.red,
+                  ),
+                ),
+              _line(),
+              _setting(
                 Icons.notifications_none_rounded,
                 'Flood Alerts',
                 'Future preference only · Does not control push delivery',
@@ -176,7 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   () => showModalBottomSheet<void>(
                     context: context,
                     showDragHandle: true,
-                    backgroundColor: AppColors.background,
+                    backgroundColor: context.colors.background,
                     builder: (context) => SafeArea(
                       child: ListView(
                         shrinkWrap: true,
@@ -185,10 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ListTile(
                               title: tx(b),
                               trailing: b == app.barangay
-                                  ? const SvgIcon(
-                                      'check',
-                                      color: AppColors.link,
-                                    )
+                                  ? SvgIcon('check', color: context.colors.link)
                                   : null,
                               onTap: () async {
                                 try {
@@ -232,7 +276,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Icons.info_outline_rounded,
                   'About AGAPAY',
                   'Version 1.0.0 · Build 2024.001',
-                  const SvgIcon('chevron', size: 14, color: AppColors.muted),
+                  SvgIcon('chevron', size: 14, color: context.colors.muted),
                 ),
               ),
               _line(),
@@ -245,7 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Icons.privacy_tip_outlined,
                   'Privacy Policy',
                   'How AGAPAY handles your data',
-                  const SvgIcon('chevron', size: 14, color: AppColors.muted),
+                  SvgIcon('chevron', size: 14, color: context.colors.muted),
                 ),
               ),
             ],
@@ -288,14 +332,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'AGAPAY · Community Flood Early-Warning System',
           size: 10,
           mono: true,
-          color: AppColors.faint,
+          color: context.colors.faint,
           align: TextAlign.center,
         ),
         tx(
           'Urdaneta City, Pangasinan · © 2024',
           size: 10,
           mono: true,
-          color: AppColors.faint,
+          color: context.colors.faint,
           align: TextAlign.center,
         ),
       ],
@@ -305,12 +349,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _profileRow(IconData icon, String label, String value) => Row(
     spacing: 10,
     children: [
-      SizedBox(width: 22, child: Icon(icon, size: 18, color: AppColors.link)),
+      SizedBox(
+        width: 22,
+        child: Icon(icon, size: 18, color: context.colors.link),
+      ),
       Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            tx(label, size: 10, mono: true, color: AppColors.muted),
+            tx(label, size: 10, mono: true, color: context.colors.muted),
             tx(value, display: true, weight: 500),
           ],
         ),
@@ -325,14 +372,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             SizedBox(
               width: 28,
-              child: Icon(icon, size: 21, color: AppColors.link),
+              child: Icon(icon, size: 21, color: context.colors.link),
             ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   tx(label, display: true, weight: 600, color: Colors.white),
-                  tx(sub, size: 11, color: AppColors.muted, height: 1.4),
+                  tx(sub, size: 11, color: context.colors.muted, height: 1.4),
                 ],
               ),
             ),
@@ -359,10 +406,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             size: 12,
             display: true,
             weight: 600,
-            color: AppColors.link,
+            color: context.colors.link,
           ),
         ),
-        const SvgIcon('chevron', size: 10, color: AppColors.link),
+        SvgIcon('chevron', size: 10, color: context.colors.link),
       ],
     ),
   );
@@ -378,7 +425,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: 40,
             height: 24,
             decoration: BoxDecoration(
-              color: value ? AppColors.blue : AppColors.border,
+              color: value ? context.colors.blue : context.colors.border,
               borderRadius: BorderRadius.circular(20),
             ),
             child: AnimatedAlign(
