@@ -1,584 +1,343 @@
-import 'dart:async';
-
-import 'package:url_launcher/url_launcher.dart';
-
+import '../../widgets/common/monitoring_status.dart';
+import '../../widgets/common/resident_decisions.dart';
 import '../../core/ui.dart';
-import '../../services/auth_api.dart';
-import '../../services/sos_location.dart';
+import '../../models/monitoring.dart';
+import '../../controllers/monitoring_controller.dart';
 import '../../widgets/maps/agapay_google_map.dart';
-
-typedef Station = ({
-  String id,
-  String name,
-  String barangay,
-  AlertLevel? level,
-  double? cm,
-  AgapayMapCoordinate point,
-  bool online,
-  DateTime? observedAt,
-  String source,
-});
-
-// UCU campus coordinate. The city ecological profile lists UCU Gym as an
-// evacuation-use facility; activation and exact entrance must be confirmed by
-// the Urdaneta CDRRMO during a real incident.
-const _ucuGym = AgapayMapCoordinate(15.97995, 120.56083);
-const _cityCenter = AgapayMapCoordinate(15.978, 120.567);
+import 'shelter_explorer.dart';
+import '../../widgets/common/unverified_station_banner.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
-
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
 
+/// R4: neutral pin for a station whose reading must not read as an operational
+/// warning. Uses the shared fail-closed MonitoringStation.operationallyVerified.
+const unverifiedMarkerColor = Color(0xff94a3b8);
+bool _unverified(StationFreshnessView v) =>
+    v.depth.value != null && !v.station.operationallyVerified;
+
 class _MapScreenState extends State<MapScreen> {
-  AgapayMapCoordinate? _resident;
-  bool _locating = false;
-  bool _loadingStations = true;
-  String? _error;
-  String? _stationError;
-  String? _routeStatus;
-  String? _routeError;
-  double? _routeDistanceMeters;
-  int? _routeDurationSeconds;
-  List<String> _routeWarnings = const [];
-  List<Station> _stations = const [];
-  Station? _station;
-  Timer? _stationTimer;
-
-  String? get _routeId {
-    final resident = _resident;
-    if (resident == null) return null;
-    return '${resident.latitude.toStringAsFixed(6)},${resident.longitude.toStringAsFixed(6)}'
-        '>${_ucuGym.latitude},${_ucuGym.longitude}:walking';
-  }
-
-  AgapayGoogleMapRoute? get _walkingRoute => _resident == null
-      ? null
-      : AgapayGoogleMapRoute(
-          id: _routeId!,
-          origin: _resident!,
-          destination: _ucuGym,
-        );
-
-  double? get _routeDistanceKm =>
-      _routeDistanceMeters == null ? null : _routeDistanceMeters! / 1000;
-
-  int? get _walkingMinutes => _routeDurationSeconds == null
-      ? null
-      : (_routeDurationSeconds! / 60).ceil();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadStations();
-      _stationTimer = Timer.periodic(
-        const Duration(seconds: 5),
-        (_) => _loadStations(),
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _stationTimer?.cancel();
-    super.dispose();
-  }
-
-  Color _markerColor(AlertLevel? level) => switch (level) {
-    AlertLevel.normal => const Color(0xff22c55e),
-    AlertLevel.advisory => const Color(0xffeab308),
-    AlertLevel.warning => const Color(0xfff97316),
-    AlertLevel.evacuate => const Color(0xffef4444),
-    null => const Color(0xffa855f7),
-  };
-
-  AlertLevel? _level(dynamic value) => switch (value) {
-    'NORMAL' => AlertLevel.normal,
-    'ADVISORY' => AlertLevel.advisory,
-    'WARNING' => AlertLevel.warning,
-    'EVACUATE' => AlertLevel.evacuate,
-    _ => null,
-  };
-
-  String _observed(DateTime? value) {
-    if (value == null) return 'No valid reading';
-    final hour = value.hour.toString().padLeft(2, '0');
-    final minute = value.minute.toString().padLeft(2, '0');
-    return '${value.month}/${value.day}/${value.year} $hour:$minute';
-  }
-
-  Future<void> _loadStations() async {
-    if (!mounted) return;
-    if (_stations.isEmpty) setState(() => _loadingStations = true);
-    try {
-      final app = AppScope.of(context);
-      final raw =
-          await app.auth.request('monitoring/stations?history_limit=20')
-              as Map<String, dynamic>;
-      final mapped = <Station>[];
-      for (final value in raw['stations'] as List<dynamic>) {
-        final data = value as Map<String, dynamic>;
-        final latitude = (data['latitude'] as num?)?.toDouble();
-        final longitude = (data['longitude'] as num?)?.toDouble();
-        if (latitude == null || longitude == null) continue;
-        mapped.add((
-          id: data['station_id'] as String,
-          name: data['station_name'] as String,
-          barangay: (data['barangay'] as String?) ?? 'Barangay unavailable',
-          level: _level(data['alert_tier']),
-          cm: (data['current_depth_cm'] as num?)?.toDouble(),
-          point: AgapayMapCoordinate(latitude, longitude),
-          online: data['is_online'] as bool,
-          observedAt: data['observed_at'] is String
-              ? DateTime.tryParse(data['observed_at'] as String)?.toLocal()
-              : null,
-          source: data['source'] as String,
-        ));
-      }
-      if (!mounted) return;
-      setState(() {
-        _stations = mapped;
-        final selectedId = _station?.id;
-        _station = null;
-        for (final station in mapped) {
-          if (station.id == selectedId) _station = station;
-        }
-        _stationError = null;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _stationError = error is AccountException
-            ? error.message
-            : 'Monitoring stations could not be loaded.';
-      });
-    } finally {
-      if (mounted) setState(() => _loadingStations = false);
-    }
-  }
-
-  void _selectStation(Station station) {
-    setState(() => _station = station);
-  }
-
-  List<AgapayGoogleMapMarker> _markers(bool evacuation) => evacuation
-      ? [
-          if (_resident != null)
-            AgapayGoogleMapMarker(
-              id: 'resident',
-              position: _resident!,
-              color: const Color(0xff38bdf8),
-              glyph: '●',
-              title: 'Your latest GPS location',
-            ),
-          const AgapayGoogleMapMarker(
-            id: 'ucu-gym',
-            position: _ucuGym,
-            color: Color(0xff22c55e),
-            glyph: 'E',
-            title: 'UCU Gym · confirm shelter activation',
-          ),
-        ]
-      : [
-          for (final station in _stations)
-            AgapayGoogleMapMarker(
-              id: station.id,
-              position: station.point,
-              color: station.online
-                  ? _markerColor(station.level)
-                  : const Color(0xffa855f7),
-              glyph: station.id.replaceFirst('STATION_0', ''),
-              title: station.cm == null
-                  ? '${station.name} · No valid reading'
-                  : '${station.name} · ${station.cm!.toStringAsFixed(1)} cm',
-              selected: _station?.id == station.id,
-            ),
-        ];
-
-  Future<void> _useCurrentLocation() async {
-    final app = AppScope.of(context);
-    if (!app.location) {
-      setState(
-        () => _error =
-            'Location sharing is turned off in Profile / Settings. Turn it on to show your device position.',
-      );
-      return;
-    }
-    setState(() {
-      _locating = true;
-      _error = null;
-    });
-    try {
-      final position = await captureSosLocation();
-      if (!mounted) return;
-      setState(() {
-        _resident = AgapayMapCoordinate(position.latitude, position.longitude);
-        _routeStatus = 'loading';
-        _routeError = null;
-        _routeDistanceMeters = null;
-        _routeDurationSeconds = null;
-        _routeWarnings = const [];
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(
-        () => _error = e is AccountException
-            ? e.message
-            : 'Your position could not be read. Enable precise location and try again.',
-      );
-    } finally {
-      if (mounted) setState(() => _locating = false);
-    }
-  }
-
-  Future<void> _openDirections() async {
-    final resident = _resident;
-    final uri = Uri.https('www.google.com', '/maps/dir/', {
-      'api': '1',
-      if (resident != null)
-        'origin': '${resident.latitude},${resident.longitude}',
-      'destination': '${_ucuGym.latitude},${_ucuGym.longitude}',
-      'travelmode': 'walking',
-    });
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) &&
-        mounted) {
-      setState(() => _error = 'No directions app is available on this device.');
-    }
-  }
-
-  void _onRouteUpdate(AgapayGoogleMapRouteUpdate update) {
-    if (!mounted || update.id != _routeId) return;
-    setState(() {
-      _routeStatus = update.status;
-      _routeError = update.status == 'error' ? update.message : null;
-      _routeDistanceMeters = update.status == 'ready'
-          ? update.distanceMeters
-          : null;
-      _routeDurationSeconds = update.status == 'ready'
-          ? update.durationSeconds
-          : null;
-      _routeWarnings = update.status == 'ready' ? update.warnings : const [];
-    });
-  }
-
+  bool _showMap = true;
+  Color _markerColor(StationFreshnessView v) => !v.depth.fresh
+      ? const Color(0xffa855f7)
+      : _unverified(v)
+      ? unverifiedMarkerColor
+      : switch (v.station.observationLevel) {
+          AlertLevel.normal => const Color(0xff22c55e),
+          AlertLevel.advisory => const Color(0xffeab308),
+          AlertLevel.warning => const Color(0xfff97316),
+          AlertLevel.evacuate => const Color(0xffef4444),
+          _ => const Color(0xffa855f7),
+        };
   @override
   Widget build(BuildContext context) {
-    final app = AppScope.of(context);
-    final evacuation = app.evacuationMap;
+    final app = AppScope.of(context), monitoring = app.monitoring;
+    final views = monitoring.views;
+    // R1: only validated registry positions are mapped; nothing is substituted.
+    final mapped = views.where((v) => v.station.mapCoordinates != null).toList();
+    final selected = monitoring.primaryView;
+    final center =
+        mapped.where((v) => v.station.id == selected?.station.id).firstOrNull ??
+        mapped.firstOrNull;
     return PageContent(
       children: [
-        PageHeading(
-          'Map',
-          'San Vicente, Urdaneta City',
-          onBack: () => app.navigate(AppTab.home),
-        ),
+        PageHeading('Map', 'Evacuation & Station Map'),
         Panel(
           padding: 4,
           radius: 12,
           child: Row(
             children: [
-              for (final entry in [
-                (false, 'Monitoring Stations'),
-                (true, 'Evacuation Route'),
-              ])
-                Expanded(
-                  child: Semantics(
-                    selected: evacuation == entry.$1,
-                    button: true,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: () {
-                        app.navigate(AppTab.map, evacuation: entry.$1);
-                        if (entry.$1) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (_resident == null && !_locating) {
-                              _useCurrentLocation();
-                            }
-                          });
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 9),
-                        decoration: BoxDecoration(
-                          color: evacuation == entry.$1
-                              ? context.colors.border
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: tx(
-                          entry.$2,
-                          size: 11,
-                          display: true,
-                          weight: 600,
-                          color: evacuation == entry.$1
-                              ? context.colors.text
-                              : context.colors.muted,
-                          align: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
+              Expanded(
+                child: SelectionButton(
+                  'Monitoring Stations',
+                  outlined: false,
+                  selected: !app.evacuationMap,
+                  onPressed: () => app.navigate(AppTab.map, evacuation: false),
                 ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: SelectionButton(
+                  'Evacuation Route',
+                  outlined: false,
+                  selected: app.evacuationMap,
+                  onPressed: () => app.navigate(AppTab.map, evacuation: true),
+                ),
+              ),
             ],
           ),
         ),
         gap,
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: SizedBox(
-            height: 360,
-            child: AgapayGoogleMap(
-              center: evacuation ? _ucuGym : _cityCenter,
-              markers: _markers(evacuation),
-              route: evacuation ? _walkingRoute : null,
-              zoom: evacuation ? 16.5 : 15,
-              tilt: evacuation ? 45 : 42,
-              fitAll: evacuation && _resident != null,
-              selectedMarkerId: evacuation ? null : _station?.id,
-              onMarkerTap: evacuation
-                  ? null
-                  : (id) {
-                      for (final station in _stations) {
-                        if (station.id == id) {
-                          _selectStation(station);
-                          return;
-                        }
-                      }
-                    },
-              onRouteUpdate: evacuation ? _onRouteUpdate : null,
+        if (app.evacuationMap)
+          const ShelterExplorer()
+        else ...[
+          if (monitoring.loading) const Text('Checking station observations…'),
+          if (monitoring.error != null)
+            const Text(
+              'Station feed unavailable. Retained measurements keep their original age; current conditions are unconfirmed.',
             ),
-          ),
-        ),
-        if (!evacuation && _stations.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Panel(
-            padding: 4,
-            radius: 10,
-            child: Row(
-              children: [
-                for (final station in _stations)
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => _selectStation(station),
-                      style: TextButton.styleFrom(
-                        foregroundColor: _station?.id == station.id
-                            ? context.colors.text
-                            : context.colors.secondary,
-                        backgroundColor: _station?.id == station.id
-                            ? context.colors.border
-                            : Colors.transparent,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        textStyle: const TextStyle(
-                          fontFamily: 'JetBrainsMono',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
+          if (views.isEmpty)
+            const Text(
+              'No monitoring stations are available. No sample pin or reading is substituted.',
+            ),
+          if (center != null) ...[
+            if (_showMap)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  height: 360,
+                  child: AgapayGoogleMap(
+                    center: AgapayMapCoordinate(
+                      center.station.mapCoordinates!.latitude,
+                      center.station.mapCoordinates!.longitude,
+                    ),
+                    markers: [
+                      for (final v in mapped)
+                        AgapayGoogleMapMarker(
+                          id: v.station.id,
+                          title:
+                              '${v.station.name} · ${_unverified(v) ? '$unverifiedStationTitle · ' : ''}${stationStatusDescription(v)}',
+                          position: AgapayMapCoordinate(
+                            v.station.mapCoordinates!.latitude,
+                            v.station.mapCoordinates!.longitude,
+                          ),
+                          color: _markerColor(v),
+                          glyph: _unverified(v) ? 'U' : 'S',
+                          selected: v.station.id == selected?.station.id,
                         ),
-                      ),
-                      child: Text(station.id),
-                    ),
+                    ],
+                    selectedMarkerId: selected?.station.id,
+                    onMarkerTap: app.selectStation,
                   ),
-              ],
-            ),
-          ),
-        ],
-        gap,
-        if (_error != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: tx(
-              _error!,
-              size: 12,
-              color: const Color(0xfff87171),
-              height: 1.5,
-            ),
-          ),
-        if (evacuation) ...[
-          Panel(
-            color: const Color(0x80052e16),
-            border: const Color(0x4016a34a),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                caption('EVACUATION DESTINATION'),
-                const SizedBox(height: 6),
-                tx(
-                  'UCU Gym',
-                  size: 17,
-                  display: true,
-                  weight: 700,
-                  color: Colors.white,
                 ),
-                tx(
-                  'Urdaneta City University · San Vicente West',
-                  size: 11,
-                  color: context.colors.secondary,
-                ),
-                gap,
-                Row(
-                  children: [
-                    Expanded(
-                      child: DataRow(
-                        'Walking route distance',
-                        _routeDistanceKm == null
-                            ? 'Use device GPS'
-                            : '${_routeDistanceKm!.toStringAsFixed(2)} km',
-                        mono: true,
+              ),
+          ] else
+            const Text(
+              'No station coordinates are available. The text list works without Maps.',
+            ),
+          if (views.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Panel(
+              padding: 4,
+              radius: 10,
+              child: Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  for (final view in views)
+                    SizedBox(
+                      width: views.length == 1 ? double.infinity : null,
+                      child: TextButton(
+                        onPressed: () => app.selectStation(view.station.id),
+                        style: TextButton.styleFrom(
+                          foregroundColor:
+                              view.station.id == selected?.station.id
+                              ? context.colors.text
+                              : context.colors.muted,
+                          backgroundColor:
+                              view.station.id == selected?.station.id
+                              ? context.colors.border
+                              : Colors.transparent,
+                        ),
+                        child: Text(view.station.id),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: DataRow(
-                        'Estimated walk',
-                        _walkingMinutes == null
-                            ? _routeStatus == 'loading'
-                                  ? 'Calculating…'
-                                  : 'Route unavailable'
-                            : '$_walkingMinutes min',
-                        mono: true,
+                ],
+              ),
+            ),
+          ],
+          gap,
+          Panel(
+            radius: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                caption('STATION LEGEND'),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 14,
+                  runSpacing: 10,
+                  children: [
+                    for (final tier in AlertLevel.values.where(
+                      (v) => v != AlertLevel.unknown,
+                    ))
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Dot(context.colors.resolve(tier.textColor), size: 8),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: tx(
+                              tier.label[0] +
+                                  tier.label.substring(1).toLowerCase(),
+                              size: 11,
+                              color: context.colors.muted,
+                            ),
+                          ),
+                        ],
                       ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Dot(
+                          context.colors.resolve(const Color(0xffa855f7)),
+                          size: 8,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: tx(
+                            'No current reading',
+                            size: 11,
+                            color: context.colors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Dot(
+                          context.colors.resolve(unverifiedMarkerColor),
+                          size: 8,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: tx(
+                            'Unverified station · not a warning',
+                            size: 11,
+                            color: context.colors.muted,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                gap,
-                tx(
-                  'Urdaneta City’s ecological profile lists UCU Gym as an evacuation-use facility. The pin marks the campus location; confirm that the shelter is activated and which entrance is safe before traveling.',
-                  size: 11,
-                  color: context.colors.muted,
-                  height: 1.5,
-                ),
                 const SizedBox(height: 8),
                 tx(
-                  'The cyan path follows Google’s walking route from your latest GPS position. Refresh your location if you move, and follow official evacuation instructions if they differ from the map.',
-                  size: 11,
+                  'Colors show the observation tier of reviewed stations. Unverified stations are grey. Connection and measurement quality are listed separately.',
+                  size: 10,
                   color: context.colors.muted,
-                  height: 1.5,
-                ),
-                if (_routeStatus == 'loading') ...[
-                  const SizedBox(height: 8),
-                  tx(
-                    'Calculating the current walking route…',
-                    size: 11,
-                    color: context.colors.secondary,
-                  ),
-                ],
-                if (_routeError != null) ...[
-                  const SizedBox(height: 8),
-                  tx(
-                    'Walking route unavailable: $_routeError',
-                    size: 11,
-                    color: const Color(0xfff87171),
-                    height: 1.5,
-                  ),
-                ],
-                for (final warning in _routeWarnings) ...[
-                  const SizedBox(height: 8),
-                  tx(
-                    warning,
-                    size: 11,
-                    color: const Color(0xfffbbf24),
-                    height: 1.5,
-                  ),
-                ],
-                gap,
-                ActionButton(
-                  _locating
-                      ? 'LOCATING…'
-                      : _resident == null
-                      ? 'USE MY CURRENT LOCATION'
-                      : 'REFRESH LOCATION & ROUTE',
-                  vertical: 12,
-                  onPressed: _locating ? null : _useCurrentLocation,
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton(
-                  onPressed: _openDirections,
-                  child: const Text('OPEN WALKING DIRECTIONS'),
                 ),
               ],
             ),
           ),
-        ] else ...[
-          Panel(
-            child: _loadingStations
-                ? const Center(child: CircularProgressIndicator())
-                : _stationError != null
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      tx(
-                        _stationError!,
-                        size: 12,
-                        color: const Color(0xfff87171),
-                      ),
-                      TextButton(
-                        onPressed: _loadStations,
-                        child: const Text('RETRY'),
-                      ),
-                    ],
-                  )
-                : _stations.isEmpty
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      tx(
-                        'No deployed monitoring station has verified coordinates in the backend yet. Sample pins have been removed.',
-                        size: 12,
-                        color: context.colors.secondary,
-                        height: 1.5,
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        onPressed: _loadStations,
-                        child: const Text('REFRESH STATIONS'),
+          for (final view in views)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Panel(
+                border: view.station.id == selected?.station.id
+                    ? context.colors.link
+                    : context.colors.border,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    caption(view.station.id),
+                    const SizedBox(height: 6),
+                    tx(view.station.name, size: 16, weight: 700),
+                    if (_unverified(view)) ...[
+                      const SizedBox(height: 10),
+                      UnverifiedStationBanner(
+                        key: ValueKey('map-unverified-${view.station.id}'),
+                        compact: true,
                       ),
                     ],
-                  )
-                : _station == null
-                ? tx(
-                    'Tap a deployed monitoring-station marker to see its latest backend reading.',
-                    size: 12,
-                    color: context.colors.secondary,
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      caption(_station!.id),
-                      const SizedBox(height: 4),
-                      tx(
-                        _station!.name,
-                        display: true,
-                        weight: 700,
-                        color: Colors.white,
+                    const SizedBox(height: 16),
+                    _MapFact(
+                      view.depth.fresh
+                          ? 'Observed water depth'
+                          : view.depth.value == null
+                          ? 'Water depth'
+                          : 'Last known water depth',
+                      view.depth.value == null
+                          ? 'No valid reading'
+                          : '${view.depth.value!.toStringAsFixed(1)} cm',
+                    ),
+                    _MapFact(
+                      'Observation tier',
+                      // Stale data never shows a current tier; unverified data is a
+                      // recorded measurement, not an operational warning.
+                      !view.depth.fresh
+                          ? 'UNKNOWN · reading not current'
+                          : _unverified(view)
+                          ? 'Recorded ${view.station.observationLevel.label} reading · unverified'
+                          : view.station.observationLevel.label,
+                    ),
+                    _MapFact('Connection', view.heartbeat.status.toUpperCase()),
+                    _MapFact('Source', view.sourceLabel),
+                    tx(
+                      'Depth: ${view.depth.status} · ${MonitoringController.ageLabel(view.depth.ageSeconds)} · quality ${view.depth.quality}',
+                      size: 10,
+                      color: context.colors.muted,
+                    ),
+                    tx(
+                      'Heartbeat: ${view.heartbeat.status} · rain: ${view.rain.status} · episode: ${view.station.activeHazardTier ?? 'None recorded'}',
+                      size: 10,
+                      color: context.colors.muted,
+                    ),
+                    ExpansionTile(
+                      key: PageStorageKey(
+                        'map-source-${app.user?.id}-${view.station.id}',
                       ),
-                      gap,
-                      DataRow(
-                        'Water level',
-                        _station!.cm == null
-                            ? 'No valid reading'
-                            : '${_station!.cm!.toStringAsFixed(1)} cm',
-                        mono: true,
-                      ),
-                      DataRow('Alert', _station!.level?.label ?? 'Unavailable'),
-                      DataRow(
-                        'Connection',
-                        _station!.online ? 'ONLINE' : 'OFFLINE',
-                      ),
-                      DataRow(
-                        'Source',
-                        _station!.source == 'simulator'
-                            ? 'VIRTUAL STATION'
-                            : _station!.source.toUpperCase(),
-                      ),
-                      DataRow('Barangay', _station!.barangay),
-                      DataRow('Observed', _observed(_station!.observedAt)),
-                    ],
+                      title: const Text('Source and measurement details'),
+                      children: [MonitoringStatus(view: view)],
+                    ),
+                    switch (view.station.locationState) {
+                      'verified' => _MapFact('Location', 'Confirmed registry location'),
+                      'unverified' => _MapFact('Location', 'Unconfirmed registry location'),
+                      'missing' => const Text('Coordinates unavailable · no map pin'),
+                      _ => const Text('Recorded location invalid · no map pin'),
+                    },
+                  ],
+                ),
+              ),
+            ),
+          gap,
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              TextButton(
+                onPressed: monitoring.loading ? null : monitoring.refresh,
+                child: const Text('Refresh stations'),
+              ),
+              if (center != null)
+                TextButton(
+                  onPressed: () => setState(() => _showMap = !_showMap),
+                  child: Text(
+                    _showMap ? 'Hide station map' : 'Show station map',
                   ),
+                ),
+            ],
+          ),
+          const ExpansionTile(
+            key: PageStorageKey('map-area-preferences'),
+            title: Text('Area and advisory preferences'),
+            children: [ResidentAreaPanel()],
           ),
         ],
       ],
     );
   }
+}
+
+class _MapFact extends StatelessWidget {
+  const _MapFact(this.label, this.value);
+  final String label, value;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: tx(label, size: 11, color: context.colors.muted)),
+        const SizedBox(width: 12),
+        Flexible(
+          child: tx(value, size: 12, weight: 600, align: TextAlign.right),
+        ),
+      ],
+    ),
+  );
 }

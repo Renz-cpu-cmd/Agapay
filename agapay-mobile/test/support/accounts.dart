@@ -1,12 +1,48 @@
+import 'package:agapay_mobile/controllers/device_capabilities_controller.dart';
+import 'package:agapay_mobile/controllers/product_preferences_controller.dart';
 import 'package:agapay_mobile/controllers/theme_controller.dart';
 import 'dart:convert';
 import 'package:agapay_mobile/controllers/app_controller.dart';
 import 'package:agapay_mobile/services/auth_api.dart';
 import 'package:agapay_mobile/services/sos_drafts.dart';
+import 'package:agapay_mobile/services/reader_cache.dart';
+import 'package:agapay_mobile/services/notification_receipts.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'predictions.dart';
 import 'community_alerts.dart';
+import 'hybrid_projection.dart';
+
+class TestLocationSource implements LocationCapabilitySource {
+  @override
+  Future<LocationCapability> read() async =>
+      const LocationCapability(permission: 'denied', service: 'disabled');
+}
+
+class MemoryProductPreferences implements ProductPreferenceStore {
+  final values = <int, String>{};
+  @override
+  Future<String?> read(int owner) async => values[owner];
+  @override
+  Future<void> write(int owner, String value) async {
+    values[owner] = value;
+  }
+}
+
+class MemoryReaderStorage implements ReaderCacheStorage {
+  final values = <String, String>{};
+  @override
+  Future<String?> read(String key) async => values[key];
+  @override
+  Future<void> write(String key, String value) async {
+    values[key] = value;
+  }
+
+  @override
+  Future<void> delete(String key) async {
+    values.remove(key);
+  }
+}
 
 class MemoryTokens implements TokenStore {
   String? value;
@@ -43,6 +79,7 @@ Map<String, dynamic> practiceSos({
   String status = 'ACTIVE',
 }) => {
   'id': 1,
+  'version': 1,
   'request_id': '00000000-0000-4000-8000-000000000001',
   'location': 'Practice site, San Vicente',
   'message': 'Practice only',
@@ -61,6 +98,7 @@ Map<String, dynamic> practiceSos({
 
 Map<String, dynamic> resident() => {
   'id': 1,
+  'version': 1,
   'name': 'Test Resident',
   'email': 'resident@example.com',
   'phone': '+639123456789',
@@ -71,11 +109,118 @@ Map<String, dynamic> resident() => {
   'is_active': true,
 };
 
-AppController fixtureController({ThemePreferenceStore? themeStorage}) {
+AppController fixtureController({
+  ReceiptStorage? receiptStorage,
+  String forecastStatus = 'not_trained',
+  ThemePreferenceStore? themeStorage,
+  DateTime Function()? observationClock,
+  Map<String, dynamic> monitoringChanges = const {},
+  bool emptyStations = false,
+  int monitoringStatus = 200,
+  Future<void>? monitoringReady,
+  List<Map<String, dynamic>> officialNotices = const [],
+  String? residentAreaId,
+}) {
   var user = resident();
   final storage = MemoryTokens();
   final requests = <Map<String, dynamic>>[];
+  final subscriptions = <String, Map<String, dynamic>>{};
+  var preferences = <String, dynamic>{
+    'revision': 0,
+    'notifications_enabled': true,
+    'locale': 'en',
+    'resident_area_id': residentAreaId,
+    'resident_area_name': residentAreaId == null
+        ? null
+        : 'Synthetic selected area',
+  };
   final client = MockClient((request) async {
+    if (request.url.path == '/api/auth/capabilities') {
+      return http.Response(
+        '{"recovery_available":false,"mfa_available":false}',
+        200,
+      );
+    }
+    if (request.url.path == '/api/auth/preferences/areas') {
+      return http.Response(
+        jsonEncode([
+          if (residentAreaId != null)
+            {'id': residentAreaId, 'name': 'Synthetic selected area'},
+        ]),
+        200,
+      );
+    }
+    if (request.url.path == '/api/auth/preferences') {
+      if (request.method == 'PATCH') {
+        final changes = jsonDecode(request.body) as Map<String, dynamic>;
+        if (changes['expected_revision'] != preferences['revision']) {
+          return http.Response('{}', 409);
+        }
+        changes.remove('expected_revision');
+        preferences = {
+          ...preferences,
+          ...changes,
+          'revision': (preferences['revision'] as int) + 1,
+        };
+      }
+      return http.Response(jsonEncode(preferences), 200);
+    }
+    if (request.url.path == '/api/official-notices') {
+      final area = request.url.queryParameters['area_id'];
+      final current = request.url.queryParameters['current_only'] == 'true';
+      final now = observationClock?.call() ?? DateTime.now();
+      final rows = officialNotices
+          .where(
+            (n) =>
+                (n['area_ids'] as List).contains(area) &&
+                n['status'] == 'Actual' &&
+                (!current ||
+                    (n['superseded_by'] == null &&
+                        DateTime.parse(
+                          n['expires_at'] as String,
+                        ).isAfter(now))),
+          )
+          .toList();
+      return http.Response(
+        jsonEncode({
+          'items': rows,
+          'checked_at': now.toUtc().toIso8601String(),
+          'has_more': false,
+          'scope': {
+            'area_id': area,
+            'status': 'Actual',
+            'current_only': current,
+          },
+        }),
+        200,
+      );
+    }
+    if (request.url.path == '/api/alert-subscriptions') {
+      if (request.method == 'POST') {
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        final key = '${body['kind']}:${body['target_id']}';
+        final revision = subscriptions[key]?['revision'] ?? 0;
+        if (body['expected_revision'] != revision) {
+          return http.Response('{}', 409);
+        }
+        subscriptions[key] = {...body, 'revision': revision + 1};
+        return http.Response(jsonEncode(subscriptions[key]), 200);
+      }
+      return http.Response(
+        jsonEncode({
+          'subscriptions': subscriptions.values.toList(),
+          'areas': [],
+          'stations': [
+            if (!emptyStations)
+              {
+                'station_id': 'STATION_001',
+                'station_name': 'Test Deployed Station',
+              },
+          ],
+        }),
+        200,
+      );
+    }
     if (request.url.path.startsWith('/api/community-alerts')) {
       final path = request.url.path;
       return http.Response(
@@ -93,48 +238,66 @@ AppController fixtureController({ThemePreferenceStore? themeStorage}) {
       );
     }
     if (request.url.path == '/api/monitoring/stations') {
+      if (monitoringReady != null) await monitoringReady;
+      if (monitoringStatus != 200) return http.Response('{}', monitoringStatus);
       final now = DateTime.now().toUtc().toIso8601String();
       return http.Response(
         jsonEncode({
           'checked_at': now,
           'stale_after_seconds': 30,
           'stations': [
-            {
-              'station_id': 'STATION_001',
-              'station_name': 'Test Deployed Station',
-              'barangay': 'San Vicente',
-              'municipality': 'Urdaneta City',
-              'latitude': 15.98165,
-              'longitude': 120.560573,
-              'administrative_status': 'active',
-              'connection_status': 'online',
-              'is_online': true,
-              'is_stale': false,
-              'age_seconds': 1,
-              'alert_tier': 'WARNING',
-              'trend': 'rising',
-              'current_depth_cm': 95.8,
-              'latest_depth_cm': 95.8,
-              'latest_rainfall_mm': 3.2,
-              'sensor_quality': 'valid',
-              'last_ping': now,
-              'observed_at': now,
-              'firmware_version': '0.2.0-simulator',
-              'source': 'simulator',
-              'threshold_advisory_cm': 60.0,
-              'threshold_warning_cm': 85.0,
-              'threshold_evacuate_cm': 100.0,
-              'history': [
-                {
-                  'sequence_no': 1,
-                  'water_depth_cm': 95.8,
-                  'rainfall_mm': 3.2,
-                  'sensor_quality': 'valid',
-                  'device_uptime_ms': 1000,
-                  'recorded_at': now,
-                },
-              ],
-            },
+            if (!emptyStations)
+              {
+                'station_id': 'STATION_001',
+                'station_name': 'Test Deployed Station',
+                'barangay': 'San Vicente',
+                'municipality': 'Urdaneta City',
+                'latitude': 15.98165,
+                'longitude': 120.560573,
+                'administrative_status': 'active',
+                'connection_status': 'online',
+                'is_online': true,
+                'is_stale': false,
+                'age_seconds': 1,
+                'alert_tier': 'WARNING',
+                'trend': 'rising',
+                'current_depth_cm': 95.8,
+                'latest_depth_cm': 95.8,
+                'latest_rainfall_mm': 3.2,
+                'sensor_quality': 'valid',
+                'last_ping': now,
+                'observed_at': now,
+                'firmware_version': '0.2.0-simulator',
+                'source': 'device',
+                'source_class': 'physical_device',
+                'source_trusted': true,
+                'depth_source_trusted': true,
+                'stream': 'operational',
+                'heartbeat_at': now,
+                'heartbeat_age_seconds': 1,
+                'heartbeat_fresh': true,
+                'latest_sample_at': now,
+                'last_valid_depth_at': now,
+                'depth_age_seconds': 1,
+                'depth_fresh': true,
+                'depth_status': 'fresh',
+                'hazard_state': 'observed',
+                'active_hazard_tier': 'WARNING',
+                'threshold_advisory_cm': 60.0,
+                'threshold_warning_cm': 85.0,
+                'threshold_evacuate_cm': 100.0,
+                'history': [
+                  {
+                    'sequence_no': 1,
+                    'water_depth_cm': 95.8,
+                    'rainfall_mm': 3.2,
+                    'sensor_quality': 'valid',
+                    'device_uptime_ms': 1000,
+                    'recorded_at': now,
+                  },
+                ],
+                ...monitoringChanges,
+              },
           ],
         }),
         200,
@@ -185,10 +348,30 @@ AppController fixtureController({ThemePreferenceStore? themeStorage}) {
           predictionFixture(
             status: preview
                 ? request.url.queryParameters['scenario'] ?? 'available'
-                : 'not_trained',
-            source: preview ? 'simulated' : 'none',
+                : forecastStatus,
+            source: preview
+                ? 'simulated'
+                : forecastStatus == 'available'
+                ? 'model'
+                : 'none',
           ),
         ),
+        200,
+      );
+    }
+    if (request.url.path.startsWith('/api/forecasts/')) {
+      return http.Response(
+        jsonEncode({
+          'product': predictionFixture(status: 'available', source: 'model'),
+          'current': false,
+          'read_at': DateTime.now().toUtc().toIso8601String(),
+        }),
+        200,
+      );
+    }
+    if (request.url.path.startsWith('/api/rain-activity/')) {
+      return http.Response(
+        jsonEncode(rainActivityFixture(station: request.url.pathSegments[2])),
         200,
       );
     }
@@ -227,8 +410,16 @@ AppController fixtureController({ThemePreferenceStore? themeStorage}) {
     );
   });
   return AppController(
+    receiptStorage: receiptStorage,
     themeStorage: themeStorage,
+    observationClock: observationClock,
+    locationSource: TestLocationSource(),
+    preferenceStorage: MemoryProductPreferences(),
     sosStorage: MemorySosDrafts(),
-    authApi: AuthApi(client: client, storage: storage),
+    authApi: AuthApi(
+      readerStorage: MemoryReaderStorage(),
+      client: client,
+      storage: storage,
+    ),
   );
 }

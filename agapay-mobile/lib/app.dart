@@ -8,6 +8,7 @@ import 'screens/alerts/notification_history_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/splash/splash_screen.dart';
+import 'l10n/generated/app_localizations.dart';
 
 class AgapayApp extends StatefulWidget {
   const AgapayApp({this.controller, super.key});
@@ -37,8 +38,9 @@ class _AgapayAppState extends State<AgapayApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _controller.setForeground(state == AppLifecycleState.resumed);
     if (state == AppLifecycleState.resumed && _controller.signedIn) {
-      _controller.notificationRegistration.refresh();
+      _controller.resumeCapabilities();
     }
   }
 
@@ -56,6 +58,9 @@ class _AgapayAppState extends State<AgapayApp> with WidgetsBindingObserver {
       listenable: _controller.theme,
       builder: (context, _) => MaterialApp(
         title: 'AGAPAY',
+        locale: const Locale('en'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         navigatorKey: _navigator,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,

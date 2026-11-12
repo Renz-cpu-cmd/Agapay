@@ -63,10 +63,13 @@ void main() {
         ..addFont(rootBundle.load('assets/fonts/$name.ttf'));
       await loader.load();
     }
+    final icons = FontLoader('MaterialIcons')
+      ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+    await icons.load();
   });
 
   testWidgets(
-    'prototype navigation, alerts, maps, settings and confirmed practice SOS',
+    'prototype navigation, alerts, maps, settings and confirmed SOS',
     (tester) async {
       await start(tester);
       await capture(tester, 'login');
@@ -97,12 +100,15 @@ void main() {
       await tapText(tester, 'LOG IN');
       await tester.pumpAndSettle();
       await capture(tester, 'home');
-      expect(find.text('95.8'), findsOneWidget);
+      await tester.ensureVisible(find.text('WATER-DEPTH FORECAST'));
+      await tester.pumpAndSettle();
+      await capture(tester, 'home_forecast');
+      expect(find.text('95.8'), findsWidgets);
       final controller = AppScope.of(
         tester.element(find.byType(MainNavigationShell)),
       );
       expect(controller.alert, AlertLevel.warning);
-      expect(find.text('VIRTUAL STATION'), findsOneWidget);
+      expect(find.textContaining('Observed'), findsWidgets);
       expect(tester.takeException(), isNull);
       await tester.drag(
         find.byType(SingleChildScrollView).first,
@@ -112,14 +118,24 @@ void main() {
       await capture(tester, 'home_evacuate');
       await tapText(tester, 'VIEW ALERT DETAILS');
       await capture(tester, 'alert_details');
-      expect(find.text('Flood Alert'), findsOneWidget);
+      expect(find.text('Sensor episode'), findsOneWidget);
       await tapText(tester, 'NAVIGATE TO SHELTER');
       await capture(tester, 'evacuation_map');
-      expect(find.text('EVACUATION DESTINATION'), findsOneWidget);
-      expect(find.text('UCU Gym'), findsOneWidget);
+      expect(
+        find.text('Shelter inventory & reported road restrictions'),
+        findsOneWidget,
+      );
+      expect(find.text('UCU Gym'), findsNothing);
+      expect(
+        find.textContaining('No authority-maintained shelter'),
+        findsOneWidget,
+      );
 
       await tapText(tester, 'Monitoring Stations');
-      await tester.tap(find.text('STATION_001'));
+      await tester.ensureVisible(
+        find.widgetWithText(TextButton, 'STATION_001'),
+      );
+      await tester.tap(find.widgetWithText(TextButton, 'STATION_001'));
       await tester.pump(const Duration(milliseconds: 400));
       await capture(tester, 'map_station');
       expect(find.text('95.8 cm'), findsOneWidget);
@@ -139,14 +155,14 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('1 active sensor alerts'), findsOneWidget);
 
-      await tapText(tester, 'History');
+      await tapText(tester, 'Episode history');
       await capture(tester, 'community_alert_history');
       expect(find.text('EVACUATE · Peak tier'), findsOneWidget);
       expect(find.text('Recovery depth: 35.2 cm'), findsOneWidget);
 
       await tab(tester, 'SOS');
       await capture(tester, 'sos');
-      await tester.tap(find.bySemanticsLabel(RegExp('Start practice SOS')));
+      await tester.tap(find.bySemanticsLabel(RegExp('Start SOS')));
       await tester.pump(const Duration(milliseconds: 400));
       await capture(tester, 'sos_confirm');
       await tester.enterText(
@@ -158,28 +174,34 @@ void main() {
         'Prototype test',
       );
       await tapText(tester, 'CANCEL');
-      expect(find.text('Practice an SOS request'), findsOneWidget);
+      expect(find.text('START SOS'), findsOneWidget);
       expect(find.text('REQUEST RECEIVED'), findsNothing);
-      await tester.tap(find.bySemanticsLabel(RegExp('Start practice SOS')));
+      await tester.tap(find.bySemanticsLabel(RegExp('Start SOS')));
       await tester.pump();
-      await tapText(tester, 'SEND PRACTICE SOS');
+      await tapText(tester, 'SEND SOS');
       await tester.pump(const Duration(seconds: 1));
       await capture(tester, 'sos_received');
       expect(find.text('REQUEST RECEIVED'), findsOneWidget);
       expect(
-        find.text('Saved by the server. Waiting for staff acknowledgement.'),
+        find.text(
+          'Server receipt confirmed. This does not confirm that a person has reviewed it or that a responder was sent.',
+        ),
         findsOneWidget,
       );
       await tapText(tester, 'BACK TO SOS HISTORY');
-      expect(find.text('PRACTICE #1'), findsOneWidget);
+      expect(find.text('TEST REQUEST #1'), findsOneWidget);
 
       await tab(tester, 'Profile');
       await capture(tester, 'profile');
+      await tester.ensureVisible(find.bySemanticsLabel('Flood Alerts').last);
       await tester.tap(find.bySemanticsLabel('Flood Alerts').last);
       await tester.pump();
       expect(controller.notifications, isFalse);
-      await tapText(tester, 'English');
-      expect(controller.language, 'Filipino');
+      expect(controller.language, 'English');
+      expect(
+        find.textContaining('Filipino translation unavailable'),
+        findsOneWidget,
+      );
       await tapText(tester, 'LOG OUT');
       await tester.pumpAndSettle();
       expect(find.text('Welcome back'), findsOneWidget);
@@ -216,6 +238,13 @@ void main() {
         reason: 'Overflow in $label at 320 px',
       );
     }
+    await tab(tester, 'Home');
+    await capture(tester, 'home_compact');
+    tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pump();
+    expect(tester.takeException(), isNull, reason: 'Home with larger text');
+    await capture(tester, 'home_large_text');
     await tester.pumpWidget(const SizedBox.shrink());
   });
 }

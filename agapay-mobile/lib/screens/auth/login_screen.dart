@@ -1,4 +1,5 @@
 import '../../core/ui.dart';
+import 'recovery_screen.dart';
 import '../../navigation/app_routes.dart';
 import '../../widgets/common/auth_field.dart';
 
@@ -11,7 +12,32 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
-  bool _busy = false;
+  bool _busy = false, _capabilitiesQueried = false, _recoveryAvailable = false;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_capabilitiesQueried) {
+      _capabilitiesQueried = true;
+      _readCapabilities();
+    }
+  }
+
+  Future<void> _readCapabilities() async {
+    try {
+      final caps = await AppScope.of(
+        context,
+      ).auth.request('auth/capabilities', authenticated: false);
+      if (mounted) {
+        setState(
+          () => _recoveryAvailable =
+              caps is Map && caps['recovery_available'] == true,
+        );
+      }
+    } catch (_) {
+      /* Recovery unavailable until explicitly configured. */
+    }
+  }
+
   String? _error;
 
   Future<void> _submit() async {
@@ -142,21 +168,25 @@ class _LoginScreenState extends State<LoginScreen> {
                             hint: '••••••••',
                             password: true,
                           ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: InkWell(
-                              onTap: () => previewNotice(
-                                context,
-                                'Contact your AGAPAY administrator to reset your password.',
+                          if (_recoveryAvailable)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const RecoveryScreen(),
+                                  ),
+                                ),
+                                child: const Text('Forgot password?'),
                               ),
-                              child: tx(
-                                'Forgot password?',
-                                size: 12,
-                                color: context.colors.link,
-                                height: 16 / 12,
-                              ),
+                            )
+                          else
+                            tx(
+                              'Email recovery unavailable; contact your AGAPAY operator.',
+                              size: 11,
+                              color: context.colors.muted,
                             ),
-                          ),
                         ],
                       ),
                       if (_error != null ||
@@ -216,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                 child: tx(
-                  'AGAPAY v1.0.0 · URDANETA CITY, PANGASINAN',
+                  'AGAPAY · ${AppScope.of(context).buildInfo.label}',
                   size: 10,
                   mono: true,
                   color: context.colors.faint,

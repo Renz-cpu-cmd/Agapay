@@ -26,7 +26,44 @@ class NotificationRegistrationController extends ChangeNotifier {
   int _generation = 0;
   bool _disposed = false;
   bool _stopping = false;
+  bool _preferenceEnabled = true;
+  bool get capabilitySupported => _provider.supported;
+  String permissionStatus = 'unknown';
+  Future<void> refreshPermission() async {
+    try {
+      permissionStatus = !_provider.supported
+          ? 'unavailable'
+          : _provider is PushPermissionProbe
+          ? await (_provider as PushPermissionProbe).permissionStatus()
+          : 'unknown';
+    } catch (_) {
+      permissionStatus = 'unavailable';
+    }
+    if (!_disposed) notifyListeners();
+  }
+
+  Future<void> setPreference(bool enabled) async {
+    if (_disposed || enabled == _preferenceEnabled) return;
+    _preferenceEnabled = enabled;
+    final version = _generation;
+    if (!enabled) {
+      await _tail;
+      if (_disposed || version != _generation || _preferenceEnabled) return;
+      try {
+        await _remove();
+      } catch (_) {
+        /* Backend preference is authoritative, including after restart. */
+      }
+      _setState(NotificationRegistrationState.disabled);
+    } else {
+      await refresh();
+    }
+  }
+
   String? _deviceId;
+
+  /// Server registration ID of this device, once registered (read-only).
+  String? get deviceId => _deviceId;
   PushToken? _registeredToken;
   NotificationRegistrationState state = NotificationRegistrationState.disabled;
 
@@ -43,7 +80,7 @@ class NotificationRegistrationController extends ChangeNotifier {
     _deviceId = null;
     _registeredToken = null;
     _setState(
-      _provider.supported && owner != null
+      _provider.supported && _preferenceEnabled && owner != null
           ? NotificationRegistrationState.waiting
           : NotificationRegistrationState.disabled,
     );
@@ -64,7 +101,11 @@ class NotificationRegistrationController extends ChangeNotifier {
   Future<void> refresh() => _queue(_provider.currentToken);
 
   Future<void> _queue(Future<PushToken?> Function() read) {
-    if (_disposed || _stopping || _owner == null || !_provider.supported) {
+    if (_disposed ||
+        !_preferenceEnabled ||
+        _stopping ||
+        _owner == null ||
+        !_provider.supported) {
       return Future.value();
     }
     final version = _generation;
@@ -109,7 +150,10 @@ class NotificationRegistrationController extends ChangeNotifier {
   }
 
   bool _current(int version) =>
-      !_disposed && _owner != null && version == _generation;
+      !_disposed &&
+      _preferenceEnabled &&
+      _owner != null &&
+      version == _generation;
 
   Future<void> _remove() async {
     final id = _deviceId;
@@ -123,8 +167,10 @@ class NotificationRegistrationController extends ChangeNotifier {
         if (error.status != 404) rethrow;
       }
     }
-    _deviceId = null;
-    _registeredToken = null;
+    if (_deviceId == id) {
+      _deviceId = null;
+      _registeredToken = null;
+    }
   }
 
   /// Drain an in-flight registration before logout revokes its session.

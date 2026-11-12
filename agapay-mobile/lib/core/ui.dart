@@ -18,6 +18,7 @@ Widget tx(
   TextAlign? align,
   int? lines,
   bool adaptive = true,
+  bool metadata = false,
 }) => Builder(
   builder: (context) => Text(
     value,
@@ -50,6 +51,7 @@ Widget caption(String value) => Builder(
   builder: (context) => tx(
     value,
     size: 10,
+    metadata: true,
     color: context.colors.muted,
     mono: true,
     weight: 600,
@@ -57,6 +59,46 @@ Widget caption(String value) => Builder(
   ),
 );
 const gap = SizedBox(height: 12);
+
+/// Shared selected treatment for the resident map and alert-history filters.
+class SelectionButton extends StatelessWidget {
+  const SelectionButton(
+    this.label, {
+    required this.selected,
+    required this.onPressed,
+    this.outlined = true,
+    super.key,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
+  final bool outlined;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    selected: selected,
+    child: TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        backgroundColor: selected
+            ? context.colors.link.withValues(alpha: .12)
+            : Colors.transparent,
+        side: outlined
+            ? BorderSide(
+                color: selected ? context.colors.link : context.colors.border,
+              )
+            : BorderSide.none,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      child: tx(
+        label,
+        size: 12,
+        display: true,
+        weight: selected ? 700 : 500,
+        color: selected ? context.colors.link : context.colors.muted,
+      ),
+    ),
+  );
+}
 
 class Panel extends StatelessWidget {
   const Panel({
@@ -145,8 +187,8 @@ class PageHeading extends StatelessWidget {
               onTap: onBack,
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                width: 44,
-                height: 44,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: context.colors.surface,
                   border: Border.all(color: context.colors.border),
@@ -248,7 +290,8 @@ class ActionButton extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: onPressed,
-            child: Padding(
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 48),
               padding: EdgeInsets.symmetric(horizontal: 10, vertical: vertical),
               child: Center(
                 child: tx(
@@ -369,22 +412,39 @@ class DataRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 3),
-    child: Row(
-      children: [
-        tx(label, size: 11, color: context.colors.muted, display: true),
-        const SizedBox(width: 12),
-        Expanded(
-          child: tx(
-            value,
-            size: 12,
-            color: color,
-            display: !mono,
-            mono: mono,
-            weight: mono ? 400 : 600,
-            align: TextAlign.right,
-          ),
-        ),
-      ],
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final stacked =
+            constraints.maxWidth < 360 &&
+            MediaQuery.textScalerOf(context).scale(14) > 18;
+        final title = tx(
+          label,
+          size: 14,
+          color: context.colors.muted,
+          display: true,
+        );
+        final content = tx(
+          value,
+          size: 14,
+          color: color,
+          display: !mono,
+          mono: mono,
+          weight: mono ? 400 : 600,
+          align: stacked ? TextAlign.left : TextAlign.right,
+        );
+        return stacked
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [title, content],
+              )
+            : Row(
+                children: [
+                  Expanded(child: title),
+                  const SizedBox(width: 12),
+                  Expanded(flex: 2, child: content),
+                ],
+              );
+      },
     ),
   );
 }

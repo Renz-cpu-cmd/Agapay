@@ -30,12 +30,24 @@ void main() {
       var status = 'ACTIVE';
       Map<String, dynamic>? record;
       final api = AuthApi(
+        readerStorage: MemoryReaderStorage(),
         storage: MemoryTokens()..value = 'resident-session',
         client: MockClient((request) async {
           if (request.url.path.endsWith('/me')) {
             return http.Response(jsonEncode(resident()), 200);
           }
           expect(request.headers['Authorization'], 'Bearer resident-session');
+          if (request.url.path.endsWith('/receipt')) {
+            return http.Response(
+              jsonEncode({
+                'receipt': record == null ? 'unseen' : 'received',
+                'item': record == null
+                    ? null
+                    : practiceSos(fields: record!, status: status),
+              }),
+              200,
+            );
+          }
           if (request.method == 'POST') {
             expect(
               drafts.values[1],
@@ -74,7 +86,7 @@ void main() {
       );
       expect(posts[0], posts[1]);
       expect(controller.pending, isNull);
-      expect(drafts.values, isEmpty);
+      expect(drafts.values[1]!['_outbox']['state'], 'received');
       status = 'ACKNOWLEDGED';
       await controller.refresh();
       expect(controller.lastSent?.acknowledgedBy, 'Test Officer');
@@ -96,8 +108,18 @@ void main() {
       Map<String, dynamic>? record;
       var posts = 0;
       final api = AuthApi(
+        readerStorage: MemoryReaderStorage(),
         storage: MemoryTokens(),
         client: MockClient((request) async {
+          if (request.url.path.endsWith('/receipt')) {
+            return http.Response(
+              jsonEncode({
+                'receipt': record == null ? 'unseen' : 'received',
+                'item': record == null ? null : practiceSos(fields: record!),
+              }),
+              200,
+            );
+          }
           if (request.method == 'POST') {
             posts++;
             record = jsonDecode(request.body) as Map<String, dynamic>;
@@ -115,32 +137,39 @@ void main() {
       expect(controller.lastSent?.id, 1);
       expect(controller.pending, isNull);
       expect(posts, 1);
-      expect(drafts.values, isEmpty);
+      expect(drafts.values[1]!['_outbox']['state'], 'received');
       controller.dispose();
       api.dispose();
     },
   );
 
-  test('validation rejection is unsent and allows corrected details', () async {
-    final drafts = MemorySosDrafts();
-    final api = AuthApi(
-      storage: MemoryTokens(),
-      client: MockClient(
-        (request) async => request.method == 'GET'
-            ? page([])
-            : http.Response('{"detail":"Refresh GPS location"}', 422),
-      ),
-    );
-    final controller = SosController(api, storage: drafts);
-    await controller.setOwner(1);
-    expect(await controller.send(fields), isNull);
-    expect(controller.error, contains('not accepted'));
-    expect(controller.pending, isNull);
-    expect(controller.lastSent, isNull);
-    expect(drafts.values, isEmpty);
-    controller.dispose();
-    api.dispose();
-  });
+  test(
+    'validation rejection remains inspectable until explicitly discarded',
+    () async {
+      final drafts = MemorySosDrafts();
+      final api = AuthApi(
+        readerStorage: MemoryReaderStorage(),
+        storage: MemoryTokens(),
+        client: MockClient(
+          (request) async => request.method == 'GET'
+              ? page([])
+              : http.Response('{"detail":"Refresh GPS location"}', 422),
+        ),
+      );
+      final controller = SosController(api, storage: drafts);
+      await controller.setOwner(1);
+      expect(await controller.send(fields), isNull);
+      expect(controller.error, contains('not accepted'));
+      expect(controller.pending, isNotNull);
+      expect(controller.pendingState, 'rejected');
+      expect(controller.lastSent, isNull);
+      await controller.discardUnsent();
+      expect(controller.pending, isNull);
+      expect(drafts.values, isEmpty);
+      controller.dispose();
+      api.dispose();
+    },
+  );
 
   test(
     'old history response cannot overwrite a successful send or another account',
@@ -148,6 +177,7 @@ void main() {
       final oldRead = Completer<http.Response>();
       var reads = 0;
       final api = AuthApi(
+        readerStorage: MemoryReaderStorage(),
         storage: MemoryTokens(),
         client: MockClient((request) async {
           if (request.method == 'POST') {
@@ -172,56 +202,55 @@ void main() {
     },
   );
 
-  test(
-    'foreground fix updates the open request and sends only GPS fields',
-    () async {
-      final captured = DateTime.utc(2026, 9, 5, 2, 15);
-      final original = practiceSos(fields: fields);
-      final api = AuthApi(
-        storage: MemoryTokens(),
-        client: MockClient((request) async {
-          if (request.method == 'GET') return page([original]);
-          expect(request.method, 'PATCH');
-          expect(request.url.path, '/api/sos/1/location');
-          expect(jsonDecode(request.body), {
-            'latitude': 15.9792,
-            'longitude': 120.571,
-            'accuracy_m': 6.5,
-            'location_recorded_at': captured.toIso8601String(),
-          });
-          return http.Response(
-            jsonEncode(
-              practiceSos(
-                fields: {
-                  ...fields,
-                  'latitude': 15.9792,
-                  'longitude': 120.571,
-                  'location_source': 'gps',
-                  'accuracy_m': 6.5,
-                  'location_recorded_at': captured.toIso8601String(),
-                },
-              ),
+  test('foreground fix sends the expected version and GPS fields', () async {
+    final captured = DateTime.utc(2026, 9, 5, 2, 15);
+    final original = practiceSos(fields: fields);
+    final api = AuthApi(
+      readerStorage: MemoryReaderStorage(),
+      storage: MemoryTokens(),
+      client: MockClient((request) async {
+        if (request.method == 'GET') return page([original]);
+        expect(request.method, 'PATCH');
+        expect(request.url.path, '/api/sos/1/location');
+        expect(jsonDecode(request.body), {
+          'expected_version': 1,
+          'latitude': 15.9792,
+          'longitude': 120.571,
+          'accuracy_m': 6.5,
+          'location_recorded_at': captured.toIso8601String(),
+        });
+        return http.Response(
+          jsonEncode(
+            practiceSos(
+              fields: {
+                ...fields,
+                'latitude': 15.9792,
+                'longitude': 120.571,
+                'location_source': 'gps',
+                'accuracy_m': 6.5,
+                'location_recorded_at': captured.toIso8601String(),
+              },
             ),
-            200,
-          );
-        }),
-      );
-      final controller = SosController(api, storage: MemorySosDrafts());
-      await controller.setOwner(1);
-      final updated = await controller.updateLocation(
-        1,
-        latitude: 15.9792,
-        longitude: 120.571,
-        accuracyM: 6.5,
-        recordedAt: captured,
-      );
-      expect(updated?.locationSource, 'gps');
-      expect(updated?.accuracyM, 6.5);
-      expect(controller.items.single.latitude, 15.9792);
-      controller.dispose();
-      api.dispose();
-    },
-  );
+          ),
+          200,
+        );
+      }),
+    );
+    final controller = SosController(api, storage: MemorySosDrafts());
+    await controller.setOwner(1);
+    final updated = await controller.updateLocation(
+      1,
+      latitude: 15.9792,
+      longitude: 120.571,
+      accuracyM: 6.5,
+      recordedAt: captured,
+    );
+    expect(updated?.locationSource, 'gps');
+    expect(updated?.accuracyM, 6.5);
+    expect(controller.items.single.latitude, 15.9792);
+    controller.dispose();
+    api.dispose();
+  });
 
   testWidgets(
     'SOS waits for acceptance, shows failure and retries without duplicate submission',
@@ -233,8 +262,11 @@ void main() {
       final response = Completer<http.Response>();
       var posts = 0;
       final app = AppController(
+        locationSource: TestLocationSource(),
+        preferenceStorage: MemoryProductPreferences(),
         sosStorage: MemorySosDrafts(),
         authApi: AuthApi(
+          readerStorage: MemoryReaderStorage(),
           storage: MemoryTokens(),
           client: MockClient((request) async {
             if (request.url.path.endsWith('/login')) {
@@ -261,16 +293,18 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 400));
       await tester.ensureVisible(
-        find.bySemanticsLabel(RegExp('Start practice SOS')),
+        find.bySemanticsLabel(RegExp('Start SOS')),
       );
-      await tester.tap(find.bySemanticsLabel(RegExp('Start practice SOS')));
+      await tester.tap(find.bySemanticsLabel(RegExp('Start SOS')));
       await tester.pump();
       await tester.enterText(
         find.byKey(const ValueKey('sos-location')),
         'Practice site, San Vicente',
       );
-      await tester.ensureVisible(find.text('SEND PRACTICE SOS'));
-      await tester.tap(find.text('SEND PRACTICE SOS'));
+      tester.testTextInput.hide();
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('SEND SOS'));
+      await tester.tap(find.text('SEND SOS'));
       await tester.pump();
       expect(find.text('SENDING…'), findsOneWidget);
       expect(find.text('REQUEST RECEIVED'), findsNothing);

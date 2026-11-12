@@ -1,3 +1,4 @@
+import '../core/release_configuration.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/prediction.dart';
@@ -11,6 +12,7 @@ class ForecastController extends ChangeNotifier {
   int? _owner;
   int _generation = 0;
   bool _disposed = false;
+  bool _foreground = true;
   Timer? _poll, _expiry;
   DateTime? _deadline;
   String stationId = 'STATION_001';
@@ -27,10 +29,45 @@ class ForecastController extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
+  void selectStation(String id) {
+    if (_disposed || stationId == id) return;
+    stationId = id;
+    ++_generation;
+    data = null;
+    error = null;
+    _deadline = null;
+    _expiry?.cancel();
+    loading = false;
+    _notify();
+    if (_owner != null) unawaited(refresh());
+  }
+
+  void setForeground(bool value) {
+    if (_disposed || _foreground == value) return;
+    _foreground = value;
+    ++_generation;
+    _poll?.cancel();
+    _expiry?.cancel();
+    loading = false;
+    if (!value) {
+      error = 'Forecast reads paused.';
+      _notify();
+      return;
+    }
+    _notify();
+    if (_owner != null) {
+      _poll = Timer.periodic(const Duration(seconds: 30), (_) {
+        if (!loading) unawaited(refresh());
+      });
+      unawaited(refresh());
+    }
+  }
+
   Future<void> setOwner(int? owner) async {
     if (_owner == owner) return;
     ++_generation;
     _owner = owner;
+    stationId = "STATION_001";
     _poll?.cancel();
     _expiry?.cancel();
     data = null;
@@ -42,15 +79,20 @@ class ForecastController extends ChangeNotifier {
     _deadline = null;
     _notify();
     if (owner == null) return;
-    _poll = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (!loading) refresh();
-    });
+    if (_foreground) {
+      _poll = Timer.periodic(const Duration(seconds: 30), (_) {
+        if (!loading) refresh();
+      });
+    }
     await refresh();
   }
 
   Future<void> setPreview(bool value, {String? scenario}) async {
+    if (value && !ReleaseConfiguration.exercisesAvailable) return;
     if (value && !previewAllowed) return;
     if (scenario != null && !forecastLabels.containsKey(scenario)) return;
+    ++_generation;
+    loading = false;
     preview = value;
     this.scenario = scenario ?? this.scenario;
     data = null;
@@ -62,7 +104,7 @@ class ForecastController extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    if (_owner == null || _disposed) return;
+    if (_owner == null || _disposed || !_foreground || loading) return;
     final generation = ++_generation;
     final started = now();
     final requestedPreview = preview;
@@ -72,7 +114,10 @@ class ForecastController extends ChangeNotifier {
       final response = await api.request(
         'predictions/$stationId?mode=${preview ? 'preview' : 'actual'}&scenario=$scenario',
       );
-      final prediction = Prediction.fromJson(response as Map<String, dynamic>);
+      final json = response as Map<String, dynamic>;
+      final prediction = requestedPreview
+          ? Prediction.fromJson(json)
+          : Prediction.fromPublishedJson(json);
       if (prediction.stationId != stationId ||
           (requestedPreview
               ? prediction.source != 'simulated'

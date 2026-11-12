@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'delivery_evidence_screen.dart';
 import '../../core/ui.dart';
+import '../../widgets/common/official_notices.dart';
+import '../../widgets/common/resident_decisions.dart';
 import 'community_alert_widgets.dart';
 
 class AlertsScreen extends StatefulWidget {
@@ -32,29 +35,43 @@ class _AlertsScreenState extends State<AlertsScreen> {
     final page = resource.data;
     return PageContent(
       children: [
-        const PageHeading('Notifications', 'AGAPAY community sensor episodes'),
+        const PageHeading('Alerts', 'Community Alert History'),
+        if (app.notices.current.items.isNotEmpty)
+          const OfficialNoticesPanel()
+        else
+          ExpansionTile(
+            // Own PageStorage identity: unkeyed, it shares the Alerts page-scroll slot.
+            key: const PageStorageKey('alerts-area-advisories'),
+            title: const Text('Advisories for your area'),
+            children: const [ResidentAreaPanel(), OfficialNoticesPanel()],
+          ),
+        gap,
+        Semantics(
+          header: true,
+          child: tx('Station sensor episodes', size: 20, weight: 700),
+        ),
         tx(
-          'In-app alert feed · Push delivery and read receipts are not connected.',
-          size: 11,
+          'Recorded sensor episodes · separate from authority advisories',
+          size: 10,
           color: context.colors.muted,
         ),
         gap,
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            Expanded(
-              child: TextButton(
-                onPressed: () => setState(() => _history = false),
-                child: Text(_history ? 'Active' : 'Active •'),
-              ),
+            SelectionButton(
+              'Active episodes',
+              selected: !_history,
+              onPressed: () => setState(() => _history = false),
             ),
-            Expanded(
-              child: TextButton(
-                onPressed: () {
-                  setState(() => _history = true);
-                  unawaited(controller.refreshHistory(offset: 0));
-                },
-                child: Text(_history ? 'History •' : 'History'),
-              ),
+            SelectionButton(
+              'Episode history',
+              selected: _history,
+              onPressed: () {
+                setState(() => _history = true);
+                unawaited(controller.refreshHistory(offset: 0));
+              },
             ),
             TextButton(
               onPressed: resource.loading
@@ -68,6 +85,13 @@ class _AlertsScreenState extends State<AlertsScreen> {
         ),
         if (!_history && page != null)
           tx('${page.total} active sensor alerts', size: 12, weight: 600),
+        if (page != null && page.items.any((e) => !e.isOperational))
+          tx(
+            'Includes unverified station records — these are not operational warnings.',
+            size: 11,
+            weight: 600,
+            color: context.colors.secondary,
+          ),
         if (_history)
           tx(
             'History includes active and resolved episodes. Resolved severity is the peak tier.',
@@ -102,7 +126,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 key: ValueKey('community-alert-${episode.id}'),
                 onTap: () => app.showCommunityAlert(episode.id),
                 borderRadius: BorderRadius.circular(16),
-                child: CommunityEpisodeSummary(episode: episode),
+                child: CommunityEpisodeSummary(episode: episode, compact: true),
               ),
             ),
             gap,
@@ -120,9 +144,29 @@ class _AlertsScreenState extends State<AlertsScreen> {
         ],
         gap,
         tx(
-          'Times shown in Philippine time (PHT). Device/simulator origin is not recorded for these episodes. Last valid depths may be stale; invalid readings do not resolve alerts.',
+          'Times shown in Philippine time (PHT). Ingress origin is not recorded for these episodes. Last valid depths may be stale; invalid readings do not resolve alerts.',
           size: 11,
           color: context.colors.muted,
+        ),
+        ExpansionTile(
+          key: const PageStorageKey('alerts-delivery-evidence'),
+          title: const Text('Notification receipt and acknowledgement'),
+          subtitle: const Text(
+            'Delivery evidence is separate from authority instructions',
+          ),
+          children: [
+            const Text(
+              'Opening an advisory does not confirm that help is on the way. Acknowledgement is available only for supported push delivery records.',
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const DeliveryEvidenceScreen(),
+                ),
+              ),
+              child: const Text('Push delivery evidence'),
+            ),
+          ],
         ),
       ],
     );

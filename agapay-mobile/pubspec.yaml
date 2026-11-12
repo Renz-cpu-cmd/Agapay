@@ -10,9 +10,13 @@ dependencies:
   cupertino_icons: ^1.0.9
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  package_info_plus: 10.2.1
   flutter_svg: ^2.3.0
   url_launcher: ^6.3.2
   http: ^1.6.0
+  crypto: 3.0.7
   geolocator: 14.0.2
   # 10.x supports this project's Android SDK 36 toolchain.
   flutter_secure_storage: ^10.3.1
@@ -20,18 +24,23 @@ dependencies:
   firebase_core: ^4.15.0
   firebase_messaging: ^16.7.0
 
+  intl: ^0.20.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
 
 flutter:
+  default-flavor: development
+  generate: true
   uses-material-design: true
   assets:
     - assets/images/
     - assets/icons/
     - assets/fonts/
-    - assets/config/
+    - path: assets/config/
+      flavors:
+        - development
     - assets/maps/
 
   fonts:

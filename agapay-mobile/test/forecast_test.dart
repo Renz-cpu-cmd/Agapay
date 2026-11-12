@@ -13,6 +13,46 @@ import 'support/accounts.dart';
 import 'support/predictions.dart';
 
 void main() {
+  testWidgets(
+    'published forecast identity and datum fit a narrow resident screen',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final app = fixtureController(forecastStatus: 'available');
+      await app.login('resident@example.com', 'long-password-value');
+      await app.forecasts.refresh();
+      await tester.pumpWidget(
+        AppScope(
+          controller: app,
+          child: const MaterialApp(
+            home: Scaffold(body: SingleChildScrollView(child: ForecastPanel())),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(app.forecasts.available, true, reason: app.forecasts.error);
+      expect(
+        find.textContaining('00000000-0000-4000-8000-000000000001'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Synthetic test datum'), findsOneWidget);
+      expect(find.text('Preview sample scenarios'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.ensureVisible(find.textContaining('Forecast ID:'));
+      await tester.tap(find.textContaining('Forecast ID:'));
+      await tester.pumpAndSettle();
+      expect(find.text('Published forecast record'), findsOneWidget);
+      expect(
+        find.textContaining('Historical, expired or withdrawn'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      app.dispose();
+    },
+  );
   test(
     'contract preserves real zeros and rejects malformed or misleading values',
     () {
@@ -42,6 +82,7 @@ void main() {
     var now = DateTime.utc(2026, 9, 4, 12);
     var fail = false;
     final api = AuthApi(
+      readerStorage: MemoryReaderStorage(),
       storage: MemoryTokens(),
       client: MockClient((_) async {
         if (fail) throw http.ClientException('offline');
@@ -72,6 +113,7 @@ void main() {
     () async {
       final delayed = Completer<http.Response>();
       final api = AuthApi(
+        readerStorage: MemoryReaderStorage(),
         storage: MemoryTokens(),
         client: MockClient((request) async {
           if (request.url.queryParameters['mode'] == 'preview') {
@@ -134,11 +176,11 @@ void main() {
       await tester.pump();
       expect(find.text('Model not trained'), findsOneWidget);
       expect(find.text('—'), findsNWidgets(3));
-      await tester.ensureVisible(find.text('Preview sample scenarios'));
-      await tester.tap(find.text('Preview sample scenarios'));
+      expect(find.text('Preview sample scenarios'), findsNothing);
+      await app.forecasts.setPreview(true);
       await tester.pump();
       await tester.pump();
-      expect(find.text('SIMULATED PREVIEW'), findsOneWidget);
+      expect(find.text('SYNTHETIC PREVIEW'), findsOneWidget);
       expect(find.text('96.0'), findsOneWidget);
       expect(app.alert, alert);
       for (final status in forecastLabels.keys.where((s) => s != 'available')) {

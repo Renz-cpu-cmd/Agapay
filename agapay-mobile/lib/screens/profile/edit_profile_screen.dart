@@ -1,4 +1,5 @@
 import '../../core/ui.dart';
+import '../../services/auth_api.dart';
 import '../../navigation/app_routes.dart';
 import '../../widgets/common/auth_field.dart';
 
@@ -15,7 +16,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _barangay = TextEditingController();
   final _current = TextEditingController();
   final _password = TextEditingController();
-  bool _loaded = false, _busy = false;
+  bool _loaded = false, _busy = false, _conflicted = false;
+  int? _version;
   String? _error;
 
   @override
@@ -24,6 +26,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!_loaded) {
       final user = AppScope.of(context).user;
       if (user != null) {
+        _version = user.version;
         _name.text = user.name;
         _email.text = user.email;
         _phone.text = user.phone;
@@ -49,6 +52,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _save() async {
+    if (_conflicted || _busy) return;
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _busy = true;
@@ -57,6 +61,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final app = AppScope.of(context);
     try {
       await app.saveProfile({
+        'expected_version': _version,
         'name': _name.text.trim(),
         'email': _email.text.trim(),
         'phone': _phone.text.trim(),
@@ -78,7 +83,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
       }
     } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+      if (error is AccountException && error.status == 409) {
+        for (final field in [
+          _name,
+          _email,
+          _phone,
+          _barangay,
+          _current,
+          _password,
+        ]) {
+          field.clear();
+        }
+        if (mounted) {
+          setState(() {
+            _conflicted = true;
+            _error =
+                'Your account changed. Stale form and password fields discarded. Refresh and review before saving.';
+          });
+        }
+      } else if (mounted) {
+        setState(() => _error = error.toString());
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -144,9 +169,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             gap,
           ],
+          if (_conflicted)
+            TextButton(
+              onPressed: _busy
+                  ? null
+                  : () async {
+                      setState(() => _busy = true);
+                      try {
+                        final app = AppScope.of(context);
+                        await app.refreshProfile();
+                        if (!mounted) return;
+                        final latest = app.user!;
+                        setState(() {
+                          _version = latest.version;
+                          _name.text = latest.name;
+                          _email.text = latest.email;
+                          _phone.text = latest.phone;
+                          _barangay.text = latest.barangay;
+                          _conflicted = false;
+                          _error = null;
+                        });
+                      } catch (error) {
+                        if (mounted) setState(() => _error = error.toString());
+                      } finally {
+                        if (mounted) setState(() => _busy = false);
+                      }
+                    },
+              child: const Text('Refresh profile and review'),
+            ),
           ActionButton(
             _busy ? 'SAVING...' : 'SAVE CHANGES',
-            onPressed: _busy ? null : _save,
+            onPressed: _busy || _conflicted ? null : _save,
           ),
         ],
       ),

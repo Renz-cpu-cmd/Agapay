@@ -5,7 +5,7 @@ abstract final class AppColors {
   static const surface = Color(0xff00112e);
   static const surfaceRaised = Color(0xff071a34);
   static const border = Color(0xff12396d);
-  static const muted = Color(0xff58739e);
+  static const muted = Color(0xff91a6c5);
   static const secondary = Color(0xff7895bd);
   static const label = Color(0xffa2b5d0);
   static const text = Color(0xffeef5ff);
@@ -17,75 +17,67 @@ abstract final class AppColors {
 }
 
 abstract final class AppTheme {
-  static final light = dark.copyWith(
-    brightness: Brightness.light,
-    scaffoldBackgroundColor: const Color(0xfff3f6fb),
-    colorScheme: const ColorScheme.light(
-      primary: Color(0xff2462b7),
-      surface: Colors.white,
-      onSurface: Color(0xff172b49),
-    ),
-    textTheme: dark.textTheme.apply(
-      bodyColor: const Color(0xff172b49),
-      displayColor: const Color(0xff172b49),
-    ),
-    dividerColor: const Color(0xffcbd8e8),
-    dividerTheme: const DividerThemeData(
-      color: Color(0xffcbd8e8),
-      thickness: 1,
-      space: 1,
-    ),
-    inputDecorationTheme: dark.inputDecorationTheme.copyWith(
-      fillColor: Colors.white,
-      hintStyle: const TextStyle(color: Color(0xff63758e), fontSize: 14),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xffcbd8e8)),
+  static final light = _build(Brightness.light);
+  static final dark = _build(Brightness.dark);
+
+  // Build Material defaults for the actual brightness. Copying a dark theme
+  // left native icons, disabled controls and dialog defaults white in light.
+  static ThemeData _build(Brightness brightness) {
+    final palette = AppPalette(brightness == Brightness.dark);
+    return ThemeData(
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+      visualDensity: VisualDensity.standard,
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xff2462b7), width: 1.5),
+      iconButtonTheme: const IconButtonThemeData(
+        style: ButtonStyle(minimumSize: WidgetStatePropertyAll(Size(48, 48))),
       ),
-    ),
-  );
-  static final dark = ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.dark,
-    fontFamily: 'Inter',
-    scaffoldBackgroundColor: AppColors.background,
-    colorScheme: const ColorScheme.dark(
-      primary: AppColors.link,
-      surface: AppColors.surface,
-      onSurface: AppColors.text,
-    ),
-    splashFactory: NoSplash.splashFactory,
-    dividerColor: AppColors.border,
-    dividerTheme: const DividerThemeData(
-      color: AppColors.border,
-      thickness: 1,
-      space: 1,
-    ),
-    textSelectionTheme: const TextSelectionThemeData(
-      cursorColor: Color(0xff3b82f6),
-      selectionColor: Color(0x403b82f6),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: AppColors.surface,
-      isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      hintStyle: const TextStyle(color: AppColors.faint, fontSize: 14),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.border),
+      useMaterial3: true,
+      brightness: brightness,
+      fontFamily: 'Inter',
+      scaffoldBackgroundColor: palette.background,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: palette.link,
+        brightness: brightness,
+        primary: palette.link,
+        onPrimary: palette.isDark ? palette.background : Colors.white,
+        surface: palette.surface,
+        onSurface: palette.text,
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.link, width: 1.5),
+      iconTheme: IconThemeData(color: palette.text),
+      splashFactory: NoSplash.splashFactory,
+      dividerColor: palette.border,
+      dividerTheme: DividerThemeData(
+        color: palette.border,
+        thickness: 1,
+        space: 1,
       ),
-    ),
-  );
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: Color(0xff3b82f6),
+        selectionColor: Color(0x403b82f6),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: palette.surface,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        hintStyle: TextStyle(color: palette.muted, fontSize: 14),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: palette.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: palette.link, width: 1.5),
+        ),
+      ),
+    );
+  }
 }
 
 /// Shared palette used by every screen; the original constants remain dark tokens.
@@ -109,6 +101,8 @@ class AppPalette {
   Color get red => AppColors.red;
 
   Color resolve(Color color) {
+    // Legacy unknown-reading text must follow the readable muted token in both themes.
+    if (color == const Color(0xff64748b)) return muted;
     if (isDark) return color;
     const dark = [
       AppColors.background,

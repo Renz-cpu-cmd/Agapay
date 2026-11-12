@@ -15,8 +15,11 @@ import 'package:http/testing.dart';
 import 'support/accounts.dart';
 import 'support/community_alerts.dart';
 
-AuthApi apiFor(Future<http.Response> Function(http.Request) handler) =>
-    AuthApi(storage: MemoryTokens(), client: MockClient(handler));
+AuthApi apiFor(Future<http.Response> Function(http.Request) handler) => AuthApi(
+  readerStorage: MemoryReaderStorage(),
+  storage: MemoryTokens(),
+  client: MockClient(handler),
+);
 http.Response ok(Object body) => http.Response(jsonEncode(body), 200);
 Future<void> drain() => Future<void>.delayed(Duration.zero);
 
@@ -194,7 +197,7 @@ void main() {
     await tester.pump();
     unawaited(c.refreshHistory());
     await tester.pump();
-    await tester.pump(const Duration(seconds: 5));
+    await tester.pump(const Duration(seconds: 10));
     expect(paths.where((p) => p.endsWith('/active')).length, 2);
     expect(paths.where((p) => p == '/api/community-alerts').length, 1);
     c.dispose();
@@ -288,6 +291,7 @@ void main() {
         var expired = false;
         final tokens = MemoryTokens()..value = 'synthetic-session';
         final api = AuthApi(
+          readerStorage: MemoryReaderStorage(),
           storage: tokens,
           client: MockClient((r) async {
             if (r.url.path.startsWith('/api/community-alerts')) {
@@ -299,7 +303,12 @@ void main() {
             return http.Response('{}', 503);
           }),
         );
-        final app = AppController(authApi: api, sosStorage: MemorySosDrafts());
+        final app = AppController(
+          locationSource: TestLocationSource(),
+          preferenceStorage: MemoryProductPreferences(),
+          authApi: api,
+          sosStorage: MemorySosDrafts(),
+        );
         await app.restoreSession();
         await drain();
         expect(app.communityAlerts.active.data, isNotNull);
@@ -344,7 +353,12 @@ void main() {
         if (state.startsWith('empty')) return ok({'items': [], 'total': 0});
         return ok(communityPage(resolved: state == 'history'));
       });
-      final app = AppController(authApi: api, sosStorage: MemorySosDrafts());
+      final app = AppController(
+        locationSource: TestLocationSource(),
+        preferenceStorage: MemoryProductPreferences(),
+        authApi: api,
+        sosStorage: MemorySosDrafts(),
+      );
       app.communityAlerts.setOwner(1);
       await tester.pumpWidget(
         AppScope(
@@ -405,7 +419,12 @@ void main() {
           r.url.path.endsWith('/501') ? communityDetail() : communityPage(),
         ),
       );
-      final app = AppController(authApi: api, sosStorage: MemorySosDrafts());
+      final app = AppController(
+        locationSource: TestLocationSource(),
+        preferenceStorage: MemoryProductPreferences(),
+        authApi: api,
+        sosStorage: MemorySosDrafts(),
+      );
       app.communityAlerts.setOwner(1);
       app.showCommunityAlert(501);
       await tester.pumpWidget(

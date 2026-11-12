@@ -1,6 +1,7 @@
 class SosRequest {
   SosRequest.fromJson(Map<String, dynamic> json)
     : id = json['id'] as int,
+      version = json['version'] as int? ?? 1,
       requestId = json['request_id'] as String,
       status = json['status'] as String,
       location = json['location'] as String,
@@ -16,7 +17,7 @@ class SosRequest {
       resolvedBy = json['resolved_by_name'] as String?,
       resolvedAt = _date(json['resolved_at']),
       resolutionNote = json['resolution_note'] as String?;
-  final int id;
+  final int id, version;
   final String requestId, status, location, message;
   final String locationSource;
   final double? latitude, longitude;

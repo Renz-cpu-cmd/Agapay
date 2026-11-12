@@ -83,7 +83,25 @@
       status.classList.remove('hidden');
     }
 
+    // Live-data refreshes (about once a second) only change marker labels. Rebuilding the
+    // map for them re-showed the loading state and cancelled the readiness wait, so the map
+    // never became ready on a real device. Label-only updates are applied in place.
+    let mapReady = false;
+    let lastStructureKey = null;
+    let fullRenders = 0;
+
+    function structureKey(config, theme) {
+      return JSON.stringify({
+        theme, center: config.center, zoom: config.zoom, tilt: config.tilt, fitAll: config.fitAll,
+        selectedMarkerId: config.selectedMarkerId, overlays: config.overlays || [], route: config.route || null,
+        markers: config.markers.map(({ title, ...structure }) => structure),
+      });
+    }
+
     function markReady() {
+      clearTimeout(readyTimer);
+      readyTimer = null;
+      mapReady = true;
       const status = document.getElementById('status');
       status.classList.add('hidden');
       bridge({ type: 'ready' });
@@ -121,13 +139,23 @@
     }
 
     window.agapayRender = async function (config) {
+      const theme = config.theme === 'dark' ? 'dark' : 'light';
+      const key = structureKey(config, theme);
+      if (map && !fullRenders && key === lastStructureKey && mapMarkers.length === config.markers.length) {
+        // Same pins, camera inputs, overlays, route and theme: refresh labels only. No loading
+        // state, camera move or route request, and the pending readiness wait is untouched.
+        latestConfig = config;
+        config.markers.forEach((item, index) => { mapMarkers[index].title = item.title; });
+        if (mapReady) bridge({ type: 'ready' });
+        return;
+      }
       const revision = ++renderRevision;
       latestConfig = config;
-      const theme = config.theme === 'dark' ? 'dark' : 'light';
       document.documentElement.dataset.theme = theme;
       document.getElementById('provider').textContent = 'GOOGLE DEMO · ' + (theme === 'dark' ? 'DARK' : 'DEFAULT');
       showStatus('LOADING GOOGLE MAP…');
 
+      fullRenders++;
       try {
         await loadGoogle(config.apiKey);
         const [mapsLibrary, markerLibrary, coreLibrary] = await Promise.all([
@@ -157,6 +185,8 @@
           document.getElementById('map').replaceChildren();
         }
         if (!map) {
+          readyTimer = null;
+          mapReady = false;
           map = new Map(document.getElementById('map'), {
             center,
             zoom: config.zoom,
@@ -188,6 +218,14 @@
         mapTheme = theme;
         clearOverlays();
         const markerPositions = [];
+        // Road reports are independent overlays; generic directions do not avoid them.
+        (config.overlays || []).forEach(item => {
+          const line = new mapsLibrary.Polyline({map,
+            path: item.points.map(p => ({lat:p.latitude,lng:p.longitude})),
+            strokeColor:item.color,strokeWeight:7,strokeOpacity:0.85,zIndex:30,
+          });
+          routeLines.push(line);
+        });
 
         config.markers.forEach(item => {
           const position = { lat: item.position.latitude, lng: item.position.longitude };
@@ -233,7 +271,7 @@
             const route = result.routes && result.routes[0];
             if (!route) throw new Error('No walking route was found.');
 
-            routeLines = route.createPolylines({
+            const walkingLines = route.createPolylines({
               polylineOptions: {
                 strokeColor: '#38bdf8',
                 strokeOpacity: .98,
@@ -241,7 +279,8 @@
                 zIndex: 5,
               },
             });
-            routeLines.forEach(line => line.setMap(map));
+            walkingLines.forEach(line => line.setMap(map));
+            routeLines.push(...walkingLines);
             routeViewport = route.viewport || null;
             bridge({
               type: 'route',
@@ -285,15 +324,19 @@
           map.moveCamera({ center, zoom: config.zoom, tilt: config.tilt, heading: 0 });
         }
 
+        lastStructureKey = key;
         clearTimeout(readyTimer);
         google.maps.event.addListenerOnce(map, 'tilesloaded', markReady);
         readyTimer = setTimeout(markReady, 8000);
       } catch (error) {
+        lastStructureKey = null;
         const message = error && error.message
           ? error.message
           : 'Google Maps could not load.';
         showStatus(message.toUpperCase());
         bridge({ type: 'error', message });
+      } finally {
+        fullRenders--;
       }
     };
   </script>

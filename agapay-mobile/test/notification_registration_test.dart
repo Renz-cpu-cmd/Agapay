@@ -44,6 +44,7 @@ class FakeTokens implements PushTokenProvider {
 class Harness {
   Harness({bool enabled = true}) {
     api = AuthApi(
+      readerStorage: MemoryReaderStorage(),
       storage: storage,
       client: MockClient((request) async {
         requests.add(request);
@@ -58,6 +59,19 @@ class Harness {
         }
         if (request.url.path == '/api/auth/logout') {
           return http.Response('', 204);
+        }
+        if (request.url.path == '/api/auth/preferences') {
+          return http.Response(
+            jsonEncode({
+              'revision': 0,
+              'notifications_enabled': true,
+              'locale': 'en',
+            }),
+            200,
+          );
+        }
+        if (request.url.path == '/api/auth/preferences/areas') {
+          return http.Response('[]', 200);
         }
         if (request.url.path == '/api/auth/me') {
           return http.Response(jsonEncode(resident()), 200);
@@ -91,6 +105,8 @@ class Harness {
       }),
     );
     app = AppController(
+      locationSource: TestLocationSource(),
+      preferenceStorage: MemoryProductPreferences(),
       authApi: api,
       sosStorage: MemorySosDrafts(),
       pushTokenProvider: enabled ? tokens : null,

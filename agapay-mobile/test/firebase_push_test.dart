@@ -85,10 +85,24 @@ class PushHarness {
     gateway.initial = initial;
     if (restored) storage.value = 'synthetic-api-session';
     final api = AuthApi(
+      readerStorage: MemoryReaderStorage(),
       storage: storage,
       client: MockClient((request) async {
         requests.add(request);
         final path = request.url.path;
+        if (request.url.path == '/api/auth/preferences') {
+          return http.Response(
+            jsonEncode({
+              'revision': 0,
+              'notifications_enabled': true,
+              'locale': 'en',
+            }),
+            200,
+          );
+        }
+        if (request.url.path == '/api/auth/preferences/areas') {
+          return http.Response('[]', 200);
+        }
         if (path == '/api/auth/me') {
           if (restoreGate != null) await restoreGate!.future;
           return http.Response(jsonEncode(resident()), 200);
@@ -119,6 +133,8 @@ class PushHarness {
       }),
     );
     app = AppController(
+      locationSource: TestLocationSource(),
+      preferenceStorage: MemoryProductPreferences(),
       authApi: api,
       sosStorage: MemorySosDrafts(),
       pushTokenProvider: provider,
@@ -358,9 +374,12 @@ void main() {
       await flush();
       expect(
         h.app.communityAlerts.detail.error,
-        'Alert service is currently unavailable.',
+        contains('Last-known episode'),
       );
-      expect(h.app.communityAlerts.detail.data, isNull);
+      expect(h.app.communityAlerts.detail.cached, isTrue);
+      expect(h.app.communityAlerts.detail.data?.episode.id, 501);
+      expect(h.app.auth.offlineReader, isFalse);
+      expect(h.app.auth.hasCachedReads, isTrue);
     },
   );
 

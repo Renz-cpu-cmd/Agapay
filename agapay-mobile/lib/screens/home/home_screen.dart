@@ -1,7 +1,15 @@
 import '../../core/ui.dart';
+import '../alerts/delivery_evidence_screen.dart';
+import '../../core/release_configuration.dart';
+import '../../widgets/common/monitoring_status.dart';
+import '../../widgets/common/resident_decisions.dart';
+import '../../widgets/common/official_notices.dart';
+import '../exercises/exercise_screen.dart';
 import '../../models/monitoring.dart';
-import '../../widgets/common/forecast_panel.dart';
+import '../../widgets/common/hybrid_trend_panels.dart';
 import '../../widgets/common/water_level_gauge.dart';
+import '../../widgets/common/water_depth_dial.dart';
+import '../../widgets/common/unverified_station_banner.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -9,131 +17,69 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final station = app.monitoring.primary;
-    final activeStation = station?.hasValidReading == true ? station : null;
-    final usingMonitoring = activeStation != null;
-    final level = activeStation?.alertLevel ?? app.alert;
-    final waterDepth = activeStation?.currentDepthCm ?? level.water;
-    final sourceLabel = activeStation != null
-        ? activeStation.isSimulator
-              ? 'VIRTUAL STATION'
-              : 'LIVE'
-        : station == null
-        ? 'DEMO'
-        : 'WAITING FOR DATA';
-    final sourceColor = activeStation?.isOnline == true
-        ? context.colors.green
-        : usingMonitoring
-        ? const Color(0xfffbbf24)
-        : context.colors.muted;
-    final trend = activeStation != null
-        ? switch (activeStation.trend) {
+    final view = app.monitoring.primaryView;
+    final usingMonitoring = station != null && view?.depth.value != null;
+    final fresh = view?.depth.fresh == true;
+    final level = usingMonitoring
+        ? station.observationLevel
+        : AlertLevel.unknown;
+    // R4: an unreviewed/ineligible station's tier is shown as a measurement, never
+    // as an operational instruction (fail-closed on missing review fields).
+    final unverified = usingMonitoring && !station.operationallyVerified;
+    final waterDepth = view?.depth.value;
+    final sourceLabel = view == null || waterDepth == null
+        ? 'NO VALID READING'
+        : view.sourceStatus.contains('UNVERIFIED')
+        ? 'UNVERIFIED SOURCE'
+        : view.sourceStatus.contains('REVIEW')
+        ? 'REVIEW REQUIRED'
+        : station?.sourceClass == 'simulator'
+        ? 'EXERCISE'
+        : fresh
+        ? 'OBSERVED'
+        : 'LAST KNOWN';
+    final sourceColor = fresh ? context.colors.green : context.colors.muted;
+    final trend = !fresh
+        ? '— UNKNOWN TREND'
+        : switch (station?.trend) {
             'rising_rapidly' => '↑ RAPIDLY RISING',
             'rising' => '↗ RISING',
             'falling' => '↘ FALLING',
-            _ => '→ STABLE',
-          }
-        : level.trend;
+            'stable' => '→ STABLE',
+            _ => '— UNKNOWN TREND',
+          };
+    final riseRate = station?.riseRate;
+    final rateText = !fresh
+        ? 'Rate — · Current measurement unconfirmed'
+        : riseRate == null
+        ? 'Rate — · ${station?.trendReason ?? 'Insufficient timing coverage'}'
+        : '${riseRate.toStringAsFixed(3)} cm/min · range ${station?.riseRateLower?.toStringAsFixed(3) ?? 'unknown'} to ${station?.riseRateUpper?.toStringAsFixed(3) ?? 'unknown'} · ${station?.trendReason ?? 'Coverage unconfirmed'}';
     return PageContent(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  spacing: 9,
-                  children: [
-                    const AgapayLogo(size: 32),
-                    tx(
-                      'AGAPAY',
-                      display: true,
-                      weight: 700,
-                      size: 23,
-                      color: Colors.white,
-                      spacing: -.45,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  spacing: 6,
-                  children: [
-                    Icon(
-                      Icons.location_on,
-                      size: 12,
-                      color: context.colors.muted,
-                    ),
-                    tx(
-                      'San Vicente, Urdaneta',
-                      size: 11,
-                      color: context.colors.muted,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            Row(
-              spacing: 8,
-              children: [
-                Semantics(
-                  label: 'Notifications',
-                  button: true,
-                  child: InkWell(
-                    onTap: () => app.navigate(AppTab.alerts),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: context.colors.surface,
-                        border: Border.all(color: context.colors.border),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        alignment: Alignment.center,
-                        children: [const SvgIcon('bell', size: 20)],
-                      ),
-                    ),
-                  ),
-                ),
-                Semantics(
-                  label: 'Profile',
-                  button: true,
-                  child: InkWell(
-                    onTap: () => app.navigate(AppTab.profile),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: context.colors.surface,
-                        border: Border.all(color: context.colors.border),
-                      ),
-                      child: const Center(child: SvgIcon('user', size: 18)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+        const _OriginalHomeHeader(),
         gap,
+        if (unverified) ...[const UnverifiedStationBanner(), gap],
         Panel(
           color: level.background,
           border: level.color.withValues(alpha: .65),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(
                 spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Dot(level.color, size: 10, glow: true),
                   tx(
-                    level.label,
+                    fresh
+                        ? level == AlertLevel.unknown
+                              ? 'Observed · tier unavailable'
+                              : 'Observed · ${level.label}'
+                        : waterDepth == null
+                        ? 'UNKNOWN'
+                        : 'Last known · ${level.label}',
                     size: 12,
                     mono: true,
                     weight: 700,
@@ -144,7 +90,15 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               tx(
-                level.description,
+                fresh
+                    ? level == AlertLevel.unknown
+                          ? 'Observed water depth'
+                          : unverified
+                          ? 'Observed water depth · unverified station'
+                          : level.description
+                    : waterDepth == null
+                    ? 'No valid reading'
+                    : 'Last known water depth',
                 display: true,
                 size: 18,
                 weight: 600,
@@ -152,13 +106,24 @@ class HomeScreen extends StatelessWidget {
                 height: 1.375,
               ),
               const SizedBox(height: 4),
-              tx(level.action, size: 12, color: level.textColor),
+              tx(
+                fresh
+                    ? level == AlertLevel.unknown
+                          ? 'Observation tier unavailable. Check station details and official advisories.'
+                          : unverified
+                          ? 'Not an operational warning or all-clear. Follow official local authority advisories.'
+                          : level.action
+                    : 'Current conditions are unconfirmed. Check area advisories.',
+                size: 12,
+                color: level.textColor,
+              ),
               gap,
               InkWell(
                 onTap: () => app.showAlert(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   spacing: 6,
+                  runSpacing: 4,
                   children: [
                     tx(
                       'VIEW ALERT DETAILS',
@@ -176,39 +141,43 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         gap,
+        if (app.notices.current.items.isNotEmpty) ...[
+          const OfficialNoticesPanel(compact: true),
+          gap,
+        ],
         Panel(
           padding: 0,
           radius: 10,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 Row(
-                  spacing: 8,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Dot(sourceColor, glow: usingMonitoring),
-                    tx(
-                      sourceLabel,
-                      size: 11,
-                      mono: true,
-                      weight: 700,
-                      color: sourceColor,
+                    Dot(sourceColor),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: tx(
+                        sourceLabel,
+                        size: 11,
+                        mono: true,
+                        weight: 700,
+                        color: sourceColor,
+                      ),
                     ),
                   ],
                 ),
-                Flexible(
-                  child: tx(
-                    usingMonitoring
-                        ? '${activeStation.ageSeconds ?? 0}s ago · ${activeStation.id}'
-                        : station == null
-                        ? 'Connecting to AGAPAY · STATION_001'
-                        : 'Start the virtual station · ${station.id}',
-                    size: 10,
-                    mono: true,
-                    color: context.colors.muted,
-                    align: TextAlign.right,
-                  ),
+                tx(
+                  station == null
+                      ? 'Waiting for a valid observation'
+                      : 'Depth measured ${app.monitoring.measurementAgeLabel(station)} · ${station.id}',
+                  size: 10,
+                  mono: true,
+                  color: context.colors.muted,
                 ),
               ],
             ),
@@ -219,121 +188,53 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              caption('WATER LEVEL'),
+              caption('WATER DEPTH'),
               const SizedBox(height: 4),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final dialSize =
+                      144 * MediaQuery.textScalerOf(context).scale(1);
+                  final stacked = constraints.maxWidth < 108 + dialSize;
+                  final gauge = Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: WaterLevelGauge(waterDepth),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: tx(
-                              waterDepth.toStringAsFixed(1),
-                              size: 56,
-                              weight: 700,
-                              mono: true,
-                              color: level.color,
-                              height: 1,
-                            ),
-                          ),
-                          tx(
-                            'cm',
-                            display: true,
-                            size: 18,
-                            weight: 600,
-                            color: context.colors.secondary,
-                          ),
-                          const SizedBox(height: 16),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: tx(
-                              trend,
-                              size: 20,
-                              weight: 700,
-                              mono: true,
-                              color: level.textColor,
-                            ),
-                          ),
-                          tx(
-                            usingMonitoring
-                                ? activeStation.sensorQuality == 'valid'
-                                      ? 'Backend-classified trend'
-                                      : 'Latest sample invalid'
-                                : level.rate,
-                            size: 11,
-                            mono: true,
-                            color: context.colors.muted,
-                          ),
-                          const SizedBox(height: 16),
-                          tx(
-                            'Threshold',
-                            size: 10,
-                            mono: true,
-                            color: context.colors.muted,
-                          ),
-                          const SizedBox(height: 4),
-                          SizedBox(
-                            width: 128,
-                            child: Column(
-                              children: [
-                                Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: LinearProgressIndicator(
-                                        value: (waterDepth / 120)
-                                            .clamp(0.0, 1.0)
-                                            .toDouble(),
-                                        minHeight: 6,
-                                        color: level.color,
-                                        backgroundColor: context.colors.border,
-                                      ),
-                                    ),
-                                    for (final t in [60, 85, 100])
-                                      Positioned(
-                                        left: t / 120 * 128,
-                                        top: -3,
-                                        child: Container(
-                                          width: 2,
-                                          height: 12,
-                                          color: context.colors.background,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    for (final l in AlertLevel.values)
-                                      tx(
-                                        l.label[0],
-                                        size: 8,
-                                        mono: true,
-                                        color: l.textColor,
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: WaterLevelGauge(
+                      waterDepth,
+                      height: 152,
+                      advisory: station?.thresholdAdvisoryCm,
+                      warning: station?.thresholdWarningCm,
+                      critical: station?.thresholdEvacuateCm,
+                      maximum: (station?.thresholdEvacuateCm ?? 100) * 1.2,
                     ),
-                  ),
-                ],
+                  );
+                  final dial = SizedBox(
+                    width: dialSize.clamp(0, constraints.maxWidth),
+                    child: WaterDepthDial(
+                      depth: waterDepth,
+                      trend: trend,
+                      level: level,
+                    ),
+                  );
+                  return stacked
+                      ? Column(
+                          children: [dial, const SizedBox(height: 12), gauge],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            gauge,
+                            const SizedBox(width: 4),
+                            Expanded(child: Center(child: dial)),
+                          ],
+                        );
+                },
+              ),
+              const SizedBox(height: 8),
+              tx(rateText, size: 11, mono: true, color: context.colors.muted),
+              const SizedBox(height: 12),
+              _DepthThresholdBar(
+                depth: waterDepth,
+                station: station,
+                level: level,
               ),
             ],
           ),
@@ -358,14 +259,14 @@ class HomeScreen extends StatelessWidget {
                           size: 17,
                           color: context.colors.link,
                         ),
-                        caption('RAINFALL'),
+                        Expanded(child: caption('RAINFALL')),
                       ],
                     ),
                     const SizedBox(height: 8),
                     tx(
-                      usingMonitoring
-                          ? '${(activeStation.latestRainfallMm ?? 0).toStringAsFixed(1)} mm'
-                          : level.rainfall,
+                      view?.rain.value == null
+                          ? '— mm'
+                          : '${view!.rain.value!.toStringAsFixed(1)} mm',
                       size: 20,
                       weight: 700,
                       mono: true,
@@ -373,8 +274,10 @@ class HomeScreen extends StatelessWidget {
                     ),
                     tx(
                       usingMonitoring
-                          ? 'Latest reporting interval'
-                          : 'Demonstration rainfall',
+                          ? view?.rain.fresh == true
+                                ? 'Observed interval · journal'
+                                : 'Last known / missing interval'
+                          : 'No valid rainfall interval',
                       size: 10,
                       mono: true,
                       color: context.colors.muted,
@@ -398,34 +301,38 @@ class HomeScreen extends StatelessWidget {
                           size: 17,
                           color: context.colors.link,
                         ),
-                        caption('STATION'),
+                        Expanded(child: caption('STATION')),
                       ],
                     ),
                     const SizedBox(height: 8),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: tx(
-                        station?.id ?? 'STATION_001',
+                        station?.id ?? '—',
                         size: 14,
                         weight: 700,
                         mono: true,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Row(
+                    Wrap(
                       spacing: 6,
+                      runSpacing: 4,
                       children: [
                         Dot(
-                          station?.isOnline == true
+                          view?.heartbeat.fresh == true
                               ? context.colors.green
                               : context.colors.muted,
                           size: 6,
                         ),
                         tx(
-                          station?.isOnline == true ? 'ONLINE' : 'OFFLINE',
+                          view?.heartbeat.fresh == true
+                              ? 'ONLINE'
+                              : (view?.heartbeat.status.toUpperCase() ??
+                                    'NO HEARTBEAT'),
                           size: 10,
                           mono: true,
-                          color: station?.isOnline == true
+                          color: view?.heartbeat.fresh == true
                               ? context.colors.green
                               : context.colors.muted,
                         ),
@@ -438,7 +345,23 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         gap,
-        const ForecastPanel(),
+        tx(
+          'Device heartbeat: ${view?.heartbeat.status ?? 'unknown'} · Sensor: ${view?.depth.quality ?? 'unknown'} · Episode: ${station?.activeHazardTier ?? 'None recorded'}',
+          size: 10,
+          color: context.colors.muted,
+        ),
+        if (view?.hazardState == 'unresolved')
+          tx(
+            'Sensor episode unresolved · ${station?.activeHazardTier ?? 'review pending'} · current conditions unconfirmed',
+            size: 10,
+            color: context.colors.red,
+          ),
+        gap,
+        const WaterDepthTrendPanel(),
+        gap,
+        const HybridForecastTrendPanel(),
+        gap,
+        const RainfallActivityPanel(),
         gap,
         Row(
           spacing: 12,
@@ -468,83 +391,210 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         gap,
-        if (!usingMonitoring)
-          Panel(
-            color: const Color(0xff080e1a),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                tx(
-                  'DEMO MODE · SIMULATE WATER LEVEL',
-                  size: 10,
-                  mono: true,
-                  weight: 600,
-                  spacing: 1,
-                  color: context.colors.faint,
-                ),
-                gap,
-                Row(
-                  spacing: 8,
-                  children: [
-                    for (final l in AlertLevel.values)
-                      Expanded(
-                        child: Semantics(
-                          button: true,
-                          selected: level == l,
-                          child: InkWell(
-                            onTap: () => app.setAlert(l),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: level == l
-                                    ? l.color
-                                    : Colors.transparent,
-                                border: Border.all(
-                                  color: l.color.withValues(alpha: .38),
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: tx(
-                                  l.label,
-                                  size: 9,
-                                  weight: 700,
-                                  mono: true,
-                                  color: level == l ? Colors.white : l.color,
-                                  spacing: .2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  children: [
-                    tx(
-                      'Simulated: ${level.water} cm',
-                      size: 9,
-                      mono: true,
-                      color: context.colors.faint,
+        ExpansionTile(
+          key: PageStorageKey('home-source-${app.user?.id}-${station?.id}'),
+          title: const Text('Measurement source and station details'),
+          children: const [MonitoringStatus()],
+        ),
+        ExpansionTile(
+          key: PageStorageKey('home-resources-${app.user?.id}'),
+          title: const Text('Area advisories and verified contacts'),
+          children: [
+            const ResidentAreaPanel(),
+            const OfficialNoticesPanel(compact: true),
+            TextButton(
+              onPressed: () => showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                showDragHandle: true,
+                builder: (_) => SafeArea(
+                  child: SizedBox(
+                    height: MediaQuery.sizeOf(context).height * .8,
+                    child: const SingleChildScrollView(
+                      padding: EdgeInsets.all(16),
+                      child: ResidentHelpPanel(inSheet: true),
                     ),
-                    tx(
-                      'For thesis defense use',
-                      size: 9,
-                      mono: true,
-                      color: context.colors.faint,
-                    ),
-                  ],
+                  ),
                 ),
-              ],
+              ),
+              child: const Text('Verified contacts'),
             ),
+          ],
+        ),
+        if (ReleaseConfiguration.exercisesAvailable)
+          TextButton(
+            onPressed: () => Navigator.of(context).push<void>(
+              MaterialPageRoute(builder: (_) => const ExerciseScreen()),
+            ),
+            child: const Text('OPEN TEST WORKSPACE'),
           ),
       ],
     );
   }
+}
+
+class _OriginalHomeHeader extends StatelessWidget {
+  const _OriginalHomeHeader();
+  @override
+  Widget build(BuildContext context) {
+    final app = AppScope.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const AgapayLogo(size: 32),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: tx(
+                      'AGAPAY',
+                      display: true,
+                      weight: 700,
+                      size: 23,
+                      spacing: -.45,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              InkWell(
+                key: const ValueKey('home-area-selector'),
+                onTap: () => showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  showDragHandle: true,
+                  builder: (_) => const SafeArea(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.all(16),
+                      child: ResidentAreaPanel(),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      size: 12,
+                      color: context.colors.muted,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: tx(
+                        app.preferences.residentAreaName ??
+                            app.preferences.residentAreaId ??
+                            '${app.user?.barangay ?? 'Your area'} · select area',
+                        size: 11,
+                        color: context.colors.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final action in [(AppTab.alerts, 'bell', 'Notifications')])
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Semantics(
+                  label: action.$3,
+                  button: true,
+                  child: InkWell(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) => const DeliveryEvidenceScreen(),
+                      ),
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: context.colors.surface,
+                        border: Border.all(color: context.colors.border),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(child: SvgIcon(action.$2, size: 20)),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DepthThresholdBar extends StatelessWidget {
+  const _DepthThresholdBar({
+    required this.depth,
+    required this.station,
+    required this.level,
+  });
+  final double? depth;
+  final MonitoringStation? station;
+  final AlertLevel level;
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) {
+      final maximum = (station?.thresholdEvacuateCm ?? 100) * 1.2;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          tx('Threshold', size: 10, mono: true, color: context.colors.muted),
+          const SizedBox(height: 6),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: depth == null ? 0 : (depth! / maximum).clamp(0.0, 1.0),
+                  minHeight: 6,
+                  color: context.colors.resolve(level.color),
+                  backgroundColor: context.colors.border,
+                ),
+              ),
+              for (final threshold in [
+                station?.thresholdAdvisoryCm,
+                station?.thresholdWarningCm,
+                station?.thresholdEvacuateCm,
+              ].whereType<double>())
+                Positioned(
+                  left: (threshold / maximum).clamp(0, 1) * (box.maxWidth - 2),
+                  top: -3,
+                  child: Container(
+                    width: 2,
+                    height: 12,
+                    color: context.colors.background,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (final tier in AlertLevel.values.where(
+                (v) => v != AlertLevel.unknown,
+              ))
+                tx(tier.label[0], size: 8, mono: true, color: tier.textColor),
+            ],
+          ),
+        ],
+      );
+    },
+  );
 }
 
 void _showTelemetryHistory(BuildContext context, MonitoringStation? station) {
@@ -591,7 +641,7 @@ void _showTelemetryHistory(BuildContext context, MonitoringStation? station) {
                         '${sample.recordedAt.hour.toString().padLeft(2, '0')}:${sample.recordedAt.minute.toString().padLeft(2, '0')}:${sample.recordedAt.second.toString().padLeft(2, '0')}',
                         sample.sensorQuality == 'valid' &&
                                 sample.waterDepthCm != null
-                            ? '${sample.waterDepthCm!.toStringAsFixed(1)} cm · ${sample.rainfallMm.toStringAsFixed(1)} mm rain'
+                            ? '${sample.waterDepthCm!.toStringAsFixed(1)} cm · ${sample.rainfallMm?.toStringAsFixed(1) ?? '—'} mm rain'
                             : 'INVALID SENSOR READING',
                         mono: true,
                       ),

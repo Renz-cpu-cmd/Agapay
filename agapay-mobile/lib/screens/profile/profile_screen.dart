@@ -1,7 +1,11 @@
 import '../../core/ui.dart';
+import 'privacy_screen.dart';
+import '../../widgets/common/alert_subscriptions.dart';
 import '../../navigation/app_routes.dart';
 import '../../widgets/common/auth_field.dart';
 import 'edit_profile_screen.dart';
+import 'account_security_screen.dart';
+import '../../widgets/common/product_capability_settings.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -30,12 +34,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [context.colors.blue, Color(0xff7c3aed)],
-                      ),
+                      shape: BoxShape.circle,
+                      color: context.colors.blue,
                     ),
                     child: Center(
                       child: tx(
@@ -44,6 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         display: true,
                         weight: 800,
                         color: Colors.white,
+                        adaptive: false,
                       ),
                     ),
                   ),
@@ -59,8 +60,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: Colors.white,
                         ),
                         const SizedBox(height: 2),
-                        Row(
+                        Wrap(
                           spacing: 8,
+                          runSpacing: 8,
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -101,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _profileRow(
                 Icons.location_on_outlined,
                 'Barangay',
-                '${app.barangay}, Urdaneta',
+                'Profile locality: ${app.barangay}',
               ),
               const SizedBox(height: 10),
               _profileRow(
@@ -117,6 +119,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   MaterialPageRoute<void>(
                     builder: (_) => const EditProfileScreen(),
                   ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => const AccountSecurityScreen(),
+                  ),
+                ),
+                icon: const Icon(Icons.lock_outline, size: 18),
+                label: const Text(
+                  'Account security and signed-in devices',
+                  textAlign: TextAlign.center,
                 ),
               ),
             ],
@@ -144,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           for (final choice in [
                             (ThemeMode.light, 'Default (Light)'),
-                            (ThemeMode.dark, 'Dark (Current theme)'),
+                            (ThemeMode.dark, 'Dark'),
                           ])
                             ListTile(
                               title: tx(choice.$2),
@@ -176,48 +191,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               _line(),
-              _setting(
-                Icons.notifications_none_rounded,
-                'Flood Alerts',
-                'Future preference only · Does not control push delivery',
-                _toggle(
-                  'Flood Alerts',
-                  app.notifications,
-                  (v) => app.updateSettings(notifications: v),
-                ),
-              ),
-              _line(),
-              _setting(
-                Icons.my_location_rounded,
-                'Location Services',
-                app.location
-                    ? 'Allowed · For SOS and nearest station'
-                    : 'Denied · Tap to enable',
-                _toggle(
-                  'Location Services',
-                  app.location,
-                  (v) => app.updateSettings(location: v),
-                ),
-              ),
-              _line(),
-              _setting(
-                Icons.language_rounded,
-                'Language',
-                'Display language for app content',
-                _link(
-                  app.language,
-                  () => app.updateSettings(
-                    language: app.language == 'English'
-                        ? 'Filipino'
-                        : 'English',
-                  ),
-                ),
-              ),
+              const ProductCapabilitySettings(),
               _line(),
               _setting(
                 Icons.home_work_outlined,
-                'Barangay',
-                'Your registered barangay for targeted alerts',
+                'Profile locality (self-reported)',
+                'Profile locality; push targeting uses explicit subscriptions',
                 _link(
                   app.barangay,
                   () => showModalBottomSheet<void>(
@@ -265,7 +244,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () => showAboutDialog(
                   context: context,
                   applicationName: 'AGAPAY',
-                  applicationVersion: '1.0.0',
+                  applicationVersion: app.buildInfo.label,
                   children: [
                     tx(
                       'Community Flood Early-Warning System. Interactive frontend prototype for Urdaneta City, Pangasinan.',
@@ -275,15 +254,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: _setting(
                   Icons.info_outline_rounded,
                   'About AGAPAY',
-                  'Version 1.0.0 · Build 2024.001',
+                  app.buildInfo.label,
                   SvgIcon('chevron', size: 14, color: context.colors.muted),
                 ),
               ),
               _line(),
               InkWell(
-                onTap: () => previewNotice(
+                onTap: () => Navigator.push(
                   context,
-                  'The privacy policy has not been supplied yet.',
+                  MaterialPageRoute<void>(
+                    builder: (_) => const PrivacyScreen(),
+                  ),
                 ),
                 child: _setting(
                   Icons.privacy_tip_outlined,
@@ -296,8 +277,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         gap,
+        const ExpansionTile(
+          key: PageStorageKey('profile-alert-subscriptions'),
+          title: Text('Alert subscriptions'),
+          children: [AlertSubscriptionsPanel()],
+        ),
+        gap,
         ActionButton(
-          _leaving ? 'SIGNING OUT…' : 'LOG OUT',
+          _leaving
+              ? 'SIGNING OUT…'
+              : app.auth.offlineReader
+              ? 'EXIT OFFLINE READER (LOCAL)'
+              : 'LOG OUT',
           vertical: 14,
           weight: 600,
           color: const Color(0x301c0000),
@@ -336,7 +327,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           align: TextAlign.center,
         ),
         tx(
-          'Urdaneta City, Pangasinan · © 2024',
+          'AGAPAY · © ${DateTime.now().year}',
           size: 10,
           mono: true,
           color: context.colors.faint,
@@ -367,27 +358,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _setting(IconData icon, String label, String sub, Widget right) =>
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          spacing: 12,
-          children: [
-            SizedBox(
-              width: 28,
-              child: Icon(icon, size: 21, color: context.colors.link),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  tx(label, display: true, weight: 600, color: Colors.white),
-                  tx(sub, size: 11, color: context.colors.muted, height: 1.4),
-                ],
-              ),
-            ),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 94),
-              child: right,
-            ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, box) {
+            final stacked = MediaQuery.textScalerOf(context).scale(14) > 20;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  spacing: 12,
+                  children: [
+                    SizedBox(
+                      width: 28,
+                      child: Icon(icon, size: 21, color: context.colors.link),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          tx(
+                            label,
+                            display: true,
+                            weight: 600,
+                            color: Colors.white,
+                          ),
+                          tx(
+                            sub,
+                            size: 11,
+                            color: context.colors.muted,
+                            height: 1.4,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (!stacked)
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 94),
+                        child: right,
+                      ),
+                  ],
+                ),
+                if (stacked)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 40, top: 8),
+                    child: Align(alignment: Alignment.centerLeft, child: right),
+                  ),
+              ],
+            );
+          },
         ),
       );
   Widget _line() => const Padding(
@@ -396,47 +413,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   );
   Widget _link(String label, VoidCallback tap) => InkWell(
     onTap: tap,
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 6,
-      children: [
-        Flexible(
-          child: tx(
-            label,
-            size: 12,
-            display: true,
-            weight: 600,
-            color: context.colors.link,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 6,
+        children: [
+          Flexible(
+            child: tx(
+              label,
+              size: 12,
+              display: true,
+              weight: 600,
+              color: context.colors.link,
+            ),
           ),
-        ),
-        SvgIcon('chevron', size: 10, color: context.colors.link),
-      ],
+          SvgIcon('chevron', size: 10, color: context.colors.link),
+        ],
+      ),
     ),
   );
-  Widget _toggle(String label, bool value, ValueChanged<bool> onChanged) =>
-      Semantics(
-        label: label,
-        toggled: value,
-        child: InkWell(
-          onTap: () => onChanged(!value),
-          borderRadius: BorderRadius.circular(20),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            width: 40,
-            height: 24,
-            decoration: BoxDecoration(
-              color: value ? context.colors.blue : context.colors.border,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: AnimatedAlign(
-              duration: const Duration(milliseconds: 180),
-              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Dot(Colors.white, size: 16),
-              ),
-            ),
-          ),
-        ),
-      );
 }

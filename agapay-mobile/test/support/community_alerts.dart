@@ -2,7 +2,9 @@ Map<String, Object?> communityEpisode({
   int id = 501,
   bool resolved = false,
   String severity = 'EVACUATE',
+  String? verification = 'operational',
 }) => {
+  'verification': ?verification,
   'id': id,
   'station_id': 'STATION_TEST',
   'station_name': 'Community Test Station',

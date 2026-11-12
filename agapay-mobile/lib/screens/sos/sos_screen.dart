@@ -7,17 +7,21 @@ import '../../models/sos_request.dart';
 import '../../services/auth_api.dart';
 import '../../services/sos_location.dart';
 import '../../widgets/maps/agapay_google_map.dart';
+import '../../widgets/common/sos_response_activity.dart';
+import '../../widgets/common/sos_outbox.dart';
+import '../../widgets/common/sos_receipt.dart';
+import '../../widgets/common/resident_decisions.dart';
 
 enum SosPhase { idle, confirm, details }
 
 class SosScreen extends StatefulWidget {
-  const SosScreen({super.key});
+  const SosScreen({this.captureLocation = captureSosLocation, super.key});
+  final Future<Position> Function() captureLocation;
   @override
   State<SosScreen> createState() => _SosScreenState();
 }
 
-class _SosScreenState extends State<SosScreen>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+class _SosScreenState extends State<SosScreen> with WidgetsBindingObserver {
   SosPhase _phase = SosPhase.idle;
   final _message = TextEditingController();
   final _location = TextEditingController();
@@ -27,19 +31,17 @@ class _SosScreenState extends State<SosScreen>
   bool _locating = false;
   String? _formError;
   SosRequest? _selected;
+  int? _privateMapFor;
   AppController? _app;
   Timer? _timer;
   bool _foreground = true;
-  bool _shareLive = true;
+  bool _shareLive = false;
+  int? _owner;
+  int _formGeneration = 0;
   bool _uploadingFix = false;
   int? _sharingSosId;
   DateTime? _lastLocationUpload;
   StreamSubscription<Position>? _locationStream;
-  late final AnimationController _pulse = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1800),
-  )..repeat();
-
   @override
   void initState() {
     super.initState();
@@ -55,7 +57,27 @@ class _SosScreenState extends State<SosScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _app = AppScope.of(context);
+    final next = AppScope.of(context);
+    if (_owner != next.user?.id) {
+      _owner = next.user?.id;
+      ++_formGeneration;
+      _cancelLocationStream();
+      _sharingSosId = null;
+      _lastLocationUpload = null;
+      _selected = null;
+      _privateMapFor = null;
+      _position = null;
+      _phase = SosPhase.idle;
+      _formError = null;
+      _shareLive = false;
+      _locating = false;
+      _message.clear();
+      _location.clear();
+      _latitude.clear();
+      _longitude.clear();
+    }
+    _app = next;
+    _syncSharingState();
   }
 
   @override
@@ -78,13 +100,16 @@ class _SosScreenState extends State<SosScreen>
     _location.dispose();
     _latitude.dispose();
     _longitude.dispose();
-    _pulse.dispose();
     super.dispose();
   }
 
   void _syncSharingState() {
     final id = _sharingSosId;
     if (id == null) return;
+    if (_app?.sos.locationConflicts.contains(id) == true) {
+      _stopLiveSharing();
+      return;
+    }
     if (_app?.location != true) {
       _stopLiveSharing();
       return;
@@ -121,6 +146,8 @@ class _SosScreenState extends State<SosScreen>
         ).listen(
           _uploadLocation,
           onError: (_) {
+            _cancelLocationStream();
+            _sharingSosId = null;
             if (mounted) {
               setState(
                 () => _formError =
@@ -133,7 +160,9 @@ class _SosScreenState extends State<SosScreen>
 
   Future<void> _uploadLocation(Position position) async {
     final id = _sharingSosId;
-    if (id == null || _uploadingFix || !_foreground) return;
+    if (id == null || _uploadingFix || !_foreground || _app?.location != true) {
+      return;
+    }
     final now = DateTime.now();
     if (_lastLocationUpload != null &&
         now.difference(_lastLocationUpload!) < const Duration(seconds: 10)) {
@@ -149,7 +178,11 @@ class _SosScreenState extends State<SosScreen>
         accuracyM: position.accuracy,
         recordedAt: position.timestamp,
       );
-      if (!mounted || updated == null) return;
+      if (!mounted) return;
+      if (updated == null) {
+        _syncSharingState();
+        return;
+      }
       setState(() {
         _position = position;
         if (_selected?.id == updated.id) _selected = updated;
@@ -180,9 +213,12 @@ class _SosScreenState extends State<SosScreen>
 
   void _back() {
     if (_app!.sos.sending) return;
+    ++_formGeneration;
     setState(() {
       _phase = SosPhase.idle;
+      _privateMapFor = null;
       _formError = null;
+      _locating = false;
     });
   }
 
@@ -198,9 +234,10 @@ class _SosScreenState extends State<SosScreen>
       _locating = true;
       _formError = null;
     });
+    final generation = _formGeneration;
     try {
-      final position = await captureSosLocation();
-      if (!mounted) return;
+      final position = await widget.captureLocation();
+      if (!mounted || generation != _formGeneration) return;
       if (!_app!.location) {
         setState(
           () => _formError =
@@ -214,7 +251,7 @@ class _SosScreenState extends State<SosScreen>
         _longitude.text = position.longitude.toStringAsFixed(6);
       });
     } catch (e) {
-      if (mounted) {
+      if (mounted && generation == _formGeneration) {
         setState(
           () => _formError = e is AccountException
               ? e.message
@@ -222,7 +259,66 @@ class _SosScreenState extends State<SosScreen>
         );
       }
     } finally {
-      if (mounted) setState(() => _locating = false);
+      if (mounted && generation == _formGeneration) {
+        setState(() => _locating = false);
+      }
+    }
+  }
+
+  Future<void> _resumeSharing(SosRequest item) async {
+    if (_locating ||
+        !_foreground ||
+        _app?.location != true ||
+        _app!.sos.locationConflicts.contains(item.id)) {
+      return;
+    }
+    final owner = _app!.user?.id;
+    final generation = _formGeneration;
+    setState(() {
+      _locating = true;
+      _formError = null;
+    });
+    try {
+      final position = await widget.captureLocation();
+      if (!mounted ||
+          !_foreground ||
+          generation != _formGeneration ||
+          _app?.user?.id != owner ||
+          _app?.location != true) {
+        return;
+      }
+      final updated = await _app!.sos.updateLocation(
+        item.id,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracyM: position.accuracy,
+        recordedAt: position.timestamp,
+      );
+      if (!mounted || generation != _formGeneration) return;
+      if (updated == null) {
+        setState(
+          () => _formError =
+              _app!.sos.error ??
+              'Location was not confirmed. Refresh and review.',
+        );
+        return;
+      }
+      if (updated.status == 'RESOLVED') {
+        return;
+      }
+      setState(() {
+        _selected = updated;
+        _position = position;
+      });
+      _startLiveSharing(updated.id);
+    } catch (error) {
+      if (mounted && generation == _formGeneration) {
+        setState(() => _formError = error.toString());
+      }
+    } finally {
+      if (mounted && generation == _formGeneration) {
+        setState(() => _locating = false);
+      }
     }
   }
 
@@ -275,8 +371,9 @@ class _SosScreenState extends State<SosScreen>
       };
     }
     setState(() => _formError = null);
+    final generation = _formGeneration;
     final saved = await sos.send(fields);
-    if (!mounted) return;
+    if (!mounted || generation != _formGeneration) return;
     if (saved != null) {
       setState(() {
         _selected = saved;
@@ -295,7 +392,7 @@ class _SosScreenState extends State<SosScreen>
     color: const Color(0x30eab308),
     border: const Color(0x60eab308),
     child: tx(
-      'PRACTICE MODE · Requests are saved to AGAPAY. Emergency dispatch and external notifications are not connected.',
+      'TEST ENVIRONMENT · Requests are saved to AGAPAY. Emergency dispatch and external notifications are not connected.',
       size: 12,
       color: const Color(0xfffbbf24),
       height: 1.5,
@@ -348,7 +445,7 @@ class _SosScreenState extends State<SosScreen>
               ? 'Loading requests…'
               : sos.error != null
               ? 'History unavailable. Retry when connected.'
-              : 'No saved practice requests yet.',
+              : 'No saved test requests yet.',
           size: 12,
           color: context.colors.secondary,
         ),
@@ -372,7 +469,7 @@ class _SosScreenState extends State<SosScreen>
                     runSpacing: 6,
                     children: [
                       tx(
-                        'PRACTICE #${item.id}',
+                        'TEST REQUEST #${item.id}',
                         size: 12,
                         mono: true,
                         color: context.colors.secondary,
@@ -418,56 +515,30 @@ class _SosScreenState extends State<SosScreen>
           }
           return PageContent(
             children: [
-              PageHeading('SOS Request', 'Practice #${item.id}', onBack: _back),
+              PageHeading(
+                'SOS Request',
+                'Test request #${item.id}',
+                onBack: _back,
+              ),
               _notice(),
               gap,
-              Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _statusColor(item.status).withValues(alpha: .12),
-                    border: Border.all(
-                      color: _statusColor(item.status),
-                      width: 2,
-                    ),
-                  ),
-                  child: Center(
-                    child: SvgIcon(
-                      'check',
-                      size: 40,
-                      color: context.colors.green,
-                    ),
-                  ),
-                ),
-              ),
+              SosReceiptCard(item: item),
               gap,
-              Center(
-                child: tx(
-                  item.status == 'ACTIVE' ? 'REQUEST RECEIVED' : item.status,
-                  size: 24,
-                  display: true,
-                  weight: 800,
-                  color: _statusColor(item.status),
-                ),
-              ),
+              SosResponseActivity(key: ValueKey(item.id), sosId: item.id),
               gap,
-              tx(
-                item.status == 'ACTIVE'
-                    ? 'Saved by the server. Waiting for staff acknowledgement.'
-                    : item.status == 'ACKNOWLEDGED'
-                    ? 'A staff member has acknowledged your practice request.'
-                    : 'Your practice request has been marked resolved.',
-                align: TextAlign.center,
-                color: context.colors.secondary,
-              ),
+              if (sos.pending != null) const SosOutboxPanel(),
+              if (sos.locationConflicts.contains(item.id))
+                TextButton(
+                  onPressed: () => unawaited(sos.refresh(manual: true)),
+                  child: const Text('Refresh and review location sharing'),
+                ),
               gap,
               Panel(
                 child: Column(
                   spacing: 12,
                   children: [
-                    DataRow('Reference', 'SOS-${item.id}', mono: true),
+                    SelectableText('Request reference: ${item.requestId}'),
+                    DataRow('Server record', 'SOS-${item.id}', mono: true),
                     const Divider(height: 1),
                     DataRow('Received', sosTime(item.createdAt)),
                     const Divider(height: 1),
@@ -483,10 +554,17 @@ class _SosScreenState extends State<SosScreen>
                     if (item.locationRecordedAt != null) ...[
                       const Divider(height: 1),
                       DataRow(
-                        'Last GPS update',
-                        '${sosTime(item.locationRecordedAt!)} · ±${item.accuracyM?.round() ?? 0} m',
+                        'Location capture',
+                        '${sosTime(item.locationRecordedAt!)} · ${sosLocationAge(item.locationRecordedAt)} · ${item.accuracyM == null ? 'Accuracy unknown' : '±${item.accuracyM!.round()} m'}',
                       ),
                     ],
+                    DataRow('Location source', item.locationSource),
+                    DataRow(
+                      'Sharing consent',
+                      _sharingSosId == item.id
+                          ? 'Foreground updates enabled by you'
+                          : 'Live updates off; request location retained',
+                    ),
                     if (item.message.isNotEmpty) ...[
                       const Divider(height: 1),
                       DataRow('Message', item.message),
@@ -496,32 +574,48 @@ class _SosScreenState extends State<SosScreen>
               ),
               if (item.latitude != null && item.longitude != null) ...[
                 gap,
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: SizedBox(
-                    height: 220,
-                    child: AgapayGoogleMap(
-                      center: AgapayMapCoordinate(
-                        item.latitude!,
-                        item.longitude!,
-                      ),
-                      zoom: 17,
-                      tilt: 42,
-                      markers: [
-                        AgapayGoogleMapMarker(
-                          id: 'sos-${item.id}',
-                          title: 'SOS-${item.id} · ${item.location}',
-                          position: AgapayMapCoordinate(
-                            item.latitude!,
-                            item.longitude!,
-                          ),
-                          color: const Color(0xffef4444),
-                          glyph: '!',
-                        ),
-                      ],
-                    ),
+                TextButton(
+                  onPressed: () => setState(
+                    () => _privateMapFor = _privateMapFor == item.id
+                        ? null
+                        : item.id,
+                  ),
+                  child: Text(
+                    _privateMapFor == item.id
+                        ? 'HIDE LOCATION MAP'
+                        : 'LOAD MAP — shares coordinates with Google Maps',
                   ),
                 ),
+                const Text(
+                  'Opening this map shares the displayed coordinates with the configured map provider. Text location and contacts remain available without it.',
+                ),
+                if (_privateMapFor == item.id)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: SizedBox(
+                      height: 220,
+                      child: AgapayGoogleMap(
+                        center: AgapayMapCoordinate(
+                          item.latitude!,
+                          item.longitude!,
+                        ),
+                        zoom: 17,
+                        tilt: 42,
+                        markers: [
+                          AgapayGoogleMapMarker(
+                            id: 'sos-${item.id}',
+                            title: 'SOS location',
+                            position: AgapayMapCoordinate(
+                              item.latitude!,
+                              item.longitude!,
+                            ),
+                            color: const Color(0xffef4444),
+                            glyph: '!',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
@@ -532,6 +626,20 @@ class _SosScreenState extends State<SosScreen>
                   ),
                 ),
               ],
+              if (_sharingSosId != item.id &&
+                  item.status != 'RESOLVED' &&
+                  app.location &&
+                  !sos.locationConflicts.contains(item.id)) ...[
+                gap,
+                TextButton(
+                  onPressed: _locating || !_foreground
+                      ? null
+                      : () => unawaited(_resumeSharing(item)),
+                  child: const Text('Resume foreground sharing'),
+                ),
+              ],
+              if (_formError != null)
+                tx(_formError!, color: context.colors.red, size: 12),
               if (_sharingSosId == item.id && item.status != 'RESOLVED') ...[
                 gap,
                 Panel(
@@ -541,14 +649,14 @@ class _SosScreenState extends State<SosScreen>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       tx(
-                        '● LIVE LOCATION SHARING',
+                        'FOREGROUND SHARING ENABLED',
                         size: 12,
                         weight: 700,
                         color: context.colors.green,
                       ),
                       const SizedBox(height: 4),
                       tx(
-                        'Your latest device position is sent to AGAPAY while this app is open. Sharing stops when you stop it, close the app, or staff resolve the SOS.',
+                        'Updates are attempted while the app is open. Check the recorded fix time to confirm what reached AGAPAY. Sharing stops when you stop it, close the app, or staff resolve the SOS.',
                         size: 11,
                         color: context.colors.secondary,
                         height: 1.5,
@@ -617,11 +725,12 @@ class _SosScreenState extends State<SosScreen>
             children: [
               PageHeading(
                 'Confirm SOS',
-                'Practice request · Review before sending',
+                'Test request · Review before sending',
                 subtitleColor: const Color(0xfff87171),
                 onBack: _back,
               ),
               _notice(),
+              if (sos.pending != null) const SosOutboxPanel(),
               gap,
               if (pending != null) ...[
                 if (!sos.sending)
@@ -721,7 +830,7 @@ class _SosScreenState extends State<SosScreen>
                 tx(
                   _position == null
                       ? 'Manual location · No GPS accuracy claimed'
-                      : 'Device location · ±${_position!.accuracy.round()} m · Captured ${sosTime(_position!.timestamp)}',
+                      : 'Device location · ±${_position!.accuracy.round()} m · ${sosLocationAge(_position!.timestamp)} · Captured ${sosTime(_position!.timestamp)}',
                   size: 11,
                   color: context.colors.muted,
                 ),
@@ -756,7 +865,7 @@ class _SosScreenState extends State<SosScreen>
                   maxLength: 1000,
                   maxLines: 3,
                   decoration: const InputDecoration(
-                    hintText: 'Describe your practice scenario',
+                    hintText: 'Describe your request details',
                   ),
                 ),
               ],
@@ -767,13 +876,19 @@ class _SosScreenState extends State<SosScreen>
                 sos.sending
                     ? 'SENDING…'
                     : pending == null
-                    ? 'SEND PRACTICE SOS'
+                    ? (app.auth.offlineReader
+                          ? 'SAVE SOS TO OUTBOX'
+                          : 'SEND SOS')
                     : 'RETRY SAME REQUEST',
                 fontSize: 18,
                 weight: 800,
                 color: context.colors.red,
                 glow: true,
-                onPressed: sos.sending || !sos.ready || _locating
+                onPressed:
+                    sos.sending ||
+                        !sos.ready ||
+                        _locating ||
+                        ['conflict', 'rejected'].contains(sos.pendingState)
                     ? null
                     : _send,
               ),
@@ -795,203 +910,152 @@ class _SosScreenState extends State<SosScreen>
             ],
           );
         }
+        final received = sos.lastSent ?? sos.items.firstOrNull;
         return PageContent(
           children: [
             PageHeading(
-              'Emergency SOS',
-              'Practice requests · Development mode',
-              onBack: () => app.navigate(AppTab.home),
+              'SOS requests',
+              'Test environment · receipt and response evidence',
             ),
             _notice(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 32, 8, 0),
-              child: Column(
-                spacing: 24,
-                children: [
-                  SizedBox(
-                    width: 176,
-                    height: 176,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.center,
-                      children: [
-                        for (final delay in [0.0, .333])
-                          AnimatedBuilder(
-                            animation: _pulse,
-                            builder: (context, child) {
-                              final t = (_pulse.value + delay) % 1;
-                              return IgnorePointer(
-                                child: Transform.scale(
-                                  scale: 1 + 1.4 * t,
-                                  child: Opacity(
-                                    opacity: .8 * (1 - t),
-                                    child: Container(
-                                      width: 176,
-                                      height: 176,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: context.colors.red,
-                                          width: delay == 0 ? 2 : 1,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        Semantics(
-                          label: 'Start practice SOS',
-                          button: true,
-                          child: InkWell(
-                            customBorder: const CircleBorder(),
-                            onTap: sos.ready && !sos.sending ? _confirm : null,
-                            child: Container(
-                              width: 176,
-                              height: 176,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: const RadialGradient(
-                                  colors: [
-                                    Color(0xffb91c1c),
-                                    Color(0xff7f1d1d),
-                                  ],
-                                ),
-                                border: Border.all(
-                                  color: const Color(0x80dc2626),
-                                  width: 3,
-                                ),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0x60dc2626),
-                                    blurRadius: 48,
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                spacing: 8,
-                                children: [
-                                  const SvgIcon(
-                                    'sos',
-                                    size: 40,
-                                    color: Colors.white,
-                                  ),
-                                  tx(
-                                    'SOS',
-                                    size: 30,
-                                    display: true,
-                                    weight: 900,
-                                    color: Colors.white,
-                                    adaptive: false,
-                                    spacing: 1.5,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    children: [
-                      tx(
-                        'Practice an SOS request',
-                        size: 20,
-                        display: true,
-                        weight: 700,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(height: 8),
-                      tx(
-                        'Review your location and message, then send a practice request to the AGAPAY command center.',
-                        color: context.colors.secondary,
-                        height: 1.625,
-                        align: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                  if (sos.pending != null)
-                    Panel(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: 12,
-                        children: [
-                          tx(
-                            'RECEIPT UNCONFIRMED',
-                            color: const Color(0xfffbbf24),
-                            weight: 700,
-                          ),
-                          tx(
-                            'Your request reference is saved. Check history or retry the same request.',
-                            size: 12,
-                            color: context.colors.secondary,
-                          ),
-                          ActionButton(
-                            'REVIEW SAVED REQUEST',
-                            onPressed: _confirm,
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (sos.error != null) _error(sos.error!),
-                  _info(
-                    Icons.location_on_outlined,
-                    'Location Sharing',
-                    'Choose device location or enter a description manually. Live sharing is opt-in and foreground only.',
-                  ),
-                  _info(
-                    Icons.assignment_outlined,
-                    'SOS Record',
-                    'Saved requests show staff acknowledgement, resolution and timestamps.',
-                  ),
-                  _history(sos),
-                ],
+            gap,
+            if (sos.pending != null) const SosOutboxPanel(),
+            if (sos.pending == null && received != null) ...[
+              SosReceiptCard(
+                item: received,
+                onOpen: () => setState(() {
+                  _selected = received;
+                  _phase = SosPhase.details;
+                }),
+              ),
+              gap,
+            ],
+            gap,
+            Center(
+              child: SosStartAction(
+                label: sos.pending == null
+                    ? (received == null ? 'START SOS' : 'START ANOTHER SOS')
+                    : 'REVIEW SAVED REQUEST',
+                onPressed: sos.ready && !sos.sending ? _confirm : null,
               ),
             ),
+            const SizedBox(height: 8),
+            const Text(
+              'Review your location and consent before sending. An unconfirmed send keeps its original reference; do not create a duplicate.',
+              textAlign: TextAlign.center,
+            ),
+            if (sos.error != null) _error(sos.error!),
+            gap,
+            _sosInfo(
+              Icons.location_on_outlined,
+              'Location sharing',
+              'Choose whether to share your location. Its capture time and accuracy stay visible before you send.',
+            ),
+            gap,
+            _sosInfo(
+              Icons.fact_check_outlined,
+              'Receipt and response',
+              '${sos.loading
+                  ? 'Checking saved requests…'
+                  : sos.error != null
+                  ? 'Receipt history is unavailable. No new receipt is confirmed.'
+                  : received == null
+                  ? 'No received test request is recorded here.'
+                  : 'Open your latest receipt above for recorded actions.'} A server receipt, staff review and an assigned responder are different recorded steps.',
+            ),
+            gap,
+            _sosInfo(
+              Icons.history,
+              'SOS record',
+              'Keep your request reference. Review its history below and check saved requests before trying another send.',
+            ),
+            gap,
+            const ExpansionTile(
+              key: PageStorageKey('sos-help'),
+              title: Text('Verified contacts and help'),
+              children: [ResidentHelpPanel()],
+            ),
+            gap,
+            _history(sos),
           ],
         );
       },
     );
   }
 
-  Widget _info(IconData icon, String title, String description) => Panel(
-    padding: 14,
-    radius: 14,
+  Widget _sosInfo(IconData icon, String title, String description) => Panel(
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 12,
       children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: context.colors.blue.withValues(alpha: .16),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: context.colors.link.withValues(alpha: .35),
-            ),
-          ),
-          child: Icon(icon, size: 19, color: context.colors.link),
-        ),
+        Icon(icon, color: context.colors.link, size: 24),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              tx(title, display: true, weight: 600, color: Colors.white),
-              const SizedBox(height: 2),
-              tx(
-                description,
-                size: 11,
-                color: context.colors.secondary,
-                height: 1.625,
-              ),
+              tx(title, size: 14, weight: 600),
+              const SizedBox(height: 4),
+              tx(description, size: 12, color: context.colors.secondary),
             ],
           ),
         ),
       ],
     ),
+  );
+}
+
+/// The original circular action opens consent/review; it never submits a request.
+class SosStartAction extends StatelessWidget {
+  const SosStartAction({
+    required this.label,
+    required this.onPressed,
+    super.key,
+  });
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final scale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.4);
+      final diameter = (184 * scale).clamp(0.0, constraints.maxWidth);
+      return SizedBox(
+        width: diameter,
+        height: diameter,
+        child: Semantics(
+          label: label == 'START SOS' ? 'Start SOS' : label,
+          button: true,
+          enabled: onPressed != null,
+          onTap: onPressed,
+          excludeSemantics: true,
+          child: FilledButton(
+            onPressed: onPressed,
+            style: FilledButton.styleFrom(
+              shape: const CircleBorder(),
+              backgroundColor: const Color(0xffc92535),
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: context.colors.border,
+              disabledForegroundColor: context.colors.muted,
+              padding: const EdgeInsets.all(24),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.warning_amber_rounded, size: 48),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
   );
 }

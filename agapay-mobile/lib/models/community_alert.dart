@@ -2,6 +2,8 @@ import 'alert_level.dart';
 
 enum CommunityAlertStatus { active, resolved }
 
+enum CommunityAlertVerification { operational, unverified }
+
 Map<String, Object?> _object(Object? value) {
   if (value is! Map<String, Object?>) {
     throw const FormatException('Expected object');
@@ -70,6 +72,11 @@ class CommunityAlert {
     if (source != 'sensor') {
       throw const FormatException('Unexpected episode source');
     }
+    // R4: server-derived and fail-closed. A missing (older server) or unknown
+    // value is treated as unverified, never as an operational warning.
+    verification = json['verification'] == 'operational'
+        ? CommunityAlertVerification.operational
+        : CommunityAlertVerification.unverified;
     triggerDepthCm = _depth(json['trigger_depth_cm']);
     latestDepthCm = _depth(json['latest_depth_cm']);
     triggeredAt = _timestamp(json['triggered_at']);
@@ -85,11 +92,16 @@ class CommunityAlert {
   late final String stationId, stationName, source;
   late final String? barangay, municipality;
   late final CommunityAlertStatus status;
+  late final CommunityAlertVerification verification;
   late final AlertLevel severity;
   late final double triggerDepthCm, latestDepthCm;
   late final DateTime triggeredAt, lastTransitionAt;
   late final DateTime? resolvedAt;
   bool get isResolved => status == CommunityAlertStatus.resolved;
+
+  /// Internal AGAPAY review only; never LGU authorization or an official order.
+  bool get isOperational =>
+      verification == CommunityAlertVerification.operational;
   String get area => [
     barangay,
     municipality,

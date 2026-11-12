@@ -1,5 +1,19 @@
 # AGAPAY Mobile
 
+Android now separates development/staging/production flavors and rejects unconfigured protected signing. Development configuration assets and exercise controls are excluded from protected builds. See [F38–F39 implementation and evidence](../agapay-docs/security/F38-F39/README.md), [protected release checklist](../agapay-docs/security/F38-F39/RELEASE-CHECKLIST.md), and [accessibility matrix](../agapay-docs/security/F38-F39/ACCESSIBILITY-MATRIX.md). iOS release schemes/signing/APNs remain a separate pending gate. The newest finding-specific contracts linked here supersede the older prototype descriptions below.
+
+F15/F16 add explicit rainfall products and reviewed installation hashes. Firmware fallback geometry is an unvalidated 150 cm bench profile; it is not a drop-in update for a 120 cm mounting. See [contracts, preservation migration, header export and physical acceptance](../agapay-docs/security/F15-F16/README.md).
+
+F13 displays the backend measured-time cm/min estimate, slope range and unknown-coverage reason. No example rate or implicit stable trend is substituted. See [F12â€“F14 contracts and verification](../agapay-docs/security/F12-F14/README.md).
+
+F09â€“F11 add provisional hysteresis/recovery policy, distinct issuer notice lifecycles and explicit notification subscriptions. See [implementation, setup and verification](../agapay-docs/security/F09-F11/README.md).
+
+Operational home starts UNKNOWN when measurements are unavailable. Practice readings are available only through **Open exercise workspace**, with persistent labeling and local state. See [F07/F08 implementation and verification](../agapay-docs/security/F07-F08/README.md).
+
+The monitoring contract separates heartbeat connectivity from retained-depth
+age/quality and uses registry source metadata. Deploy the matching backend and
+review source identities using [F05/F06 rollout](../agapay-docs/security/F05-F06/README.md).
+
 Flutter frontend converted from the supplied Figma Make export,
 `Strict Instruction Compliance.zip`. The React screen source is the visual
 reference. Outfit, Inter, and JetBrains Mono are bundled locally with OFL licenses.
@@ -12,10 +26,10 @@ From this directory:
 
 ```powershell
 flutter pub get
-flutter run --dart-define=AGAPAY_API_URL=http://127.0.0.1:8000
+flutter run --flavor development --dart-define=AGAPAY_API_URL=http://127.0.0.1:8000
 ```
 
-For Android, connect a device or start an emulator and use `flutter run`.
+For Android, connect a device or start an emulator and use `flutter run --flavor development`.
 iOS builds require macOS and Xcode. The Android debug APK builds successfully;
 native device execution and iOS builds are not yet verified. Phones use their actual safe areas and system status bar;
 the export's decorative browser phone frame is not part of the app.
@@ -34,15 +48,15 @@ For local prototyping, copy
 `assets/config/google_maps_demo_key.txt` and replace its contents with a Maps Demo
 Key. The real file is ignored by Git. Demo Keys require no billing but have changing
 daily quotas and are prohibited for production use. A production build needs a
-standard billing-enabled Google Maps credential or a different production map
-provider.
+reviewed hosted HTTPS map with application/API-restricted credentials, or a different production map
+provider. Protected builds default to the usable station/shelter list fallback until that integration is verified; they never load the bundled demo key.
 
 ## Implemented
 
 - Animated splash that restores a saved session or opens Login.
-- Resident login and registration with validation, API errors, masked passwords, and barangay picker.
-- Home: live/virtual alert banner, animated water gauge, interval rainfall,
-  station freshness, telemetry history, forecast, and an offline demo fallback.
+- Resident-only sign-in and registration with validation, API errors, masked passwords, and barangay picker.
+- Home: live/virtual alert banner, animated water gauge, measured water-depth
+  trend, hybrid forecast, rainfall activity, station freshness, and telemetry history.
 - Alert details, with navigation to the evacuation map and SOS.
 - Centralized Google JavaScript WebView map with a five-second monitoring
   snapshot refresh, device GPS location, UCU Gym evacuation guidance, a Google-computed
@@ -69,10 +83,20 @@ navigation, ML inference and emergency dispatch are not connected. Evacuation ro
 uses the online Google Maps Compute Routes service and must not replace instructions
 from local responders.
 
-Home and monitoring-based Alert Details forecasts use the authenticated [prediction API](../agapay-docs/PREDICTION_INTERFACE.md)
-for `STATION_001`. Actual mode shows Model not trained until an adapter is configured.
-Development previews label sample values and let you exercise all availability states.
-Failed or expired results hide numbers; forecast previews do not change alert tiers.
+Home and monitoring-based Alert Details use the authenticated read-only
+`GET /api/hybrid-projections/{station}/summary`. Station selection on the map
+updates home history, forecast, and rainfall together. The summary uses fresh
+ESP32 depth, physical gauge inputs, and the same assumed basin as the automatic
+web demonstration. It remains development-only and does not inherit another
+browser's configuration. Missing rainfall stays unknown; stale, failed, or
+expired projections hide numeric values. Forecasts do not change alert tiers.
+
+The mobile app is for residents only. Login always uses the `mobile` audience;
+admin/officer logins and cached staff sessions are rejected. ML Configuration
+and ML Evaluation belong to the staff web command center and have no mobile
+screens or links. The mobile projection controller sends read-only summary
+requests; it cannot configure or start a model run. The legacy prediction
+contract and its controller remain for compatibility tests.
 
 SOS saves a practice request only after explicit confirmation and shows success
 only when the backend accepts it. Failed or interrupted attempts retain their
@@ -150,8 +174,9 @@ loads that persistent episode's detail and timeline.
   shown. A successful response can still contain an old valid reading: invalid
   telemetry preserves the persistent episode and does not resolve it.
 - The static notification feed, fake read/unread counts, and monitoring-derived
-  notification dots were removed. There is no read-receipt backend; the optional FCM transport is documented below. The Profile switch is explicitly a future preference only and does not
-  disable this safety feed, register devices, or control push delivery.
+  notification dots were removed. Optional per-notification callback evidence and
+  explicit acknowledgement now have a separate history (F33). Profile delivery
+  preferences are server-connected; they do not hide the in-app sensor feed.
 - `source=sensor` means telemetry-generated. Device/simulator historical origin
   is not stored, and persistent episodes are not labelled physically verified.
   Physical/site calibration remains pending. An EVACUATE sensor tier is not an
@@ -204,12 +229,10 @@ This is authorization behavior only: the default provider remains disabled and
 the app does not claim real notifications are active. Production provider-token
 storage requires protected database/backups and encryption-at-rest controls.
 
-The Profile switch remains explicitly **future preference only**. It is not
-server-connected and does not control registrations or delivery. A future release
-must implement a server-enforced preference before labelling it operational.
-The Community Alert feed and live Home monitoring remain separate and unchanged;
-no unread/read-receipt model exists. Foreground messages refresh community data;
-background notification display belongs to the OS.
+The Profile delivery preference is server-connected (F17–F19). Optional app receipt
+consent is a separate off-by-default choice (F33). The Community Alert feed and
+live Home monitoring remain separate from per-notification evidence. Foreground
+messages refresh community data; background notification display belongs to the OS.
 
 Validated SENSOR_ESCALATION metadata selects a positive `alert_id`. Initial and
 resumed notification taps wait for session restoration, then fetch Community Alert
@@ -232,3 +255,31 @@ Validate with `flutter pub get`, `flutter analyze`, and `flutter test`.
 Registration tests cover login, disabled/no-token behavior, rotation, serialization,
 logout races, failure/expiry, provider errors and disposal; existing Community Alert,
 auth, SOS, monitoring, prediction and navigation tests remain in the full suite.
+
+Station lifecycle administration, persistent preferences, English-only language and verified geographic context: [F17-F19 contracts and rollout](../agapay-docs/security/F17-F19/README.md).
+
+Verified email recovery, account sessions/devices and stale profile protection: [F20-F21 contracts and deployment](../agapay-docs/security/F20-F21/README.md). Staff MFA and administrative tools remain on web.
+
+SOS location conflict pause/manual resume and resident-visible recorded response drills: [F22-F23 contracts and rollout](../agapay-docs/security/F22-F23/README.md). Mobile remains resident-only; operational dispatch is disabled.
+
+
+Registry shelter/text fallback, encrypted last-known offline reader and durable exact-payload practice SOS outbox: [F24-F25 contracts, rollout and remaining device acceptance](../agapay-docs/security/F24-F25/README.md). Live inventory starts empty; generic routes do not certify flood-safe access.
+
+
+Unified observation freshness/selection across home, map, detail and forecasts; release-only HTTPS origin guards: [F26-F27 implementation, rollout and verification](../agapay-docs/security/F26-F27/README.md). Field deployment acceptance remains pending.
+
+## Feed lifecycle and bounded reads (F30–F31)
+
+Monitoring, hybrid, forecast and community-alert reads pause in the background and refresh on resume. Old account/station/mode generations cannot replace the current view. Monitoring requests 20 history points; encrypted legacy 120-point cache entries remain readable without renewing their timestamps or retention. Backend degradation appears separately from sensor freshness. See the [measured results](../agapay-docs/security/F30-F31/RESULTS.md); native battery/radio and physical receipt-to-render checks remain pending.
+
+## Optional delivery evidence (F33)
+
+Alerts → Push delivery evidence displays the resident's own queued/provider/callback/open/explicit-acknowledgement stages. Optional callback collection defaults off; a dedicated encrypted 200-record/seven-day journal submits original timestamps without reading API credentials from a background isolate. Manual refresh drains bounded queued callbacks. A stale acknowledgement requires manual refresh and is never automatically retried. Physical phone delivery and OS background behavior remain pending; see [contracts and phone acceptance](../agapay-docs/security/F32-F33/README.md).
+
+Home/detail water forecasts use the shared published product and display its ID, datum, binding and original expiry. Tapping the ID opens a historical record. Ordinary rain reads use an observation-only endpoint and cannot run private basin inference. Staff experiments and model review remain web-only. The operational model remains unavailable until real-data evaluation and independent approval pass; see [F34–F35 contracts and rollout](../agapay-docs/security/F34-F35/README.md).
+
+F40 adds resident privacy requests and an ephemeral owner-record copy, with current-password verification and explicit review receipts. SOS map disclosure requires a deliberate map action. Staff privacy administration remains web-only. See [privacy/recovery contracts](../agapay-docs/security/F40/README.md) and [observed verification](../agapay-docs/security/F40/RESULTS.md).
+
+Resident home and alerts now follow area, next-action, advisory, help and observation decisions. Shared scoped notice reads preserve expiry/cancellation and exclude Test/Exercise records; technical details, measured trends and published forecasts have separate expandable regions. See [design, contracts, previews and verification](../agapay-docs/design/resident-decisions/README.md).
+
+Resident SOS now leads with queued/unknown/server-received evidence and an immutable reference, followed by recorded drill ownership/actions and location consent. Maps start with shared station/resource lists, including coordinate-less stations, area-scoped inventory pages and optional map views. See [SOS/map contracts, previews and verification](../agapay-docs/design/resident-sos-map/README.md).

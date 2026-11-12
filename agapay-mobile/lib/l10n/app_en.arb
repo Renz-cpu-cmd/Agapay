@@ -1,0 +1,23 @@
+{
+  "@@locale": "en",
+  "operationalLanguage": "English",
+  "translationUnavailable": "Filipino translation unavailable. All operational and critical flows remain in English.",
+  "residentArea": "Resident area (verified ID)",
+  "profileLocality": "Profile locality (self-reported)",
+  "selectedStation": "Selected station",
+  "languageRequest": "Which language would help your community? This records a request; it does not change app language.",
+  "unknownDescription": "Current hazard unknown. No valid measurement is available.",
+  "normalDescription": "Measured depth is below the advisory threshold. Local hazards may remain.",
+  "advisoryDescription": "Measured depth crossed the advisory threshold. Monitor local updates.",
+  "warningDescription": "Measured depth crossed the warning threshold. Prepare and check local guidance.",
+  "evacuateDescription": "Measured depth crossed the EVACUATE threshold. Follow official local authority instructions.",
+  "unknownAction": "Check official local updates while monitoring is unavailable.",
+  "normalAction": "Keep monitoring local updates; a below-threshold reading does not rule out hazards.",
+  "advisoryAction": "Stay alert and monitor updates. Prepare emergency supplies.",
+  "warningAction": "Prepare for possible evacuation. Move valuables to higher ground.",
+  "evacuateAction": "AGAPAY EVACUATE-level sensor alert. Prepare to evacuate and follow official local authority instructions. Confirm shelter activation and safe access.",
+  "practiceSos": "SOS does not dispatch emergency responders.",
+  "deliveryPolicy": "Off disables all AGAPAY sensor push, including critical and citywide. In-app notices remain visible. Messages already in flight may arrive.",
+  "locationChoice": "App location choice",
+  "locationPolicy": "Your app choice, operating-system permission and device location service are separate. Manual SOS location stays available."
+}

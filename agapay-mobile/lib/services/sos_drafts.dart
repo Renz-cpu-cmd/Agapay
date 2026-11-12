@@ -13,12 +13,21 @@ class SecureSosDraftStore implements SosDraftStore {
   @override
   Future<Map<String, dynamic>?> read(int userId) async {
     final raw = await _storage.read(key: _key(userId));
+    if (raw != null && utf8.encode(raw).length > 16384) {
+      throw const FormatException('Saved SOS exceeds its size budget');
+    }
     return raw == null ? null : jsonDecode(raw) as Map<String, dynamic>;
   }
 
   @override
-  Future<void> write(int userId, Map<String, dynamic> draft) =>
-      _storage.write(key: _key(userId), value: jsonEncode(draft));
+  Future<void> write(int userId, Map<String, dynamic> draft) {
+    final raw = jsonEncode(draft);
+    if (utf8.encode(raw).length > 16384) {
+      throw const FormatException('Saved SOS exceeds its size budget');
+    }
+    return _storage.write(key: _key(userId), value: raw);
+  }
+
   @override
   Future<void> clear(int userId) => _storage.delete(key: _key(userId));
 }

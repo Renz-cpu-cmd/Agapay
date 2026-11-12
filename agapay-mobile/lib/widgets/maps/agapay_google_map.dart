@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../core/ui.dart';
+import '../../core/release_configuration.dart';
 
 const _htmlAsset = 'assets/maps/agapay_google_map.html';
 const _demoKeyAsset = 'assets/config/google_maps_demo_key.txt';
@@ -91,11 +93,30 @@ class AgapayGoogleMapMarker {
   };
 }
 
+class AgapayGoogleMapPolyline {
+  const AgapayGoogleMapPolyline({
+    required this.id,
+    required this.title,
+    required this.points,
+    required this.color,
+  });
+  final String id, title;
+  final List<AgapayMapCoordinate> points;
+  final String color;
+  Map<String, Object> toJson() => {
+    'id': id,
+    'title': title,
+    'points': points.map((p) => p.toJson()).toList(),
+    'color': color,
+  };
+}
+
 class AgapayGoogleMap extends StatefulWidget {
   const AgapayGoogleMap({
     super.key,
     required this.center,
     required this.markers,
+    this.overlays = const [],
     this.route,
     this.zoom = 15,
     this.tilt = 42,
@@ -107,6 +128,7 @@ class AgapayGoogleMap extends StatefulWidget {
 
   final AgapayMapCoordinate center;
   final List<AgapayGoogleMapMarker> markers;
+  final List<AgapayGoogleMapPolyline> overlays;
   final AgapayGoogleMapRoute? route;
   final double zoom;
   final double tilt;
@@ -127,6 +149,27 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
   bool _pageLoaded = false;
   bool _ready = false;
   bool _dark = false;
+  Timer? _watchdog;
+
+  /// A load that never settles (script or tiles stalled) must end in the readable
+  /// retry state, not an endless spinner. Only armed when a real WebView exists.
+  void _armWatchdog() {
+    if (_controller == null) return;
+    _watchdog?.cancel();
+    _watchdog = Timer(const Duration(seconds: 30), () {
+      if (!mounted || _ready || _error != null) return;
+      setState(
+        () => _error =
+            'Google Maps did not finish loading. Check the connection and retry; station details remain available.',
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _watchdog?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -150,8 +193,25 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
     await controller.setNavigationDelegate(
       NavigationDelegate(
         onPageFinished: (_) {
+          // Any (re)loaded page starts a fresh map, including reloads the app did not
+          // start; it is not ready until the page says so, and the watchdog bounds it.
           _pageLoaded = true;
+          if (mounted && _ready) setState(() => _ready = false);
+          _armWatchdog();
           _render();
+        },
+        onNavigationRequest: (request) {
+          if (ReleaseConfiguration.protectedBuild && request.isMainFrame) {
+            final allowed = Uri.tryParse(ReleaseConfiguration.mapOrigin),
+                target = Uri.tryParse(request.url);
+            if (allowed == null ||
+                target == null ||
+                target.scheme != 'https' ||
+                allowed.origin != target.origin) {
+              return NavigationDecision.prevent;
+            }
+          }
+          return NavigationDecision.navigate;
         },
         onWebResourceError: (error) {
           if (error.isForMainFrame == true && mounted) {
@@ -176,14 +236,27 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
         _pageLoaded = false;
       });
     }
+    _armWatchdog();
     try {
+      if (ReleaseConfiguration.protectedBuild) {
+        if (ReleaseConfiguration.mapMode != 'hosted') {
+          throw const FormatException(
+            'Interactive map unavailable in this build. Use the station and shelter lists.',
+          );
+        }
+        final origin = ReleaseConfiguration.publicHttps(
+          ReleaseConfiguration.mapOrigin,
+        );
+        await controller.loadRequest(origin);
+        return;
+      }
       final values = await Future.wait([
         rootBundle.loadString(_htmlAsset),
         rootBundle.loadString(_demoKeyAsset),
       ]);
       final key = values[1].trim();
       if (key.isEmpty || key == 'PASTE_YOUR_MAPS_DEMO_KEY_HERE') {
-        throw const FormatException('Google Maps Demo Key is not configured.');
+        throw const FormatException('Google Maps key is not configured.');
       }
       _html = values[0];
       _apiKey = key;
@@ -193,7 +266,7 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
       setState(() {
         _error = error is FormatException
             ? error.message
-            : 'Google Maps Demo Key is not available in this build.';
+            : 'Google Maps key is not available in this build.';
       });
     }
   }
@@ -203,13 +276,15 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
       final data = jsonDecode(message.message) as Map<String, dynamic>;
       switch (data['type']) {
         case 'ready':
-          if (mounted) {
+          _watchdog?.cancel();
+          if (mounted && !_ready) {
             setState(() {
               _ready = true;
               _error = null;
             });
           }
         case 'error':
+          _watchdog?.cancel();
           if (mounted) {
             setState(() {
               _ready = false;
@@ -247,9 +322,13 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
   Future<void> _render() async {
     final controller = _controller;
     final key = _apiKey;
-    if (controller == null || !_pageLoaded || key == null) return;
+    if (controller == null ||
+        !_pageLoaded ||
+        (!ReleaseConfiguration.protectedBuild && key == null)) {
+      return;
+    }
     final config = {
-      'apiKey': key,
+      if (!ReleaseConfiguration.protectedBuild) 'apiKey': key,
       'theme': _dark ? 'dark' : 'light',
       'center': widget.center.toJson(),
       'zoom': widget.zoom,
@@ -257,6 +336,7 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
       'fitAll': widget.fitAll,
       'selectedMarkerId': widget.selectedMarkerId,
       'markers': widget.markers.map((marker) => marker.toJson()).toList(),
+      'overlays': widget.overlays.map((line) => line.toJson()).toList(),
       'route': widget.route?.toJson(),
     };
     try {
@@ -279,6 +359,7 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
     'fitAll': value.fitAll,
     'selectedMarkerId': value.selectedMarkerId,
     'markers': value.markers.map((marker) => marker.toJson()).toList(),
+    'overlays': value.overlays.map((line) => line.toJson()).toList(),
     'route': value.route?.toJson(),
   });
 
@@ -289,15 +370,33 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
     if (next == _dark) return;
     _dark = next;
     _ready = false;
+    _armWatchdog();
     _controller?.setBackgroundColor(context.colors.surface);
     _render();
   }
+
+  /// The signature without marker labels. Labels carry live values (heartbeat age,
+  /// measurement time) that change every second; they are refreshed in place by the
+  /// page and must not hide the map behind the loading overlay.
+  String _structure(AgapayGoogleMap value) => jsonEncode({
+    'center': value.center.toJson(),
+    'zoom': value.zoom,
+    'tilt': value.tilt,
+    'fitAll': value.fitAll,
+    'selectedMarkerId': value.selectedMarkerId,
+    'markers': value.markers.map((marker) => marker.toJson()..remove('title')).toList(),
+    'overlays': value.overlays.map((line) => line.toJson()).toList(),
+    'route': value.route?.toJson(),
+  });
 
   @override
   void didUpdateWidget(covariant AgapayGoogleMap oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_signature(widget) == _signature(oldWidget)) return;
-    _ready = false;
+    if (_structure(widget) != _structure(oldWidget)) {
+      _ready = false;
+      _armWatchdog();
+    }
     _render();
   }
 
@@ -308,12 +407,31 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
       return ColoredBox(
         color: context.colors.surface,
         child: Center(
-          child: Semantics(
-            label: 'Google map preview',
-            child: Icon(
-              Icons.map_outlined,
-              color: context.colors.secondary,
-              size: 34,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.map_outlined,
+                  color: context.colors.secondary,
+                  size: 34,
+                ),
+                const SizedBox(height: 10),
+                tx(
+                  'Interactive map unavailable in this preview',
+                  size: 13,
+                  weight: 600,
+                  align: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                tx(
+                  'For interactive maps, use the Android app. Text details remain available on this screen.',
+                  size: 12,
+                  color: context.colors.secondary,
+                  align: TextAlign.center,
+                ),
+              ],
             ),
           ),
         ),

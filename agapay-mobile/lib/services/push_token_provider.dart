@@ -39,6 +39,10 @@ abstract class PushTokenProvider {
   Stream<PushToken?> get changes;
 }
 
+abstract interface class PushPermissionProbe {
+  Future<String> permissionStatus();
+}
+
 class DisabledPushTokenProvider implements PushTokenProvider {
   const DisabledPushTokenProvider();
   @override

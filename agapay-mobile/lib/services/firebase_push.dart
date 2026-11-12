@@ -4,6 +4,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'push_messaging.dart';
+import 'notification_receipts.dart';
+import 'auth_api.dart';
 import 'push_token_provider.dart';
 
 enum PushPermission { notDetermined, denied, allowed }
@@ -31,7 +33,8 @@ class SecurePushStore implements PushLocalStore {
       _storage.write(key: key, value: value);
 }
 
-class FirebasePushTokenProvider implements PushTokenProvider {
+class FirebasePushTokenProvider
+    implements PushTokenProvider, PushPermissionProbe {
   FirebasePushTokenProvider(
     this.gateway, {
     required this.platform,
@@ -43,6 +46,8 @@ class FirebasePushTokenProvider implements PushTokenProvider {
   Future<String>? _identity;
   @override
   bool get supported => true;
+  @override
+  Future<String> permissionStatus() async => (await gateway.permission()).name;
 
   Future<String> _installationId() => _identity ??= _loadIdentity();
   Future<String> _loadIdentity() async {
@@ -148,6 +153,13 @@ Future<void> agapayFirebaseBackgroundMessage(RemoteMessage message) async {
   if (SensorPush.parse(message.data) == null) return;
   try {
     await Firebase.initializeApp();
+    final api = AuthApi();
+    try {
+      final journal = NotificationReceiptJournal(api);
+      if(await journal.capture(message.data, 'RECEIVED'))await journal.flush(limit: 1);
+    } finally {
+      api.dispose();
+    }
   } catch (_) {
     /* No credential logging. */
   }

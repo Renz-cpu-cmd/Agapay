@@ -1,4 +1,5 @@
 import '../core/ui.dart';
+import '../widgets/common/offline_reader_banner.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/map/map_screen.dart';
 import '../screens/alerts/alerts_screen.dart';
@@ -28,22 +29,40 @@ class MainNavigationShell extends StatelessWidget {
       child: Scaffold(
         body: SafeArea(
           bottom: false,
-          child: Stack(
+          child: Column(
             children: [
-              Offstage(
-                offstage: app.details,
-                child: IndexedStack(
-                  index: app.tab.index,
+              const OfflineReaderBanner(),
+              if (app.monitoring.snapshot?.serviceHealth?['status'] ==
+                  'degraded')
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    app.monitoring.snapshot!.serviceHealth!['message']
+                            as String? ??
+                        'Some live services are degraded. Check timestamps.',
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                ),
+              Expanded(
+                child: Stack(
                   children: [
-                    for (var i = 0; i < _screens.length; i++)
-                      TickerMode(
-                        enabled: !app.details && i == app.tab.index,
-                        child: _screens[i],
+                    Offstage(
+                      offstage: app.details,
+                      child: IndexedStack(
+                        index: app.tab.index,
+                        children: [
+                          for (var i = 0; i < _screens.length; i++)
+                            TickerMode(
+                              enabled: !app.details && i == app.tab.index,
+                              child: _screens[i],
+                            ),
+                        ],
                       ),
+                    ),
+                    if (app.details) const AlertDetailsScreen(),
                   ],
                 ),
               ),
-              if (app.details) const AlertDetailsScreen(),
             ],
           ),
         ),
@@ -60,6 +79,77 @@ class AgapayBottomNav extends StatelessWidget {
     final app = AppScope.of(context);
     const labels = ['Home', 'Map', 'SOS', 'Alerts', 'Profile'];
     const icons = ['home', 'map', 'sos', 'bell', 'user'];
+    if (MediaQuery.textScalerOf(context).scale(14) > 24) {
+      return Material(
+        color: context.colors.surface,
+        child: SafeArea(
+          top: false,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final style = DefaultTextStyle.of(
+                context,
+              ).style.copyWith(fontSize: 14, color: context.colors.text);
+              var labelHeight = 0.0;
+              for (final label in labels) {
+                final painter = TextPainter(
+                  text: TextSpan(text: label, style: style),
+                  textDirection: Directionality.of(context),
+                  textScaler: MediaQuery.textScalerOf(context),
+                )..layout(maxWidth: constraints.maxWidth / 3);
+                if (painter.height > labelHeight) labelHeight = painter.height;
+                painter.dispose();
+              }
+              return Wrap(
+                children: [
+                  for (var i = 0; i < labels.length; i++)
+                    SizedBox(
+                      width: constraints.maxWidth / 3,
+                      height: 48 + labelHeight,
+                      child: Semantics(
+                        label: '${labels[i]} tab',
+                        selected: app.tab.index == i,
+                        button: true,
+                        child: ExcludeSemantics(
+                          child: InkWell(
+                            onTap: () => app.navigate(AppTab.values[i]),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SvgIcon(
+                                  icons[i],
+                                  size: 24,
+                                  color: app.tab.index == i
+                                      ? context.colors.link
+                                      : context.colors.muted,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  labels[i],
+                                  textAlign: TextAlign.center,
+                                  style: style.copyWith(
+                                    color: app.tab.index == i
+                                        ? context.colors.link
+                                        : context.colors.muted,
+                                    fontWeight: app.tab.index == i
+                                        ? FontWeight.w700
+                                        : FontWeight.w400,
+                                  ),
+                                ),
+                                if (app.tab.index == i)
+                                  Dot(context.colors.link, size: 4),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+    }
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -72,7 +162,9 @@ class AgapayBottomNav extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0x66000000),
+            color: context.colors.isDark
+                ? const Color(0x66000000)
+                : const Color(0x120f2748),
             blurRadius: 18,
             offset: Offset(0, -5),
           ),
@@ -81,7 +173,9 @@ class AgapayBottomNav extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 74,
+          height:
+              74 +
+              32 * (MediaQuery.textScalerOf(context).scale(1) - 1).clamp(0, 2),
           child: Row(
             children: [
               for (var i = 0; i < labels.length; i++)
@@ -109,7 +203,11 @@ class AgapayBottomNav extends StatelessWidget {
                                             color: context.colors.red,
                                             shape: BoxShape.circle,
                                             boxShadow:
-                                                app.alert != AlertLevel.normal
+                                                app.alert != null &&
+                                                    app.alert !=
+                                                        AlertLevel.unknown &&
+                                                    app.alert !=
+                                                        AlertLevel.normal
                                                 ? const [
                                                     BoxShadow(
                                                       color: Color(0x80dc2626),

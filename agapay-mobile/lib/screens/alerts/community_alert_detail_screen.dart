@@ -34,17 +34,20 @@ class CommunityAlertDetailScreen extends StatelessWidget {
           gap,
           Panel(
             child: tx(
-              detail.episode.isResolved
+              !detail.episode.isOperational
+                  // R4: never phrase an unverified record as an instruction.
+                  ? 'Unverified station record. This incident was recorded by a station that has not completed AGAPAY field review, or whose eligibility was withdrawn. It is not an operational warning and not an evacuation instruction. Follow official local authority advisories.'
+                  : detail.episode.isResolved
                   ? 'This episode resolved after a valid NORMAL reading. Peak tier describes the past incident, not the current condition. Resolution does not guarantee an area is safe.'
                   : detail.episode.severity == AlertLevel.evacuate
-                  ? 'AGAPAY EVACUATE-level sensor alert. High flood risk detected. Prepare to evacuate and follow official local authority instructions. Proceed to a confirmed evacuation site when instructed or when immediate safety requires it.'
+                  ? 'AGAPAY EVACUATE-level sensor alert. The configured EVACUATE sensor threshold was crossed. Prepare to evacuate and follow official local authority instructions. Proceed to a confirmed evacuation site when instructed or when immediate safety requires it.'
                   : 'AGAPAY sensor alert. Monitor updates and follow official local authority instructions. Prepare emergency supplies and for possible evacuation.',
               size: 13,
             ),
           ),
           gap,
           tx(
-            'Sensor tiers are not official LGU evacuation orders. Physical/site calibration is pending. Historical device/simulator origin is unknown.',
+            'Sensor tiers are not official LGU evacuation orders. Physical/site calibration is pending. Historical ingress origin is unknown.',
             size: 11,
             color: context.colors.muted,
           ),
@@ -87,7 +90,7 @@ class CommunityAlertDetailScreen extends StatelessWidget {
           ),
           gap,
           tx(
-            'UCU Gym is a prototype evacuation destination. Confirm shelter activation and a safe entrance before traveling.',
+            'Open the authority-maintained shelter list. Confirm activation, capacity and access with the listed source before traveling. Generic routes do not establish flood-safe access.',
             size: 12,
           ),
           gap,

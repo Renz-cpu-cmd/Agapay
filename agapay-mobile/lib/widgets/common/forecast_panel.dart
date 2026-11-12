@@ -1,5 +1,7 @@
+import 'monitoring_status.dart';
 import '../../core/ui.dart';
 import '../../models/prediction.dart';
+import '../../screens/forecast_record_screen.dart';
 
 class ForecastPanel extends StatelessWidget {
   const ForecastPanel({super.key, this.detailed = false});
@@ -25,27 +27,39 @@ class ForecastPanel extends StatelessWidget {
                 ? 'The forecast has expired. Refresh to check availability.'
                 : data?.reason);
         return Panel(
-          color: const Color(0xff0c1320),
-          border: const Color(0x660d1f3c),
+          padding: 14,
+          radius: 14,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const MonitoringStatus(),
               Wrap(
                 alignment: WrapAlignment.spaceBetween,
                 runSpacing: 6,
                 children: [
                   caption('FLOOD FORECAST'),
-                  tx(
-                    forecast.preview ? 'SIMULATED PREVIEW' : 'ADVISORY ONLY',
-                    size: 9,
-                    mono: true,
-                    color: forecast.preview
-                        ? const Color(0xfffbbf24)
-                        : context.colors.label,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.colors.background,
+                      border: Border.all(color: context.colors.border),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: tx(
+                      forecast.preview ? 'SYNTHETIC PREVIEW' : 'ADVISORY ONLY',
+                      size: 9,
+                      mono: true,
+                      color: forecast.preview
+                          ? const Color(0xfffbbf24)
+                          : context.colors.label,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Row(
                 children: [
                   Expanded(
@@ -65,6 +79,15 @@ class ForecastPanel extends StatelessWidget {
                   ),
                 ],
               ),
+              if (forecast.available && !forecast.preview) ...[
+                for (final point in data!.points)
+                  Text(
+                    '+${point.horizonMinutes} min interval: ${forecastInterval(point)}',
+                  ),
+                const Text(
+                  'Event-calibrated local-depth interval. Coverage can fail under drift; not flood probability.',
+                ),
+              ],
               if (detailed) ...[
                 for (var i = 0; i < 3; i++)
                   Padding(
@@ -93,7 +116,7 @@ class ForecastPanel extends StatelessWidget {
                         const SizedBox(width: 8),
                         tx(
                           forecast.available
-                              ? '${data!.points[i].waterDepthCm!.toStringAsFixed(1)} cm'
+                              ? '${forecastDepth(data!.points[i].waterDepthCm, (data.publication['uncertainty']?['display_resolution_cm'] as num?)?.toDouble() ?? 1)} cm'
                               : '—',
                           size: 14,
                           mono: true,
@@ -123,13 +146,21 @@ class ForecastPanel extends StatelessWidget {
                                 mono: true,
                                 color: context.colors.muted,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               tx(
                                 forecast.available
-                                    ? data!.points[i].waterDepthCm!
-                                          .toStringAsFixed(1)
+                                    ? forecast.preview
+                                          ? data!.points[i].waterDepthCm!
+                                                .toStringAsFixed(1)
+                                          : forecastDepth(
+                                              data!.points[i].waterDepthCm,
+                                              (data.publication['uncertainty']?['display_resolution_cm']
+                                                          as num?)
+                                                      ?.toDouble() ??
+                                                  1,
+                                            )
                                     : '—',
-                                size: 18,
+                                size: 20,
                                 mono: true,
                                 weight: 700,
                                 color: forecast.available
@@ -181,6 +212,28 @@ class ForecastPanel extends StatelessWidget {
                     mono: true,
                     color: context.colors.muted,
                   ),
+                if (data.publication['forecast_id'] != null) ...[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => ForecastRecordScreen(
+                          id: data.publication['forecast_id'] as String,
+                        ),
+                      ),
+                    ),
+                    child: tx(
+                      'Forecast ID: ${data.publication['forecast_id']} · binding ${data.publication['deployment_version']}',
+                      size: 10,
+                      mono: true,
+                      color: context.colors.muted,
+                    ),
+                  ),
+                  tx(
+                    'Datum: ${data.publication['reference_datum']} · cutoff ${data.publication['data_cutoff']}',
+                    size: 10,
+                    color: context.colors.muted,
+                  ),
+                ],
               ],
               const SizedBox(height: 10),
               tx(
@@ -188,7 +241,7 @@ class ForecastPanel extends StatelessWidget {
                 size: 10,
                 color: context.colors.muted,
               ),
-              if (forecast.previewAllowed || forecast.preview) ...[
+              if (forecast.preview) ...[
                 const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerLeft,

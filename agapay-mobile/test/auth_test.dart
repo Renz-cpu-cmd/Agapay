@@ -3,6 +3,7 @@ import 'package:agapay_mobile/app.dart';
 import 'package:agapay_mobile/controllers/app_controller.dart';
 import 'package:agapay_mobile/navigation/main_navigation_shell.dart';
 import 'package:agapay_mobile/services/auth_api.dart';
+import 'package:agapay_mobile/screens/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -10,12 +11,72 @@ import 'package:http/testing.dart';
 import 'support/accounts.dart';
 
 void main() {
+  testWidgets('mobile login offers resident login and registration only', (
+    tester,
+  ) async {
+    final app = fixtureController();
+    await tester.pumpWidget(
+      AppScope(
+        controller: app,
+        child: const MaterialApp(home: LoginScreen()),
+      ),
+    );
+    expect(find.text('Staff'), findsNothing);
+    expect(find.byType(SegmentedButton<bool>), findsNothing);
+    expect(find.text('LOG IN'), findsOneWidget);
+    expect(find.text('Register'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    app.dispose();
+  });
+  test(
+    'staff sign-in responses and cached staff sessions are rejected and cleared',
+    () async {
+      for (final role in ['admin', 'officer']) {
+        for (final failLogout in [false, true]) {
+          final storage = MemoryTokens()..value = 'cached-staff-token';
+          final api = AuthApi(
+            readerStorage: MemoryReaderStorage(),
+            storage: storage,
+            client: MockClient((request) async {
+              if (request.url.path.endsWith('/logout')) {
+                return http.Response(
+                  failLogout ? '{"detail":"offline"}' : '',
+                  failLogout ? 503 : 204,
+                );
+              }
+              final user = {...resident(), 'role': role};
+              if (request.url.path.endsWith('/me')) {
+                return http.Response(jsonEncode(user), 200);
+              }
+              expect(jsonDecode(request.body)['audience'], 'mobile');
+              return http.Response(
+                jsonEncode({
+                  'user': user,
+                  'access_token': 'rejected-staff-token',
+                }),
+                200,
+              );
+            }),
+          );
+          await expectLater(api.restore(), throwsA(isA<AccountException>()));
+          expect(storage.value, isNull);
+          await expectLater(
+            api.login('staff@example.com', 'test-password'),
+            throwsA(isA<AccountException>()),
+          );
+          expect(storage.value, isNull);
+          api.dispose();
+        }
+      }
+    },
+  );
   test(
     'login sends resident audience and restores a securely stored token',
     () async {
       final storage = MemoryTokens();
       final calls = <http.Request>[];
       final api = AuthApi(
+        readerStorage: MemoryReaderStorage(),
         storage: storage,
         client: MockClient((request) async {
           calls.add(request);
@@ -50,6 +111,7 @@ void main() {
       final storage = MemoryTokens()..value = 'expired';
       var expired = false;
       final api = AuthApi(
+        readerStorage: MemoryReaderStorage(),
         storage: storage,
         client: MockClient(
           (_) async => http.Response('{"detail":"Session expired"}', 401),
@@ -65,6 +127,7 @@ void main() {
   test('connection failure keeps a stored session for a later retry', () async {
     final storage = MemoryTokens()..value = 'saved';
     final api = AuthApi(
+      readerStorage: MemoryReaderStorage(),
       storage: storage,
       client: MockClient((_) async => throw http.ClientException('offline')),
     );
@@ -77,6 +140,7 @@ void main() {
     final storage = MemoryTokens()..value = 'saved';
     var revoked = false;
     final api = AuthApi(
+      readerStorage: MemoryReaderStorage(),
       storage: storage,
       client: MockClient((request) async {
         if (request.url.path.endsWith('/logout')) {
@@ -99,7 +163,10 @@ void main() {
     tester,
   ) async {
     final controller = AppController(
+      locationSource: TestLocationSource(),
+      preferenceStorage: MemoryProductPreferences(),
       authApi: AuthApi(
+        readerStorage: MemoryReaderStorage(),
         storage: MemoryTokens(),
         client: MockClient(
           (_) async => http.Response(

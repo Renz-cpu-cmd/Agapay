@@ -49,6 +49,15 @@ class MemoryThemes implements ThemePreferenceStore {
 }
 
 void main() {
+  test('native controls use the same light or dark foreground as app text', () {
+    for (final theme in [AppTheme.light, AppTheme.dark]) {
+      expect(
+        theme.iconTheme.color,
+        theme.colorScheme.onSurface,
+        reason: '${theme.brightness} native icons must follow the theme',
+      );
+    }
+  });
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     for (final name in ['Inter', 'Outfit', 'JetBrainsMono']) {
@@ -116,7 +125,14 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             theme: theme,
-            home: const Scaffold(body: WaterLevelGauge(60)),
+            home: const Scaffold(
+              body: WaterLevelGauge(
+                60,
+                advisory: 60,
+                warning: 85,
+                critical: 100,
+              ),
+            ),
           ),
         );
         await tester.pumpAndSettle();
@@ -137,11 +153,11 @@ void main() {
         expect(water.height, closeTo(90, 1e-9));
         expect(svg.height, 196);
         expect(source, contains('viewBox="0 0 100 196"'));
-        expect(source, contains('y1="38" x2="32" y2="38"'));
+        expect(source, contains('y1="38.0" x2="32" y2="38.0"'));
         expect(source, contains('y1="60.5" x2="32" y2="60.5"'));
-        expect(source, contains('y1="98" x2="32" y2="98"'));
+        expect(source, contains('y1="98.0" x2="32" y2="98.0"'));
         expect(
-          find.bySemanticsLabel(RegExp('Water level 60.0 centimeters')),
+          find.bySemanticsLabel(RegExp('Water depth 60.0 centimeters')),
           findsOneWidget,
         );
       }
@@ -172,7 +188,7 @@ void main() {
         expect(water.height, closeTo(fill, 1e-9));
         expect(
           find.bySemanticsLabel(
-            RegExp('Water level ${level.toStringAsFixed(1)} centimeters'),
+            RegExp('Water depth ${level.toStringAsFixed(1)} centimeters'),
           ),
           findsOneWidget,
         );
@@ -206,19 +222,45 @@ void main() {
       await tester.ensureVisible(find.text('Default'));
       await tester.tap(find.text('Default'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Dark (Current theme)'));
+      await tester.tap(find.text('Dark'));
       await tester.pumpAndSettle();
       expect(
         Theme.of(tester.element(find.byType(MainNavigationShell))).brightness,
         Brightness.dark,
       );
-      for (final mode in [ThemeMode.light, ThemeMode.dark]) {
+      for (final mode in [ThemeMode.light, ThemeMode.dark, ThemeMode.light]) {
         await app.theme.setMode(mode);
         for (final tab in AppTab.values) {
           app.navigate(tab);
           await tester.pump(const Duration(milliseconds: 400));
           await tester.pump(const Duration(seconds: 1));
           expect(tester.takeException(), isNull, reason: '$mode / $tab');
+          final navContext = tester.element(find.byType(AgapayBottomNav));
+          final palette = navContext.colors;
+          expect(palette.isDark, mode == ThemeMode.dark);
+          final icons = tester
+              .widgetList<SvgPicture>(
+                find.descendant(
+                  of: find.byType(AgapayBottomNav),
+                  matching: find.byType(SvgPicture),
+                ),
+              )
+              .toList();
+          expect(icons.length, 5);
+          for (var i = 0; i < icons.length; i++) {
+            expect(
+              icons[i].colorFilter,
+              ColorFilter.mode(
+                i == 2
+                    ? Colors.white
+                    : i == tab.index
+                    ? palette.link
+                    : palette.muted,
+                BlendMode.srcIn,
+              ),
+              reason: '$mode / $tab / navigation icon $i',
+            );
+          }
           if (tab == AppTab.map) {
             final stationButton = find.widgetWithText(
               TextButton,
