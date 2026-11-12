@@ -1,0 +1,508 @@
+{
+  "sqlite": [
+    {
+      "name": "exercise_sessions",
+      "sql": "\nCREATE TABLE exercise_sessions (\n\tid VARCHAR(36) NOT NULL, \n\tcreated_by INTEGER NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tmax_sends INTEGER NOT NULL, \n\trevision INTEGER NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\texpires_at DATETIME NOT NULL, \n\tterminated_at DATETIME, \n\tterminated_by INTEGER, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_exercise_max_sends CHECK (max_sends >= 1 AND max_sends <= 50), \n\tFOREIGN KEY(created_by) REFERENCES users (id), \n\tFOREIGN KEY(terminated_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "created_by",
+        "reason",
+        "max_sends",
+        "revision",
+        "created_at",
+        "expires_at",
+        "terminated_at",
+        "terminated_by"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "created_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "max_sends": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "terminated_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "terminated_by": {
+          "type": "INTEGER",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_sessions_created_by",
+          "sql": "CREATE INDEX ix_exercise_sessions_created_by ON exercise_sessions (created_by)"
+        }
+      ]
+    },
+    {
+      "name": "exercise_deliveries",
+      "sql": "\nCREATE TABLE exercise_deliveries (\n\tid VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tdevice_id VARCHAR(36) NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\trequested_by INTEGER NOT NULL, \n\tidempotency_key VARCHAR(64) NOT NULL, \n\tmessage_type VARCHAR(20) NOT NULL, \n\ttrigger_kind VARCHAR(16) NOT NULL, \n\tstate VARCHAR(16) NOT NULL, \n\tattempts INTEGER NOT NULL, \n\toutcome VARCHAR(40), \n\tcreated_at DATETIME NOT NULL, \n\tattempted_at DATETIME, \n\tcompleted_at DATETIME, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_exercise_idempotency UNIQUE (session_id, idempotency_key), \n\tCONSTRAINT ck_exercise_type CHECK (message_type = 'EXERCISE_TEST'), \n\tCONSTRAINT ck_exercise_trigger CHECK (trigger_kind = 'manual'), \n\tCONSTRAINT ck_exercise_state CHECK (state IN ('PENDING','PROCESSING','TESTED','SENT','REJECTED','SUPPRESSED','UNKNOWN')), \n\tFOREIGN KEY(session_id) REFERENCES exercise_sessions (id), \n\tFOREIGN KEY(device_id) REFERENCES notification_devices (id), \n\tFOREIGN KEY(requested_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "session_id",
+        "device_id",
+        "device_revision",
+        "requested_by",
+        "idempotency_key",
+        "message_type",
+        "trigger_kind",
+        "state",
+        "attempts",
+        "outcome",
+        "created_at",
+        "attempted_at",
+        "completed_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "requested_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "idempotency_key": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "message_type": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "trigger_kind": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "outcome": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "attempted_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "completed_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "session_id",
+          "idempotency_key"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_deliveries_created_at",
+          "sql": "CREATE INDEX ix_exercise_deliveries_created_at ON exercise_deliveries (created_at)"
+        },
+        {
+          "name": "ix_exercise_deliveries_device_id",
+          "sql": "CREATE INDEX ix_exercise_deliveries_device_id ON exercise_deliveries (device_id)"
+        },
+        {
+          "name": "ix_exercise_deliveries_session_id",
+          "sql": "CREATE INDEX ix_exercise_deliveries_session_id ON exercise_deliveries (session_id)"
+        }
+      ]
+    },
+    {
+      "name": "exercise_device_consents",
+      "sql": "\nCREATE TABLE exercise_device_consents (\n\tdevice_id VARCHAR(36) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\tconsented_at DATETIME NOT NULL, \n\trevoked_at DATETIME, \n\tPRIMARY KEY (device_id), \n\tFOREIGN KEY(device_id) REFERENCES notification_devices (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "device_id",
+        "user_id",
+        "device_revision",
+        "consented_at",
+        "revoked_at"
+      ],
+      "column_contract": {
+        "device_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "consented_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "revoked_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "device_id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_device_consents_user_id",
+          "sql": "CREATE INDEX ix_exercise_device_consents_user_id ON exercise_device_consents (user_id)"
+        }
+      ]
+    },
+    {
+      "name": "exercise_recipients",
+      "sql": "\nCREATE TABLE exercise_recipients (\n\tsession_id VARCHAR(36) NOT NULL, \n\tdevice_id VARCHAR(36) NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\tadded_by INTEGER NOT NULL, \n\tadded_at DATETIME NOT NULL, \n\trevoked_at DATETIME, \n\tPRIMARY KEY (session_id, device_id), \n\tFOREIGN KEY(session_id) REFERENCES exercise_sessions (id), \n\tFOREIGN KEY(device_id) REFERENCES notification_devices (id), \n\tFOREIGN KEY(added_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "session_id",
+        "device_id",
+        "device_revision",
+        "added_by",
+        "added_at",
+        "revoked_at"
+      ],
+      "column_contract": {
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "added_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "added_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "revoked_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "session_id",
+        "device_id"
+      ],
+      "indexes": []
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "exercise_sessions",
+      "sql": "\nCREATE TABLE exercise_sessions (\n\tid VARCHAR(36) NOT NULL, \n\tcreated_by INTEGER NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tmax_sends INTEGER NOT NULL, \n\trevision INTEGER NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tterminated_at TIMESTAMP WITH TIME ZONE, \n\tterminated_by INTEGER, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_exercise_max_sends CHECK (max_sends >= 1 AND max_sends <= 50), \n\tFOREIGN KEY(created_by) REFERENCES users (id), \n\tFOREIGN KEY(terminated_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "created_by",
+        "reason",
+        "max_sends",
+        "revision",
+        "created_at",
+        "expires_at",
+        "terminated_at",
+        "terminated_by"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "created_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "max_sends": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "terminated_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "terminated_by": {
+          "type": "INTEGER",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_sessions_created_by",
+          "sql": "CREATE INDEX ix_exercise_sessions_created_by ON exercise_sessions (created_by)"
+        }
+      ]
+    },
+    {
+      "name": "exercise_deliveries",
+      "sql": "\nCREATE TABLE exercise_deliveries (\n\tid VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tdevice_id VARCHAR(36) NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\trequested_by INTEGER NOT NULL, \n\tidempotency_key VARCHAR(64) NOT NULL, \n\tmessage_type VARCHAR(20) NOT NULL, \n\ttrigger_kind VARCHAR(16) NOT NULL, \n\tstate VARCHAR(16) NOT NULL, \n\tattempts INTEGER NOT NULL, \n\toutcome VARCHAR(40), \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tattempted_at TIMESTAMP WITH TIME ZONE, \n\tcompleted_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_exercise_idempotency UNIQUE (session_id, idempotency_key), \n\tCONSTRAINT ck_exercise_type CHECK (message_type = 'EXERCISE_TEST'), \n\tCONSTRAINT ck_exercise_trigger CHECK (trigger_kind = 'manual'), \n\tCONSTRAINT ck_exercise_state CHECK (state IN ('PENDING','PROCESSING','TESTED','SENT','REJECTED','SUPPRESSED','UNKNOWN')), \n\tFOREIGN KEY(session_id) REFERENCES exercise_sessions (id), \n\tFOREIGN KEY(device_id) REFERENCES notification_devices (id), \n\tFOREIGN KEY(requested_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "session_id",
+        "device_id",
+        "device_revision",
+        "requested_by",
+        "idempotency_key",
+        "message_type",
+        "trigger_kind",
+        "state",
+        "attempts",
+        "outcome",
+        "created_at",
+        "attempted_at",
+        "completed_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "requested_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "idempotency_key": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "message_type": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "trigger_kind": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "outcome": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "attempted_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "completed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "session_id",
+          "idempotency_key"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_deliveries_created_at",
+          "sql": "CREATE INDEX ix_exercise_deliveries_created_at ON exercise_deliveries (created_at)"
+        },
+        {
+          "name": "ix_exercise_deliveries_device_id",
+          "sql": "CREATE INDEX ix_exercise_deliveries_device_id ON exercise_deliveries (device_id)"
+        },
+        {
+          "name": "ix_exercise_deliveries_session_id",
+          "sql": "CREATE INDEX ix_exercise_deliveries_session_id ON exercise_deliveries (session_id)"
+        }
+      ]
+    },
+    {
+      "name": "exercise_device_consents",
+      "sql": "\nCREATE TABLE exercise_device_consents (\n\tdevice_id VARCHAR(36) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\tconsented_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\trevoked_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (device_id), \n\tFOREIGN KEY(device_id) REFERENCES notification_devices (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "device_id",
+        "user_id",
+        "device_revision",
+        "consented_at",
+        "revoked_at"
+      ],
+      "column_contract": {
+        "device_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "consented_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "revoked_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "device_id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_device_consents_user_id",
+          "sql": "CREATE INDEX ix_exercise_device_consents_user_id ON exercise_device_consents (user_id)"
+        }
+      ]
+    },
+    {
+      "name": "exercise_recipients",
+      "sql": "\nCREATE TABLE exercise_recipients (\n\tsession_id VARCHAR(36) NOT NULL, \n\tdevice_id VARCHAR(36) NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\tadded_by INTEGER NOT NULL, \n\tadded_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\trevoked_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (session_id, device_id), \n\tFOREIGN KEY(session_id) REFERENCES exercise_sessions (id), \n\tFOREIGN KEY(device_id) REFERENCES notification_devices (id), \n\tFOREIGN KEY(added_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "session_id",
+        "device_id",
+        "device_revision",
+        "added_by",
+        "added_at",
+        "revoked_at"
+      ],
+      "column_contract": {
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "added_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "added_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "revoked_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "session_id",
+        "device_id"
+      ],
+      "indexes": []
+    }
+  ]
+}

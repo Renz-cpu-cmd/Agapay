@@ -12,7 +12,8 @@ from fastapi import HTTPException
 
 
 def main():
-    Base.metadata.create_all(engine)
+    from app.migrations import require_current
+    require_current(engine)
     with SessionLocal() as db:
         if setup_complete(db):
             raise SystemExit("Administrator setup is complete. Manage additional accounts through the web app.")

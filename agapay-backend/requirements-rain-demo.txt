@@ -1,0 +1,4 @@
+-r requirements-hybrid.txt
+-r requirements.txt
+paho-mqtt==2.1.0
+# Run only the separately labeled test publisher; not required for live counts.

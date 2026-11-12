@@ -36,6 +36,7 @@ class SosCreate(BaseModel):
 class SosTransition(BaseModel):
     model_config = ConfigDict(extra="forbid")
     status: Literal["ACKNOWLEDGED", "RESOLVED"]
+    expected_version: int = Field(ge=1)
     resolution_note: Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)] = ""
 
 
@@ -44,6 +45,7 @@ class SosLocationUpdate(BaseModel):
 
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
     latitude: float = Field(ge=-90, le=90)
+    expected_version: int = Field(ge=1)
     longitude: float = Field(ge=-180, le=180)
     accuracy_m: float = Field(ge=0, le=100000)
     location_recorded_at: datetime
@@ -59,6 +61,7 @@ class SosLocationUpdate(BaseModel):
 class SosRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    version: int
     user_id: int
     request_id: str
     resident_name: str

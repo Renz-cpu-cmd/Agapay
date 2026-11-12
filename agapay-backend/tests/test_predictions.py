@@ -7,7 +7,8 @@ from sqlalchemy import select
 from app.config import Settings, get_settings
 from app.database import SessionLocal
 from app.main import app
-from app.models import Station, Telemetry, utc_now
+from app.models import Station, Telemetry, TelemetryProvenance, StationCredential, utc_now
+from station_support import device_token
 from app.prediction_schemas import ModelOutput, PredictionInput, PredictionResponse
 from app.services import ml_predictor
 from app.services.ml_predictor import get_predictor
@@ -28,15 +29,22 @@ def access(client):
 
 
 def history(now, count=12, step_minutes=5, age_seconds=1, invalid=False, future=False):
+    device_token(STATION)
     with SessionLocal() as db:
+        credential = db.scalar(select(StationCredential).where(StationCredential.station_id == STATION))
         for i in range(count):
             timestamp = now - timedelta(minutes=(count - i - 1) * step_minutes, seconds=age_seconds)
             if future and i == count - 1:
                 timestamp = now + timedelta(minutes=1)
-            db.add(Telemetry(station_id=STATION, sequence_no=i + 1,
+            reading = Telemetry(station_id=STATION, sequence_no=i + 1,
                 water_depth_cm=None if invalid and i == count - 1 else 40 + i,
                 rainfall_mm=.5, sensor_quality="invalid" if invalid and i == count - 1 else "valid",
-                device_uptime_ms=i * 300000, recorded_at=timestamp))
+                device_uptime_ms=i * 300000, recorded_at=timestamp, measured_at=timestamp,
+                schema_version=2, config_version=1, source_id="TEST_" + STATION, eligible_for_current=True, disposition="current")
+            db.add(reading)
+            db.flush()
+            db.add(TelemetryProvenance(telemetry_id=reading.id, credential_id=credential.id,
+                ingress_transport="mqtt", ingress_identity="TEST_"+STATION, source_class="physical_device", stream="operational", registry_version=1))
         db.commit()
 
 
@@ -50,7 +58,9 @@ class Adapter:
 
 
 def use_adapter(adapter):
-    app.dependency_overrides[get_predictor] = lambda: adapter
+    # Isolate adapter validation tests; registry authorization is tested separately.
+    from app.routers.predictions import get_prediction_reader
+    app.dependency_overrides[get_prediction_reader] = lambda: lambda db,station,allowed: ml_predictor.predict_station(db,station,adapter,allowed)
 
 
 def test_default_auth_contract_and_no_sample_fallback(client, access):
@@ -85,7 +95,7 @@ def test_preview_states_are_explicit_and_do_not_modify_actual_state(client, acce
         assert db.scalar(select(Station).where(Station.station_id == STATION)).status == "active"
 
 
-@pytest.mark.parametrize("settings", [Settings(environment="production"), Settings(prediction_preview_enabled=False)])
+@pytest.mark.parametrize("settings", [Settings().model_copy(update={"environment":"production"}), Settings(prediction_preview_enabled=False)])
 def test_preview_disabled_by_environment_or_config(client, access, settings):
     app.dependency_overrides[get_settings] = lambda: settings
     assert client.get(f"/api/predictions/{STATION}", headers=access).json()["preview_allowed"] is False
@@ -106,7 +116,7 @@ def test_adapter_input_and_valid_zero_forecasts_have_correct_targets(client, acc
     assert isinstance(adapter.input, PredictionInput)
     assert adapter.input.samples[0].recorded_at < adapter.input.samples[-1].recorded_at
     assert adapter.input.samples[-1].rainfall_interval_seconds is None
-    assert data.timestamp_basis == "server_received"
+    assert data.timestamp_basis == "device_measured"
 
 
 @pytest.mark.parametrize("options,status", [

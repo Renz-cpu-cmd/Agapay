@@ -12,7 +12,7 @@ from test_alerts import episodes, payload, send, station
 ROOT = '/api/community-alerts'
 EPISODE_FIELDS = {
     'id', 'station_id', 'station_name', 'barangay', 'municipality', 'status',
-    'severity', 'source', 'trigger_depth_cm', 'latest_depth_cm', 'triggered_at',
+    'severity', 'source', 'verification', 'trigger_depth_cm', 'latest_depth_cm', 'triggered_at',
     'last_transition_at', 'resolved_at',
 }
 TRANSITION_FIELDS = {'previous_severity', 'new_severity', 'water_depth_cm', 'transitioned_at'}
@@ -148,22 +148,24 @@ def test_lifecycle_visibility_peak_history_invalid_and_second_episode(client, st
     assert page(client, resident, station, status='ACTIVE')['items'] == [active]
     assert page(client, resident, station, status='RESOLVED')['items'] == [resolved]
     # A retry, even with altered content, never changes the resident history.
-    assert client.post('/api/telemetry', json=payload(station, 8, 0)).status_code == 409
+    from station_support import device_headers
+    assert client.post('/api/telemetry', json=payload(station, 8, 0), headers=device_headers(station)).status_code == 409
     assert page(client, resident, station, '/active')['items'] == [active]
 
 
 @pytest.mark.parametrize('station_status', ['active', 'inactive', 'maintenance'])
 def test_no_implicit_geographic_or_station_status_suppression(client, station, resident, station_status):
+    send(client, station, 1, 100)
     with SessionLocal() as db:
         s = db.scalar(select(Station).where(Station.station_id == station))
         s.status, s.barangay, s.firmware_version = station_status, 'Not the resident barangay', 'simulator-dev'
         db.commit()
-    send(client, station, 1, 100)
     with SessionLocal() as db:
         db.scalar(select(Station).where(Station.station_id == station)).firmware_version = 'simulator-dev'
         db.commit()
     item, = page(client, resident, station, '/active')['items']
     assert item['severity'] == 'EVACUATE' and item['source'] == 'sensor'
+    assert item['verification'] == 'unverified'  # R4: no reviewed configuration; still listed, never hidden
     assert set(item) == EPISODE_FIELDS  # No invented device/simulator historical origin.
     # Default unfiltered feed also includes alerts outside the resident's area.
     assert item in client.get(ROOT + '/active?limit=100', headers=resident).json()['items']

@@ -1,7 +1,5 @@
 import hashlib
 import secrets
-import threading
-import time
 from datetime import timedelta
 
 from fastapi import Depends, HTTPException, Request
@@ -29,11 +27,19 @@ def verify_password(password: str, user: User | None) -> bool:
     return passwords.verify(password, user.password_hash if user else _dummy_hash) and user is not None
 
 
-def create_user(db: Session, payload: RegisterRequest, role: str = "resident") -> User:
-    user = User(**payload.model_dump(exclude={"password", "role"}), role=role, password_hash=passwords.hash(payload.password))
+def create_user(db: Session, payload: RegisterRequest, role: str = "resident", *, commit=True, actor=None, reason='Account registration') -> User:
+    user = User(**payload.model_dump(exclude={"password", "role", "reason"}), role=role, password_hash=passwords.hash(payload.password))
     db.add(user)
-    commit_account(db)
-    db.refresh(user)
+    try:
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, 'An account with this email already exists.') from None
+    from app.services.mutation_audit import record, snapshot
+    record(db,actor or user,'account',user.id,'account_created',reason,after=snapshot(user))
+    if commit:
+        commit_account(db)
+        db.refresh(user)
     return user
 
 
@@ -84,23 +90,39 @@ def revoke_sessions(db: Session, user_id: int) -> None:
     db.execute(delete(AuthSession).where(AuthSession.user_id == user_id))
 
 
-def issue_session(db: Session, user: User) -> SessionRead:
+def issue_session(db: Session, user: User, *, audience: str = "legacy", mfa_verified: bool = False) -> SessionRead:
     lock_account(db, user.id)
+    db.flush()
+    db.refresh(user)
+    if not user.is_active:
+        raise HTTPException(401, "This account is inactive.")
+    from app.identity_models import MfaCredential
+    if user.role in ("admin", "officer") and (get_settings().staff_mfa_required or db.get(MfaCredential,user.id)) and not mfa_verified:
+        raise HTTPException(403, "Staff multi-factor verification is required.")
     token = secrets.token_urlsafe(32)
     expires_at = utc_now() + timedelta(days=get_settings().session_days)
     db.execute(delete(AuthSession).where(AuthSession.expires_at <= utc_now()))
-    db.add(AuthSession(token_hash=token_digest(token), user_id=user.id, expires_at=expires_at))
+    session=AuthSession(token_hash=token_digest(token), user_id=user.id, expires_at=expires_at, audience=audience,
+                       mfa_verified_at=utc_now() if mfa_verified else None)
+    db.add(session);db.flush()
+    from app.services.mutation_audit import record
+    record(db,user,'account',user.id,'session_issued','Authenticated session issued',after={'session_id':session.public_id,'audience':audience,'mfa_verified':mfa_verified})
     db.commit()
     return SessionRead(access_token=token, expires_at=expires_at, user=UserRead.model_validate(user))
 
 
-def current_user(credentials: HTTPAuthorizationCredentials | None = Depends(bearer), db: Session = Depends(get_db)) -> User:
+def current_user(credentials: HTTPAuthorizationCredentials | None = Depends(bearer), db: Session = Depends(get_db), request: Request = None) -> User:
     error = HTTPException(401, "Your session has expired. Please sign in again.", headers={"WWW-Authenticate": "Bearer"})
     if credentials is None or credentials.scheme.lower() != "bearer" or len(credentials.credentials) > 256:
         raise error
     session = db.scalar(select(AuthSession).where(AuthSession.token_hash == token_digest(credentials.credentials), AuthSession.expires_at > utc_now()))
-    user = db.get(User, session.user_id) if session else None
+    user = db.get(User, session.user_id, populate_existing=True) if session else None
     if user is None or not user.is_active:
+        raise error
+    if request is not None and request.headers.get('X-Agapay-Require-Staff')=='1' and user.role not in ('admin','officer'):
+        raise HTTPException(403,'Staff access is required.')
+    from app.identity_models import MfaCredential
+    if user.role in ("admin", "officer") and (get_settings().staff_mfa_required or db.get(MfaCredential,user.id)) and session.mfa_verified_at is None:
         raise error
     return user
 
@@ -111,29 +133,4 @@ def require_admin(user: User = Depends(current_user)) -> User:
     return user
 
 
-class AuthLimiter:
-    """Bounded per-process abuse protection; use a shared gateway limit for multiple workers."""
-    def __init__(self):
-        self.entries: dict[str, tuple[int, float]] = {}
-        self.lock = threading.Lock()
-
-    def hit(self, key: str, limit: int, window: int = 900):
-        with self.lock:
-            now = time.monotonic()
-            self.entries = {k: v for k, v in self.entries.items() if v[1] > now}
-            count, reset = self.entries.get(key, (0, now + window))
-            if count >= limit or (key not in self.entries and len(self.entries) >= 10000):
-                raise HTTPException(429, "Too many attempts. Please try again later.", headers={"Retry-After": str(max(1, int(reset - now)))})
-            self.entries[key] = (count + 1, reset)
-
-    def clear(self, key: str):
-        with self.lock:
-            self.entries.pop(key, None)
-
-
-limiter = AuthLimiter()
-
-
-def request_ip(request: Request) -> str:
-    # Do not trust arbitrary client-supplied forwarding headers.
-    return request.client.host if request.client else "unknown"
+from app.services.auth_abuse import AuthLimiter, limiter, request_ip

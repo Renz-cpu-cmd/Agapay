@@ -17,10 +17,16 @@ class SendOutcome(str, Enum):
 
 
 @dataclass(frozen=True)
+class ProviderResult:
+    outcome: SendOutcome
+    provider_reference: str | None = None
+
+
+@dataclass(frozen=True)
 class PushMessage:
     title: str
     body: str
-    data: dict[str, str]
+    data: dict[str, str] = field(repr=False)  # May contain a scoped receipt capability.
 
 
 @dataclass(frozen=True)

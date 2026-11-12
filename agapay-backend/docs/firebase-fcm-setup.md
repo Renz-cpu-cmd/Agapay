@@ -103,8 +103,11 @@ displays notification payloads while backgrounded. Initial and resumed taps pars
 only a positive episode ID, wait for session restoration, and retrieve real detail
 from `/api/community-alerts/{id}`. Logged-out taps are discarded, and API failure
 shows the existing unavailable state. Push prose never supplies authoritative
-episode content. No read receipts, offline replay, geofencing, topic subscriptions
-or server-connected Profile preference is added.
+episode content. Later F33 adds optional received/open callback evidence, an
+encrypted bounded callback outbox and explicit resident acknowledgement; F17–F19
+add server-connected delivery preferences. See [current contracts and remaining
+phone acceptance](../../agapay-docs/security/F32-F33/README.md). Geofencing and
+topic subscriptions are not implemented.
 
 API-session expiry does not revoke push authorization. Explicit logout, security
 revocation, account ineligibility, withdrawal and invalid tokens retain their

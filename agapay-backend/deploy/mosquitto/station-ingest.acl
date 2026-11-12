@@ -1,0 +1,21 @@
+# Device broker usernames MUST equal their station IDs. No shared device account.
+# These patterns apply to all authenticated identities; stations can never send ACKs.
+pattern write agapay/stations/%u/telemetry
+pattern write agapay/stations/%u/rain
+pattern read agapay/stations/%u/rain-ack
+pattern read agapay/stations/%u/telemetry-ack
+pattern read agapay/stations/%u/forecast
+pattern write agapay/exercises/stations/%u/telemetry
+pattern write agapay/exercises/stations/%u/rain
+pattern read agapay/exercises/stations/%u/rain-ack
+
+# Dedicated backend account: read measurements, write only acknowledgement and advisory forecast topics.
+user backend-ingest
+topic read agapay/stations/+/telemetry
+topic read agapay/stations/+/rain
+topic write agapay/stations/+/rain-ack
+topic write agapay/stations/+/telemetry-ack
+topic write agapay/stations/+/forecast
+topic read agapay/exercises/stations/+/telemetry
+topic read agapay/exercises/stations/+/rain
+topic write agapay/exercises/stations/+/rain-ack

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.models import Alert, AlertTransition, Station, Telemetry
 from app.services.alert_classifier import SEVERITY_ORDER, classify_depth
 from app.services.notification_service import enqueue_transition
+from app.services.hazard_policy import decide
 
 
 def process_sensor_alert(db: Session, station: Station, telemetry: Telemetry) -> None:
@@ -12,13 +13,13 @@ def process_sensor_alert(db: Session, station: Station, telemetry: Telemetry) ->
     Never commit here: telemetry, the episode, and its transition must succeed
     together. Administrative station status does not stand in for water depth.
     """
-    if telemetry.sensor_quality != "valid" or telemetry.water_depth_cm is None:
-        return
-    severity = classify_depth(station, telemetry.water_depth_cm)
     episode = db.scalar(select(Alert).where(
         Alert.station_id == station.station_id, Alert.status == "ACTIVE",
     ))
     previous = episode.current_severity if episode else "NORMAL"
+    severity = decide(db, station, telemetry, previous)
+    if telemetry.sensor_quality != "valid" or telemetry.water_depth_cm is None:
+        return
     if episode is None:
         if severity == "NORMAL":
             return

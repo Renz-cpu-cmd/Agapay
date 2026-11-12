@@ -2,16 +2,34 @@ import hashlib
 from datetime import timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select, or_, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import SosRequest, User, utc_now
 from app.services.accounts import current_user
+from app.sos_response_models import SosDrillResponse
+from app.services.sos_concurrency import claim, conflict
 from app.sos_schemas import SosCreate, SosLocationUpdate, SosPage, SosRead, SosTransition, Status
 
 router = APIRouter(prefix="/api/sos", tags=["SOS (practice)"])
+
+
+def replay_fix(db, item, payload, user_id):
+    """Serialize duplicate acknowledgement with resolution and newer fixes."""
+    result = db.execute(update(SosRequest).where(
+        SosRequest.id == item.id, SosRequest.user_id == user_id,
+        SosRequest.status != 'RESOLVED', SosRequest.location_recorded_at == payload.location_recorded_at,
+        SosRequest.latitude == payload.latitude, SosRequest.longitude == payload.longitude,
+        SosRequest.accuracy_m == payload.accuracy_m,
+    ).values(version=SosRequest.version).execution_options(synchronize_session=False))
+    if result.rowcount != 1:
+        db.rollback()
+        return False
+    db.commit()
+    db.refresh(item)
+    return True
 
 
 def visible(db: Session, user: User, sos_id: int):
@@ -25,6 +43,10 @@ def visible(db: Session, user: User, sos_id: int):
 def create(payload: SosCreate, response: Response, user: User = Depends(current_user), db: Session = Depends(get_db)):
     if user.role != "resident":
         raise HTTPException(403, "Resident access is required to submit an SOS.")
+    from app.services.accounts import lock_account
+    lock_account(db, user.id); db.refresh(user)
+    if not user.is_active or user.role != 'resident':
+        raise HTTPException(403, 'Resident account is no longer authorized')
     digest = hashlib.sha256(payload.model_dump_json().encode()).hexdigest()
     lookup = select(SosRequest).where(SosRequest.user_id == user.id, SosRequest.request_id == str(payload.request_id))
 
@@ -70,6 +92,17 @@ def list_requests(status: Status | None = None, limit: int = Query(50, ge=1, le=
     return SosPage(items=items, total=total, counts=counts)
 
 
+@router.post('/receipt')
+def receipt(payload:SosCreate,user:User=Depends(current_user),db:Session=Depends(get_db)):
+    """Read-only exact-payload receipt lookup; never creates or re-sends an SOS."""
+    if user.role!='resident':raise HTTPException(403,'Resident access required')
+    item=db.scalar(select(SosRequest).where(SosRequest.user_id==user.id,SosRequest.request_id==str(payload.request_id)))
+    if item is None:return {'receipt':'unseen','item':None}
+    if item.payload_hash!=hashlib.sha256(payload.model_dump_json().encode()).hexdigest():
+        return {'receipt':'conflict','item':None,'message':'Reference exists with different submitted details. Refresh and manually review; do not overwrite.'}
+    return {'receipt':'received','item':SosRead.model_validate(item)}
+
+
 @router.get("/{sos_id}", response_model=SosRead)
 def get_request(sos_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     return visible(db, user, sos_id)
@@ -83,10 +116,7 @@ def update_location(sos_id: int, payload: SosLocationUpdate,
     if user.role != "resident":
         raise HTTPException(403, "Only the resident who submitted this SOS can share its location.")
     if item.status == "RESOLVED":
-        raise HTTPException(409, "Location sharing has ended because this SOS is resolved.")
-    age = utc_now() - payload.location_recorded_at
-    if age > timedelta(minutes=2) or age < -timedelta(minutes=1):
-        raise HTTPException(422, "Refresh your GPS location before sharing it.")
+        conflict(db, item, "Location sharing has ended because this SOS is resolved. Refresh the request.")
 
     if item.location_recorded_at is not None:
         previous = item.location_recorded_at
@@ -95,7 +125,7 @@ def update_location(sos_id: int, payload: SosLocationUpdate,
         else:
             previous = previous.astimezone(timezone.utc)
         if payload.location_recorded_at < previous:
-            raise HTTPException(409, "A newer location has already been recorded.")
+            conflict(db, item, "A newer location has already been recorded. Refresh the request.")
         if payload.location_recorded_at == previous:
             same_fix = (
                 item.latitude == payload.latitude
@@ -103,14 +133,23 @@ def update_location(sos_id: int, payload: SosLocationUpdate,
                 and item.accuracy_m == payload.accuracy_m
             )
             if same_fix:
+                if not replay_fix(db, item, payload, user.id):
+                    conflict(db, item)
                 return item
-            raise HTTPException(409, "A different location was already recorded at this time.")
-
-    item.latitude = payload.latitude
-    item.longitude = payload.longitude
-    item.accuracy_m = payload.accuracy_m
-    item.location_recorded_at = payload.location_recorded_at
-    item.location_source = "gps"
+            conflict(db, item, "A different location was already recorded at this time. Refresh the request.")
+    age = utc_now() - payload.location_recorded_at
+    if age > timedelta(minutes=2) or age < -timedelta(minutes=1):
+        raise HTTPException(422, "Refresh your GPS location before sharing it.")
+    try:
+        claim(db, item, payload.expected_version, conditions=(
+            SosRequest.user_id == user.id, SosRequest.status != "RESOLVED",
+            or_(SosRequest.location_recorded_at.is_(None), SosRequest.location_recorded_at < payload.location_recorded_at),
+        ), fields=dict(latitude=payload.latitude, longitude=payload.longitude, accuracy_m=payload.accuracy_m,
+                       location_recorded_at=payload.location_recorded_at, location_source='gps'))
+    except HTTPException as exc:
+        if exc.status_code == 409 and replay_fix(db, item, payload, user.id):
+            return item
+        raise
     db.commit()
     db.refresh(item)
     return item
@@ -123,18 +162,17 @@ def transition(sos_id: int, payload: SosTransition, user: User = Depends(current
     item = visible(db, user, sos_id)
     if item.status == payload.status:
         return item  # Retrying never rewrites the original officer or timestamp.
+    if payload.status == 'RESOLVED' and db.get(SosDrillResponse, item.id):
+        conflict(db, item, 'This request has a response drill. Record closure with a reason and evidence in its drill workflow.')
     expected = "ACTIVE" if payload.status == "ACKNOWLEDGED" else "ACKNOWLEDGED"
     if item.status != expected:
-        raise HTTPException(409, "SOS status has changed. Refresh the request; acknowledge before resolving.")
+        conflict(db, item, "SOS status has changed. Refresh the request; acknowledge before resolving.")
     fields = {"status": payload.status}
     if payload.status == "ACKNOWLEDGED":
         fields.update(acknowledged_by=user.id, acknowledged_by_name=user.name, acknowledged_at=utc_now())
     else:
         fields.update(resolved_by=user.id, resolved_by_name=user.name, resolved_at=utc_now(), resolution_note=payload.resolution_note)
-    result = db.execute(update(SosRequest).where(SosRequest.id == sos_id, SosRequest.status == expected).values(**fields))
-    if result.rowcount != 1:
-        db.rollback()
-        raise HTTPException(409, "Another officer updated this request. Refresh to see its current status.")
+    claim(db, item, payload.expected_version, conditions=(SosRequest.status == expected,), fields=fields)
     db.commit()
     db.refresh(item)
     return item

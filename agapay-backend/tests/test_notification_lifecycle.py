@@ -109,7 +109,7 @@ def test_password_revokes_all_devices_including_pruned_provenance(client, statio
         with SessionLocal() as db:
             assert db.get(AuthSession, digest(a)) is None
     response = client.patch("/api/auth/me", headers=b,
-                            json={"current_password": PASSWORD, "password": PASSWORD + "-changed"})
+                            json={"expected_version":1,"current_password": PASSWORD, "password": PASSWORD + "-changed"})
     assert response.status_code == 200
     for access in (a, b):
         assert client.get("/api/auth/me", headers=access).status_code == 401
@@ -136,9 +136,9 @@ def test_admin_security_changes_disable_and_do_not_auto_reactivate(client, stati
     admin = staff(client)
     with SessionLocal() as db:
         user_id = db.get(NotificationDevice, device["id"]).user_id
-    assert client.patch(f"/api/users/{user_id}", headers=admin, json=change).status_code == 200
+    assert client.patch(f"/api/users/{user_id}", headers=admin, json={"expected_version":1,"reason":"Synthetic security account update",**change}).status_code == 200
     assert client.patch(f"/api/users/{user_id}", headers=admin,
-                        json={"is_active": True, "role": "resident"}).status_code == 200
+                        json={"expected_version":2,"reason":"Synthetic account reactivation","is_active": True, "role": "resident"}).status_code == 200
     with SessionLocal() as db:
         current = db.get(NotificationDevice, device["id"])
         assert not current.enabled and current.provider_token is None

@@ -1,9 +1,13 @@
 import argparse
 import json
 import math
+import os
 import random
 import sys
 import time
+from datetime import datetime, timezone
+from uuid import uuid4
+from urllib.parse import urlparse
 from collections.abc import Iterator
 
 import httpx
@@ -36,17 +40,28 @@ def scenario_reading(scenario: str, index: int, count: int, rng: random.Random) 
 def readings(args: argparse.Namespace) -> Iterator[dict[str, object]]:
     rng = random.Random(args.seed)
     sequence = args.start_sequence or int(time.time() * 1000)
+    boot_id = "SIM_" + uuid4().hex
+    boot_sequence = getattr(args, "boot_sequence", 1)
+    source_id = getattr(args, "device_id", "UNCONFIGURED_SIMULATOR")
+    config_version = getattr(args, "config_version", 1)
+    started_ns = time.monotonic_ns()
     index = 0
     while True:
         cycle_index = index % args.count
         depth, rainfall, quality = scenario_reading(args.scenario, cycle_index, args.count, rng)
         yield {
             "station_id": args.station_id,
+            "schema_version": 2,
+            "config_version": config_version,
+            "source_id": source_id,
+            "boot_id": boot_id,
+            "boot_sequence": boot_sequence,
+            "measured_at": datetime.now(timezone.utc).isoformat(),
             "sequence_no": sequence + index,
             "water_depth_cm": depth,
             "rainfall_mm": rainfall,
             "sensor_quality": quality,
-            "device_uptime_ms": index * int(max(args.interval, 0.001) * 1000),
+            "device_uptime_ms": (time.monotonic_ns() - started_ns) // 1_000_000,
             "firmware_version": "0.2.0-simulator",
         }
         index += 1
@@ -60,6 +75,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--url", default="http://127.0.0.1:8000")
     parser.add_argument("--station-id", default="STATION_001")
+    parser.add_argument("--device-id", required=True, help="Commissioned device_id (use a dedicated simulator station)")
+    parser.add_argument("--config-version", type=int, required=True)
+    parser.add_argument("--boot-sequence", type=int, required=True, help="Persist/increment between simulator runs; never reuse")
     parser.add_argument("--scenario", choices=SCENARIOS, default="rising")
     parser.add_argument("--count", type=int, default=16)
     parser.add_argument("--interval", type=float, default=2.0)
@@ -77,6 +95,9 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if any(getattr(args, field, 1) < 1 for field in ("boot_sequence", "config_version")):
+        print("--boot-sequence and --config-version must be positive", file=sys.stderr)
+        return 2
     if args.count < 2:
         print("--count must be at least 2", file=sys.stderr)
         return 2
@@ -84,9 +105,18 @@ def main() -> int:
         print("--interval cannot be negative", file=sys.stderr)
         return 2
 
-    endpoint = f"{args.url.rstrip('/')}/api/telemetry"
+    endpoint = f"{args.url.rstrip('/')}/api/exercises/telemetry"
+    token = os.environ.get("AGAPAY_STATION_INGEST_TOKEN", "").strip()
+    if not args.dry_run:
+        if not token.startswith("agi_") or len(token) != 47:
+            print("Set AGAPAY_STATION_INGEST_TOKEN to this station's provisioned token; staff sessions are not ingestion credentials.", file=sys.stderr)
+            return 2
+        destination = urlparse(endpoint)
+        if destination.scheme != "https" and destination.hostname not in ("127.0.0.1", "localhost", "::1"):
+            print("Use HTTPS for ingestion outside a loopback development server.", file=sys.stderr)
+            return 2
     sent = 0
-    client = None if args.dry_run else httpx.Client(timeout=10.0, trust_env=False)
+    client = None if args.dry_run else httpx.Client(timeout=10.0, trust_env=False, headers={"Authorization": "Bearer " + token})
     print(f"AGAPAY virtual station | {args.station_id} | scenario={args.scenario}")
     try:
         for payload in readings(args):
@@ -99,7 +129,7 @@ def main() -> int:
                     print(f"Cannot reach {endpoint}: {exc}", file=sys.stderr)
                     return 1
                 if response.status_code != 201:
-                    print(f"FAILED {response.status_code}: {response.text}", file=sys.stderr)
+                    print(f"FAILED {response.status_code}: verify station commissioning, credential scope/expiry and ingest budget.", file=sys.stderr)
                     return 1
                 stored = response.json()
                 print(

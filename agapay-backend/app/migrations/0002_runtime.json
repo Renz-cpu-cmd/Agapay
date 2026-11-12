@@ -1,0 +1,372 @@
+{
+  "sqlite": [
+    {
+      "name": "worker_heartbeats",
+      "sql": "\nCREATE TABLE worker_heartbeats (\n\trole VARCHAR(32) NOT NULL, \n\tstate VARCHAR(16) NOT NULL, \n\tobserved_at DATETIME NOT NULL, \n\tlast_success_at DATETIME, \n\tdetail VARCHAR(64) NOT NULL, \n\tPRIMARY KEY (role)\n)\n\n",
+      "columns": [
+        "role",
+        "state",
+        "observed_at",
+        "last_success_at",
+        "detail"
+      ],
+      "column_contract": {
+        "role": {
+          "type": "VARCHAR(32)",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "observed_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "last_success_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "detail": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        }
+      },
+      "indexes": [],
+      "unique_contract": [],
+      "primary_key": [
+        "role"
+      ]
+    },
+    {
+      "name": "workflow_metric_buckets",
+      "sql": "\nCREATE TABLE workflow_metric_buckets (\n\tmetric VARCHAR(48) NOT NULL, \n\tminute INTEGER NOT NULL, \n\tcount INTEGER NOT NULL, \n\tfailures INTEGER NOT NULL, \n\ttotal_seconds FLOAT NOT NULL, \n\tmaximum_seconds FLOAT NOT NULL, \n\thistogram JSON NOT NULL, \n\tPRIMARY KEY (metric, minute)\n)\n\n",
+      "columns": [
+        "metric",
+        "minute",
+        "count",
+        "failures",
+        "total_seconds",
+        "maximum_seconds",
+        "histogram"
+      ],
+      "column_contract": {
+        "metric": {
+          "type": "VARCHAR(48)",
+          "nullable": false
+        },
+        "minute": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "count": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "failures": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "total_seconds": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "maximum_seconds": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "histogram": {
+          "type": "JSON",
+          "nullable": false
+        }
+      },
+      "indexes": [
+        {
+          "name": "ix_workflow_metric_minute",
+          "sql": "CREATE INDEX ix_workflow_metric_minute ON workflow_metric_buckets (minute)"
+        }
+      ],
+      "unique_contract": [],
+      "primary_key": [
+        "metric",
+        "minute"
+      ]
+    },
+    {
+      "name": "shared_read_models",
+      "sql": "\nCREATE TABLE shared_read_models (\n\t\"key\" VARCHAR(80) NOT NULL, \n\tgeneration VARCHAR(64) NOT NULL, \n\tpayload JSON, \n\tchecked_at DATETIME, \n\texpires_at DATETIME, \n\tlease_token VARCHAR(36), \n\tlease_until DATETIME, \n\tPRIMARY KEY (\"key\")\n)\n\n",
+      "columns": [
+        "key",
+        "generation",
+        "payload",
+        "checked_at",
+        "expires_at",
+        "lease_token",
+        "lease_until"
+      ],
+      "column_contract": {
+        "key": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "generation": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "payload": {
+          "type": "JSON",
+          "nullable": true
+        },
+        "checked_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "lease_token": {
+          "type": "VARCHAR(36)",
+          "nullable": true
+        },
+        "lease_until": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "indexes": [],
+      "unique_contract": [],
+      "primary_key": [
+        "key"
+      ]
+    },
+    {
+      "name": "operator_alerts",
+      "sql": "\nCREATE TABLE operator_alerts (\n\tcode VARCHAR(64) NOT NULL, \n\tseverity VARCHAR(16) NOT NULL, \n\tmessage TEXT NOT NULL, \n\tfirst_seen_at DATETIME NOT NULL, \n\tlast_seen_at DATETIME NOT NULL, \n\tresolved_at DATETIME, \n\tPRIMARY KEY (code)\n)\n\n",
+      "columns": [
+        "code",
+        "severity",
+        "message",
+        "first_seen_at",
+        "last_seen_at",
+        "resolved_at"
+      ],
+      "column_contract": {
+        "code": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "severity": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "message": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "first_seen_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "last_seen_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "resolved_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "indexes": [],
+      "unique_contract": [],
+      "primary_key": [
+        "code"
+      ]
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "worker_heartbeats",
+      "sql": "\nCREATE TABLE worker_heartbeats (\n\trole VARCHAR(32) NOT NULL, \n\tstate VARCHAR(16) NOT NULL, \n\tobserved_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tlast_success_at TIMESTAMP WITH TIME ZONE, \n\tdetail VARCHAR(64) NOT NULL, \n\tPRIMARY KEY (role)\n)\n\n",
+      "columns": [
+        "role",
+        "state",
+        "observed_at",
+        "last_success_at",
+        "detail"
+      ],
+      "column_contract": {
+        "role": {
+          "type": "VARCHAR(32)",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "observed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "last_success_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "detail": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        }
+      },
+      "indexes": [],
+      "unique_contract": [],
+      "primary_key": [
+        "role"
+      ]
+    },
+    {
+      "name": "workflow_metric_buckets",
+      "sql": "\nCREATE TABLE workflow_metric_buckets (\n\tmetric VARCHAR(48) NOT NULL, \n\tminute INTEGER NOT NULL, \n\tcount INTEGER NOT NULL, \n\tfailures INTEGER NOT NULL, \n\ttotal_seconds FLOAT NOT NULL, \n\tmaximum_seconds FLOAT NOT NULL, \n\thistogram JSON NOT NULL, \n\tPRIMARY KEY (metric, minute)\n)\n\n",
+      "columns": [
+        "metric",
+        "minute",
+        "count",
+        "failures",
+        "total_seconds",
+        "maximum_seconds",
+        "histogram"
+      ],
+      "column_contract": {
+        "metric": {
+          "type": "VARCHAR(48)",
+          "nullable": false
+        },
+        "minute": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "count": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "failures": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "total_seconds": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "maximum_seconds": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "histogram": {
+          "type": "JSON",
+          "nullable": false
+        }
+      },
+      "indexes": [
+        {
+          "name": "ix_workflow_metric_minute",
+          "sql": "CREATE INDEX ix_workflow_metric_minute ON workflow_metric_buckets (minute)"
+        }
+      ],
+      "unique_contract": [],
+      "primary_key": [
+        "metric",
+        "minute"
+      ]
+    },
+    {
+      "name": "shared_read_models",
+      "sql": "\nCREATE TABLE shared_read_models (\n\tkey VARCHAR(80) NOT NULL, \n\tgeneration VARCHAR(64) NOT NULL, \n\tpayload JSON, \n\tchecked_at TIMESTAMP WITH TIME ZONE, \n\texpires_at TIMESTAMP WITH TIME ZONE, \n\tlease_token VARCHAR(36), \n\tlease_until TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (key)\n)\n\n",
+      "columns": [
+        "key",
+        "generation",
+        "payload",
+        "checked_at",
+        "expires_at",
+        "lease_token",
+        "lease_until"
+      ],
+      "column_contract": {
+        "key": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "generation": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "payload": {
+          "type": "JSON",
+          "nullable": true
+        },
+        "checked_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "lease_token": {
+          "type": "VARCHAR(36)",
+          "nullable": true
+        },
+        "lease_until": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "indexes": [],
+      "unique_contract": [],
+      "primary_key": [
+        "key"
+      ]
+    },
+    {
+      "name": "operator_alerts",
+      "sql": "\nCREATE TABLE operator_alerts (\n\tcode VARCHAR(64) NOT NULL, \n\tseverity VARCHAR(16) NOT NULL, \n\tmessage TEXT NOT NULL, \n\tfirst_seen_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tlast_seen_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tresolved_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (code)\n)\n\n",
+      "columns": [
+        "code",
+        "severity",
+        "message",
+        "first_seen_at",
+        "last_seen_at",
+        "resolved_at"
+      ],
+      "column_contract": {
+        "code": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "severity": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "message": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "first_seen_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "last_seen_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "resolved_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "indexes": [],
+      "unique_contract": [],
+      "primary_key": [
+        "code"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,492 @@
+{
+  "sqlite": [
+    {
+      "name": "delivery_generations",
+      "sql": "\nCREATE TABLE delivery_generations (\n\tgeneration INTEGER NOT NULL, \n\ttoken VARCHAR(36) NOT NULL, \n\tstate VARCHAR(16) NOT NULL, \n\tkind VARCHAR(16) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tsource_backup_sha256 VARCHAR(64), \n\tdatabase_identity VARCHAR(80), \n\tclaim_seq INTEGER NOT NULL, \n\theld_count INTEGER NOT NULL, \n\tdeclared_by INTEGER, \n\tdeclared_at DATETIME NOT NULL, \n\tactivated_by INTEGER, \n\tactivated_at DATETIME, \n\tPRIMARY KEY (generation), \n\tCONSTRAINT ck_delivery_generation_state CHECK (state IN ('RECOVERING','ACTIVE','SUPERSEDED')), \n\tCONSTRAINT ck_delivery_generation_kind CHECK (kind IN ('initialize','restore','declared')), \n\tCONSTRAINT ck_delivery_generation_claims CHECK (claim_seq >= 0), \n\tUNIQUE (token)\n)\n\n",
+      "columns": [
+        "generation",
+        "token",
+        "state",
+        "kind",
+        "reason",
+        "source_backup_sha256",
+        "database_identity",
+        "claim_seq",
+        "held_count",
+        "declared_by",
+        "declared_at",
+        "activated_by",
+        "activated_at"
+      ],
+      "column_contract": {
+        "generation": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "token": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "source_backup_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "database_identity": {
+          "type": "VARCHAR(80)",
+          "nullable": true
+        },
+        "claim_seq": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "held_count": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "declared_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "declared_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "activated_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "activated_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "token"
+        ]
+      ],
+      "primary_key": [
+        "generation"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "delivery_recovery_events",
+      "sql": "\nCREATE TABLE delivery_recovery_events (\n\tid INTEGER NOT NULL, \n\tgeneration INTEGER NOT NULL, \n\taction VARCHAR(32) NOT NULL, \n\tactor_id INTEGER, \n\tdetails JSON NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "generation",
+        "action",
+        "actor_id",
+        "details",
+        "created_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "generation": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(32)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "details": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_delivery_recovery_events_generation",
+          "sql": "CREATE INDEX ix_delivery_recovery_events_generation ON delivery_recovery_events (generation)"
+        }
+      ]
+    },
+    {
+      "name": "delivery_recovery_holds",
+      "sql": "\nCREATE TABLE delivery_recovery_holds (\n\tid INTEGER NOT NULL, \n\tgeneration INTEGER NOT NULL, \n\tkind VARCHAR(20) NOT NULL, \n\tdelivery_id VARCHAR(36) NOT NULL, \n\toriginal_state VARCHAR(20) NOT NULL, \n\toriginal_attempts INTEGER NOT NULL, \n\toriginal_result VARCHAR(40), \n\toriginal_created_at DATETIME NOT NULL, \n\toriginal_attempted_at DATETIME, \n\treason_code VARCHAR(32) NOT NULL, \n\theld_at DATETIME NOT NULL, \n\tversion INTEGER NOT NULL, \n\tdecision VARCHAR(24), \n\tevidence_kind VARCHAR(24), \n\tevidence_sha256 VARCHAR(64), \n\tdecision_reason VARCHAR(500), \n\tdecided_by INTEGER, \n\tdecided_at DATETIME, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_delivery_recovery_hold UNIQUE (kind, delivery_id), \n\tCONSTRAINT ck_delivery_hold_kind CHECK (kind IN ('operational','exercise_manual','exercise_sensor')), \n\tCONSTRAINT ck_delivery_hold_decision CHECK (decision IS NULL OR decision IN ('provider_accepted','not_delivered','outcome_unknown','superseded'))\n)\n\n",
+      "columns": [
+        "id",
+        "generation",
+        "kind",
+        "delivery_id",
+        "original_state",
+        "original_attempts",
+        "original_result",
+        "original_created_at",
+        "original_attempted_at",
+        "reason_code",
+        "held_at",
+        "version",
+        "decision",
+        "evidence_kind",
+        "evidence_sha256",
+        "decision_reason",
+        "decided_by",
+        "decided_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "generation": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "delivery_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "original_state": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "original_attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "original_result": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        },
+        "original_created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "original_attempted_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "reason_code": {
+          "type": "VARCHAR(32)",
+          "nullable": false
+        },
+        "held_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "decision": {
+          "type": "VARCHAR(24)",
+          "nullable": true
+        },
+        "evidence_kind": {
+          "type": "VARCHAR(24)",
+          "nullable": true
+        },
+        "evidence_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "decision_reason": {
+          "type": "VARCHAR(500)",
+          "nullable": true
+        },
+        "decided_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "decided_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "kind",
+          "delivery_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_delivery_recovery_holds_generation",
+          "sql": "CREATE INDEX ix_delivery_recovery_holds_generation ON delivery_recovery_holds (generation)"
+        }
+      ]
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "delivery_generations",
+      "sql": "\nCREATE TABLE delivery_generations (\n\tgeneration INTEGER NOT NULL, \n\ttoken VARCHAR(36) NOT NULL, \n\tstate VARCHAR(16) NOT NULL, \n\tkind VARCHAR(16) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tsource_backup_sha256 VARCHAR(64), \n\tdatabase_identity VARCHAR(80), \n\tclaim_seq BIGINT NOT NULL, \n\theld_count INTEGER NOT NULL, \n\tdeclared_by INTEGER, \n\tdeclared_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tactivated_by INTEGER, \n\tactivated_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (generation), \n\tCONSTRAINT ck_delivery_generation_state CHECK (state IN ('RECOVERING','ACTIVE','SUPERSEDED')), \n\tCONSTRAINT ck_delivery_generation_kind CHECK (kind IN ('initialize','restore','declared')), \n\tCONSTRAINT ck_delivery_generation_claims CHECK (claim_seq >= 0), \n\tUNIQUE (token)\n)\n\n",
+      "columns": [
+        "generation",
+        "token",
+        "state",
+        "kind",
+        "reason",
+        "source_backup_sha256",
+        "database_identity",
+        "claim_seq",
+        "held_count",
+        "declared_by",
+        "declared_at",
+        "activated_by",
+        "activated_at"
+      ],
+      "column_contract": {
+        "generation": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "token": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "source_backup_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "database_identity": {
+          "type": "VARCHAR(80)",
+          "nullable": true
+        },
+        "claim_seq": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "held_count": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "declared_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "declared_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "activated_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "activated_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "token"
+        ]
+      ],
+      "primary_key": [
+        "generation"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "delivery_recovery_events",
+      "sql": "\nCREATE TABLE delivery_recovery_events (\n\tid BIGSERIAL NOT NULL, \n\tgeneration INTEGER NOT NULL, \n\taction VARCHAR(32) NOT NULL, \n\tactor_id INTEGER, \n\tdetails JSON NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "generation",
+        "action",
+        "actor_id",
+        "details",
+        "created_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "generation": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(32)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "details": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_delivery_recovery_events_generation",
+          "sql": "CREATE INDEX ix_delivery_recovery_events_generation ON delivery_recovery_events (generation)"
+        }
+      ]
+    },
+    {
+      "name": "delivery_recovery_holds",
+      "sql": "\nCREATE TABLE delivery_recovery_holds (\n\tid BIGSERIAL NOT NULL, \n\tgeneration INTEGER NOT NULL, \n\tkind VARCHAR(20) NOT NULL, \n\tdelivery_id VARCHAR(36) NOT NULL, \n\toriginal_state VARCHAR(20) NOT NULL, \n\toriginal_attempts INTEGER NOT NULL, \n\toriginal_result VARCHAR(40), \n\toriginal_created_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\toriginal_attempted_at TIMESTAMP WITH TIME ZONE, \n\treason_code VARCHAR(32) NOT NULL, \n\theld_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tversion INTEGER NOT NULL, \n\tdecision VARCHAR(24), \n\tevidence_kind VARCHAR(24), \n\tevidence_sha256 VARCHAR(64), \n\tdecision_reason VARCHAR(500), \n\tdecided_by INTEGER, \n\tdecided_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_delivery_recovery_hold UNIQUE (kind, delivery_id), \n\tCONSTRAINT ck_delivery_hold_kind CHECK (kind IN ('operational','exercise_manual','exercise_sensor')), \n\tCONSTRAINT ck_delivery_hold_decision CHECK (decision IS NULL OR decision IN ('provider_accepted','not_delivered','outcome_unknown','superseded'))\n)\n\n",
+      "columns": [
+        "id",
+        "generation",
+        "kind",
+        "delivery_id",
+        "original_state",
+        "original_attempts",
+        "original_result",
+        "original_created_at",
+        "original_attempted_at",
+        "reason_code",
+        "held_at",
+        "version",
+        "decision",
+        "evidence_kind",
+        "evidence_sha256",
+        "decision_reason",
+        "decided_by",
+        "decided_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "generation": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "delivery_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "original_state": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "original_attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "original_result": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        },
+        "original_created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "original_attempted_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "reason_code": {
+          "type": "VARCHAR(32)",
+          "nullable": false
+        },
+        "held_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "decision": {
+          "type": "VARCHAR(24)",
+          "nullable": true
+        },
+        "evidence_kind": {
+          "type": "VARCHAR(24)",
+          "nullable": true
+        },
+        "evidence_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "decision_reason": {
+          "type": "VARCHAR(500)",
+          "nullable": true
+        },
+        "decided_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "decided_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "kind",
+          "delivery_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_delivery_recovery_holds_generation",
+          "sql": "CREATE INDEX ix_delivery_recovery_holds_generation ON delivery_recovery_holds (generation)"
+        }
+      ]
+    }
+  ]
+}

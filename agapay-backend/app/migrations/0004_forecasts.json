@@ -1,0 +1,348 @@
+{
+  "sqlite": [
+    {
+      "name": "forecast_models",
+      "sql": "\nCREATE TABLE forecast_models (\n\tid VARCHAR(64) NOT NULL, \n\tbundle JSON NOT NULL, \n\tregistered_by INTEGER NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(registered_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "bundle",
+        "registered_by",
+        "created_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "bundle": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "registered_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "forecast_approvals",
+      "sql": "\nCREATE TABLE forecast_approvals (\n\tmodel_id VARCHAR(64) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tstate VARCHAR(20) NOT NULL, \n\treviewer_id INTEGER, \n\tevidence_sha256 VARCHAR(64), \n\tPRIMARY KEY (model_id), \n\tFOREIGN KEY(model_id) REFERENCES forecast_models (id), \n\tFOREIGN KEY(reviewer_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "model_id",
+        "version",
+        "state",
+        "reviewer_id",
+        "evidence_sha256"
+      ],
+      "column_contract": {
+        "model_id": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "reviewer_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "evidence_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "model_id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "forecast_deployments",
+      "sql": "\nCREATE TABLE forecast_deployments (\n\tstation_id VARCHAR(50) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tmodel_id VARCHAR(64), \n\tmodel_review_version INTEGER, \n\tconfiguration_hash VARCHAR(64), \n\treviewed_by INTEGER, \n\tPRIMARY KEY (station_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(model_id) REFERENCES forecast_models (id), \n\tFOREIGN KEY(reviewed_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "version",
+        "model_id",
+        "model_review_version",
+        "configuration_hash",
+        "reviewed_by"
+      ],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "model_id": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "model_review_version": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "configuration_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "reviewed_by": {
+          "type": "INTEGER",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "published_forecasts",
+      "sql": "\nCREATE TABLE published_forecasts (\n\tid VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tinput_fingerprint VARCHAR(64) NOT NULL, \n\tgenerated_at DATETIME NOT NULL, \n\tvalid_until DATETIME NOT NULL, \n\tpayload JSON NOT NULL, \n\tPRIMARY KEY (id), \n\tUNIQUE (station_id, input_fingerprint), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "input_fingerprint",
+        "generated_at",
+        "valid_until",
+        "payload"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "input_fingerprint": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "generated_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "valid_until": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "payload": {
+          "type": "JSON",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "station_id",
+          "input_fingerprint"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_published_forecasts_generated_at",
+          "sql": "CREATE INDEX ix_published_forecasts_generated_at ON published_forecasts (generated_at)"
+        },
+        {
+          "name": "ix_published_forecasts_station_id",
+          "sql": "CREATE INDEX ix_published_forecasts_station_id ON published_forecasts (station_id)"
+        }
+      ]
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "forecast_models",
+      "sql": "\nCREATE TABLE forecast_models (\n\tid VARCHAR(64) NOT NULL, \n\tbundle JSON NOT NULL, \n\tregistered_by INTEGER NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(registered_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "bundle",
+        "registered_by",
+        "created_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "bundle": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "registered_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "forecast_approvals",
+      "sql": "\nCREATE TABLE forecast_approvals (\n\tmodel_id VARCHAR(64) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tstate VARCHAR(20) NOT NULL, \n\treviewer_id INTEGER, \n\tevidence_sha256 VARCHAR(64), \n\tPRIMARY KEY (model_id), \n\tFOREIGN KEY(model_id) REFERENCES forecast_models (id), \n\tFOREIGN KEY(reviewer_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "model_id",
+        "version",
+        "state",
+        "reviewer_id",
+        "evidence_sha256"
+      ],
+      "column_contract": {
+        "model_id": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "reviewer_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "evidence_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "model_id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "forecast_deployments",
+      "sql": "\nCREATE TABLE forecast_deployments (\n\tstation_id VARCHAR(50) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tmodel_id VARCHAR(64), \n\tmodel_review_version INTEGER, \n\tconfiguration_hash VARCHAR(64), \n\treviewed_by INTEGER, \n\tPRIMARY KEY (station_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(model_id) REFERENCES forecast_models (id), \n\tFOREIGN KEY(reviewed_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "version",
+        "model_id",
+        "model_review_version",
+        "configuration_hash",
+        "reviewed_by"
+      ],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "model_id": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "model_review_version": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "configuration_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "reviewed_by": {
+          "type": "INTEGER",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "published_forecasts",
+      "sql": "\nCREATE TABLE published_forecasts (\n\tid VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tinput_fingerprint VARCHAR(64) NOT NULL, \n\tgenerated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tvalid_until TIMESTAMP WITH TIME ZONE NOT NULL, \n\tpayload JSON NOT NULL, \n\tPRIMARY KEY (id), \n\tUNIQUE (station_id, input_fingerprint), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "input_fingerprint",
+        "generated_at",
+        "valid_until",
+        "payload"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "input_fingerprint": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "generated_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "valid_until": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "payload": {
+          "type": "JSON",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "station_id",
+          "input_fingerprint"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_published_forecasts_generated_at",
+          "sql": "CREATE INDEX ix_published_forecasts_generated_at ON published_forecasts (generated_at)"
+        },
+        {
+          "name": "ix_published_forecasts_station_id",
+          "sql": "CREATE INDEX ix_published_forecasts_station_id ON published_forecasts (station_id)"
+        }
+      ]
+    }
+  ]
+}

@@ -30,6 +30,9 @@ def create_first_administrator(db: Session, payload: RegisterRequest) -> User:
             raise HTTPException(409, "Administrator setup is complete. Sign in to manage accounts.")
         user = User(**payload.model_dump(exclude={"password"}), role="admin", password_hash=password_hash)
         db.add(user)
+        db.flush()
+        from app.services.mutation_audit import record,snapshot
+        record(db,user,"account",user.id,"administrator_bootstrapped","Deliberate one-time installation administrator setup",after=snapshot(user))
         db.commit()
     except IntegrityError as exc:
         db.rollback()

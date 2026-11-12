@@ -1,7 +1,9 @@
 import argparse
 import random
+import httpx
 
 from simulator.simulate_http import SCENARIOS, readings, scenario_reading
+from simulator import simulate_http
 
 
 def test_scenarios_cover_normal_flood_recovery_fault_and_offline_profiles():
@@ -34,5 +36,41 @@ def test_generated_payloads_match_the_telemetry_contract():
     )
     payloads = list(readings(args))
     assert [payload["sequence_no"] for payload in payloads] == [100, 101, 102, 103]
-    assert [payload["device_uptime_ms"] for payload in payloads] == [0, 2000, 4000, 6000]
+    uptimes = [payload["device_uptime_ms"] for payload in payloads]
+    assert uptimes == sorted(uptimes) and all(value >= 0 for value in uptimes)
+    from app.schemas import TelemetryCreate
+    for body in payloads:
+        TelemetryCreate.model_validate(body)
+    assert len({p["boot_id"] for p in payloads}) == 1
+    assert all(p["measured_at"] is not None for p in payloads)
     assert all(payload["firmware_version"] == "0.2.0-simulator" for payload in payloads)
+
+
+def simulator_args(**changes):
+    return argparse.Namespace(url="http://127.0.0.1:8000", station_id="TEST_SIM", scenario="normal",
+        count=2, interval=0, loop=False, dry_run=False, seed=2026, start_sequence=100, **changes)
+
+
+def test_real_simulator_refuses_missing_token_without_contacting_server(monkeypatch, capsys):
+    monkeypatch.delenv("AGAPAY_STATION_INGEST_TOKEN", raising=False)
+    monkeypatch.setattr(simulate_http, "parse_args", simulator_args)
+    monkeypatch.setattr(simulate_http.httpx, "Client", lambda **kw: (_ for _ in ()).throw(AssertionError("Must not connect")))
+    assert simulate_http.main() == 2
+    assert "AGAPAY_STATION_INGEST_TOKEN" in capsys.readouterr().err
+
+
+def test_simulator_adds_station_authorization_without_logging_token(monkeypatch, capsys):
+    token = "agi_" + "s" * 43
+    seen = []
+    def response(request):
+        import json
+        seen.append(request.headers["Authorization"])
+        return httpx.Response(201, json=json.loads(request.content))
+    actual_client = httpx.Client
+    monkeypatch.setenv("AGAPAY_STATION_INGEST_TOKEN", token)
+    monkeypatch.setattr(simulate_http, "parse_args", simulator_args)
+    monkeypatch.setattr(simulate_http.httpx, "Client", lambda **kw: actual_client(transport=httpx.MockTransport(response), **kw))
+    assert simulate_http.main() == 0
+    assert seen == ["Bearer " + token] * 2
+    captured = capsys.readouterr()
+    assert token not in captured.out + captured.err

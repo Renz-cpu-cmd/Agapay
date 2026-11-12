@@ -6,6 +6,7 @@ from sqlalchemy import select
 from app.database import SessionLocal
 from app.models import Alert, AlertTransition, Station, Telemetry, utc_now
 from test_accounts import account, headers, reset_accounts
+from station_support import device_headers, ordering_fields
 
 
 STATION = "MONITOR_TEST"
@@ -37,7 +38,9 @@ def access(client):
 def post(client, sequence, depth, quality="valid", rainfall=0.7):
     return client.post(
         "/api/telemetry",
+        headers=device_headers(STATION),
         json={
+            **ordering_fields(STATION, sequence),
             "station_id": STATION,
             "sequence_no": sequence,
             "water_depth_cm": depth,
@@ -50,7 +53,9 @@ def post(client, sequence, depth, quality="valid", rainfall=0.7):
 
 
 def monitored_station(client, access):
-    response = client.get("/api/monitoring/stations?history_limit=20", headers=access)
+    # R5: filter to this module's station; the unfiltered snapshot is budget-limited.
+    response = client.get("/api/monitoring/stations", headers=access,
+                          params={"history_limit": 20, "station_id": STATION})
     assert response.status_code == 200
     assert response.headers["cache-control"] == "no-store"
     return next(item for item in response.json()["stations"] if item["station_id"] == STATION)
@@ -72,10 +77,11 @@ def test_live_snapshot_classifies_thresholds_trend_and_history(client, access):
     item = monitored_station(client, access)
     assert item["connection_status"] == "online"
     assert item["alert_tier"] == "ADVISORY"
-    assert item["trend"] == "rising_rapidly"
+    assert item["trend"] == "unknown"  # Two near-simultaneous samples do not establish a robust physical rate.
+    assert item["rise_rate_cm_per_minute"] is None
     assert item["current_depth_cm"] == 64
-    assert item["latest_rainfall_mm"] == 1.4
-    assert item["source"] == "simulator"
+    assert item["latest_rainfall_mm"] is None  # Ambiguous water-envelope rain is not a journal product.
+    assert item["source"] == "device"  # Registry ownership, even with a simulator firmware label.
     assert [sample["sequence_no"] for sample in item["history"]] == [1, 2]
 
 
@@ -93,7 +99,8 @@ def test_freshness_and_administrative_state_are_separate_from_severity(client, a
     assert post(client, 1, 104).status_code == 201
     with SessionLocal() as db:
         saved = db.scalar(select(Station).where(Station.station_id == STATION))
-        saved.last_ping = utc_now() - timedelta(minutes=5)
+        db.scalar(select(Telemetry).where(Telemetry.station_id == STATION)).received_at = utc_now() - timedelta(minutes=5)
+        db.scalar(select(Telemetry).where(Telemetry.station_id == STATION)).measured_at = utc_now() - timedelta(minutes=5)
         db.commit()
     item = monitored_station(client, access)
     assert item["connection_status"] == "offline"

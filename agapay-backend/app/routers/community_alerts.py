@@ -12,6 +12,7 @@ from app.community_alert_schemas import (
 from app.database import get_db
 from app.models import Alert, AlertTransition, Station
 from app.services.accounts import current_user
+from app.services.incident_verification import verification_column
 
 
 # The existing active-account dependency admits residents, officers and admins.
@@ -22,14 +23,14 @@ router = APIRouter(
 )
 
 
-def community_alert(episode: Alert, station: Station) -> CommunityAlertRead:
+def community_alert(episode: Alert, station: Station, verification: str) -> CommunityAlertRead:
     """Explicit allowlist: never serialize the operational model wholesale."""
     return CommunityAlertRead(
         id=episode.id, station_id=station.station_id,
         station_name=station.station_name, barangay=station.barangay,
         municipality=station.municipality, status=episode.status,
         severity=episode.current_severity if episode.status == "ACTIVE" else episode.highest_severity,
-        source=episode.source, trigger_depth_cm=episode.trigger_depth_cm,
+        source=episode.source, verification=verification, trigger_depth_cm=episode.trigger_depth_cm,
         latest_depth_cm=episode.latest_depth_cm, triggered_at=episode.triggered_at,
         last_transition_at=episode.last_transition_at, resolved_at=episode.resolved_at,
     )
@@ -46,10 +47,12 @@ def community_page(db: Session, station_id: str | None, status: AlertStatus | No
     # station status must not silently hide an existing sensor episode.
     join = Alert.station_id == Station.station_id
     total = db.scalar(select(func.count()).select_from(Alert).join(Station, join).where(*conditions))
-    records = db.execute(select(Alert, Station).join(Station, join).where(*conditions)
+    # Unverified incidents stay listed (never silently deleted); each carries its
+    # fail-closed verification so clients cannot present it as an operational warning.
+    records = db.execute(select(Alert, Station, verification_column()).join(Station, join).where(*conditions)
                          .order_by(Alert.triggered_at.desc(), Alert.id.desc())
                          .offset(offset).limit(limit)).all()
-    return CommunityAlertPage(items=[community_alert(episode, station) for episode, station in records], total=total)
+    return CommunityAlertPage(items=[community_alert(*record) for record in records], total=total)
 
 
 @router.get("", response_model=CommunityAlertPage)
@@ -71,7 +74,7 @@ def community_alert_detail(alert_id: int,
                             transition_limit: int = Query(50, ge=1, le=100),
                             transition_offset: int = Query(0, ge=0),
                             db: Session = Depends(get_db)) -> CommunityAlertDetail:
-    record = db.execute(select(Alert, Station).join(Station, Alert.station_id == Station.station_id)
+    record = db.execute(select(Alert, Station, verification_column()).join(Station, Alert.station_id == Station.station_id)
                         .where(Alert.id == alert_id, Alert.source == "sensor")).one_or_none()
     if record is None:
         raise HTTPException(404, "Community sensor alert not found.")

@@ -1,17 +1,39 @@
+F28/F29: [depth history, explicit migrations and managed deployment](../agapay-docs/security/F28-F29/README.md). Startup now requires the migration ledger and never seeds demo data.
+
 # AGAPAY Backend
+
+F15/F16 add explicit rainfall products and reviewed installation hashes. Firmware fallback geometry is an unvalidated 150 cm bench profile; it is not a drop-in update for a 120 cm mounting. See [contracts, preservation migration, header export and physical acceptance](../agapay-docs/security/F15-F16/README.md).
+
+F12â€“F14 add independent channel health, measured-time rise estimates and bounded persisted history/event reports. See [contracts, history-index migration and verification](../agapay-docs/security/F12-F14/README.md).
+
+F09â€“F11 add provisional hysteresis/recovery policy, distinct issuer notice lifecycles and explicit notification subscriptions. See [implementation, setup and verification](../agapay-docs/security/F09-F11/README.md).
 
 FastAPI telemetry foundation and persistent account services for AGAPAY.
 
 For first-administrator setup, web/mobile login, roles, and account endpoints, see [Accounts setup](../agapay-docs/ACCOUNTS_SETUP.md).
 
+Station writes now require admin provisioning and a separate station ingestion credential.
+See [F01/F02 commissioning, authentication and rollout](../agapay-docs/security/F01-F02/README.md)
+before running an existing publisher. Existing station data is preserved; no device
+is implicitly authorized by the seeded station row.
+
+Water ingestion now requires the v2 boot/measurement metadata. Existing databases
+need the explicit preservation migration before startup; see
+[F03/F04 ordering and rollout](../agapay-docs/security/F03-F04/README.md).
+
+[F05/F06 source registry and freshness](../agapay-docs/security/F05-F06/README.md)
+adds required admin source review, isolated exercise ingestion and separate
+heartbeat/retained-depth clocks. Existing identities are not automatically
+classified physical. HTTP simulators use `/api/exercises/telemetry`.
+
 ## What is implemented
 
 - FastAPI application and interactive OpenAPI documentation
 - SQLAlchemy 2 database layer
-- Automatically seeded `STATION_001` virtual UCU irrigation station
+- Explicit development-only `STATION_001` demo bootstrap
 - Strict telemetry validation matching the MQTT contract
-- Duplicate protection using `(station_id, sequence_no)`
-- UTC receive timestamps
+- Boot-scoped duplicate/conflict protection and atomic current-state ordering
+- Separate acquisition/receipt timestamps; late samples remain historical
 - Latest and historical telemetry endpoints
 - Scenario-driven HTTP virtual-station sender
 - Authenticated monitoring snapshot with freshness, source, severity, trend, and history
@@ -19,7 +41,7 @@ For first-administrator setup, web/mobile login, roles, and account endpoints, s
 
 Persistent practice SOS with owner/staff access, idempotent submissions and audited status transitions is documented in [Practice SOS setup](../agapay-docs/SOS_SETUP.md).
 
-Authentication, resident registration, profiles, revocable sessions, and administrator user management are implemented alongside `stations` and `telemetry`. The [prediction interface](../agapay-docs/PREDICTION_INTERFACE.md) supplies 30/60/90-minute availability responses and explicit development previews. No trained ML model is configured. Push delivery, WebSockets, operational reports, and ML training remain later phases.
+Authentication, resident registration, profiles, revocable sessions, and administrator user management are implemented alongside `stations` and `telemetry`. The [prediction interface](../agapay-docs/PREDICTION_INTERFACE.md) supplies 30/60/90-minute availability responses and explicit development previews. No trained ML model is configured. Bounded persisted water-depth reports are documented in the F12â€“F14 guide above; they do not replace a complete operational incident report.
 
 ## Start on Windows
 
@@ -30,6 +52,10 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 Copy-Item .env.example .env
+# For a NEW database; existing installations first verify a private copy and stop writers.
+python -m app.migrations --apply --writers-stopped --backup-confirmed
+# Optional development demo; review seed metadata first.
+python -m app.bootstrap_demo --apply
 python -m uvicorn app.main:app --reload
 ```
 
@@ -41,7 +67,8 @@ In a second activated PowerShell window:
 python simulator\simulate_http.py --scenario flash-flood --count 16 --interval 2
 ```
 
-No hardware or simulator account is required. The web and mobile apps need a
+No hardware is required for the simulator, but it needs a commissioned station and
+`AGAPAY_STATION_INGEST_TOKEN` with HTTP scope. The web and mobile apps need a
 normal local account to read the protected monitoring snapshot. See the
 [virtual-station guide](../agapay-docs/TELEMETRY_SIMULATOR.md) for every scenario.
 
@@ -144,7 +171,7 @@ acknowledgment endpoints are exposed; SOS acknowledgment remains separate.
 | GET | `/api/alerts/{alert_id}` | Episode details (404 if absent) |
 | GET | `/api/alerts/{alert_id}/transitions` | Transition history, oldest first (404 if episode absent) |
 
-Lists return `{items, total}` and accept `limit` (1–100, default 50) and `offset`
+Lists return `{items, total}` and accept `limit` (1â€“100, default 50) and `offset`
 (default 0). Episode lists support `station_id` and `severity` (current severity);
 `/api/alerts` additionally accepts `status=ACTIVE|RESOLVED`. An unknown station
 filter returns an empty page. Resolved episodes have current severity NORMAL and
@@ -153,13 +180,7 @@ severity, depth, telemetry ID/sequence, and UTC timestamp. Episode details inclu
 trigger/latest telemetry IDs/sequences and depths, trigger/last-transition times,
 and optional resolution time. Use the existing `/docs` OpenAPI schemas for fields.
 
-The existing startup `Base.metadata.create_all()` creates the two new tables in
-existing development databases. No old telemetry is backfilled/replayed: persistent
-history starts with newly accepted samples after this version is deployed. Restarting
-the service preserves episodes; it does not reclassify them without new valid data.
-Manual/demo web alerts are not imported. Production migrations, calibrated hysteresis,
-notifications, WebSockets, and resident mobile alert integration remain separate work.
-**No push notification delivery or production-readiness claim is included.**
+Schema upgrades are explicit and version checked; follow the F28/F29 guide. Startup preserves existing episodes without replaying them. Historical depth backfill never reclassifies current hazards or enqueues notifications. Field deployment and provider acceptance remain separate.
 
 ### Community read API
 
@@ -178,7 +199,7 @@ no anonymous access or alert mutation/acknowledgment endpoint.
 | GET | `/api/community-alerts/{alert_id}` | Safe episode detail with a bounded transition page; 404 if absent |
 
 Both lists return `{items, total}`. They accept `station_id`, `limit` (default 50,
-range 1–100), and `offset` (default 0, minimum 0). The general list additionally
+range 1â€“100), and `offset` (default 0, minimum 0). The general list additionally
 accepts `status=ACTIVE|RESOLVED`. Ordering is newest `triggered_at` first, then
 descending episode ID for ties. `total` counts matching episodes before pagination;
 an unknown station or exhausted page returns an empty `items` list. Offset pages
@@ -200,11 +221,11 @@ last valid episode reading while active, or the final NORMAL recovery reading
 after resolution. Peak severity does not imply a stored peak depth.
 
 Detail adds `transitions: {items, total}`. Use `transition_limit` (default 50,
-range 1–100) and `transition_offset` (default 0, minimum 0) to page the timeline.
+range 1â€“100) and `transition_offset` (default 0, minimum 0) to page the timeline.
 Transitions follow chronological ingestion order, with the internal transition
 ID breaking timestamp ties. Their public fields are only `previous_severity`,
 `new_severity`, `water_depth_cm`, and `transitioned_at`. A direct
-NORMAL → EVACUATE transition is returned as recorded. Telemetry IDs, telemetry
+NORMAL â†’ EVACUATE transition is returned as recorded. Telemetry IDs, telemetry
 foreign keys, sequence numbers, transition IDs, actor/account/session information,
 and authentication data are excluded from the community contract.
 
@@ -225,7 +246,8 @@ order; physical/site calibration of the provisional thresholds remains outstandi
 
 Flutter consumes this Community Alert API through its authenticated client.
 Loading, unavailable, active and resolved states are distinct. The FCM adapter is available behind explicit configuration; actual delivery is
-unverified. Subscriptions, geofencing and read receipts are not implemented.
+unverified. Station/area subscriptions and optional delivery evidence are implemented;
+physical receipt and flood-exposure geofencing remain unverified.
 
 ## Notification foundation
 
@@ -234,3 +256,36 @@ push delivery. The Firebase Admin HTTP v1 adapter is implemented; the default
 provider remains disabled and no real delivery is verified. See [external FCM setup](docs/firebase-fcm-setup.md). See [notification architecture and local worker checks](docs/notifications.md)
 for API contracts, session-linked explicit revocation, retry/ambiguity policy, payload safety,
 and the external Firebase setup still required.
+
+Station lifecycle administration, persistent preferences, English-only language and verified geographic context: [F17-F19 contracts and rollout](../agapay-docs/security/F17-F19/README.md).
+
+Account recovery/invitations, staff MFA, session management, shared abuse controls and versioned mutation audits: [F20-F21 contracts and deployment](../agapay-docs/security/F20-F21/README.md).
+
+Atomic SOS location/lifecycle versions and configurable response drills: [F22-F23 contracts and rollout](../agapay-docs/security/F22-F23/README.md). Operational dispatch remains disabled.
+
+
+Versioned authority-maintained shelters, road reports, preparedness references and read-only exact-payload SOS receipts: [F24-F25 contracts, rollout and remaining device acceptance](../agapay-docs/security/F24-F25/README.md). Live inventory starts empty; generic routes do not certify flood-safe access.
+
+
+Verified production MQTT contexts, reviewed HTTPS origins and explicit physical-device broker ACL staging: [F26-F27 implementation, rollout and verification](../agapay-docs/security/F26-F27/README.md). Field deployment acceptance remains pending.
+
+## Workflow readiness and shared reads (F30–F31)
+
+Use `/live` for dependency-free liveness and `/ready` for schema plus explicitly required workflow capabilities. Protected `/api/operations/diagnostics` and separately authenticated `/api/operations/metrics` report broker SUBACK, worker progress, rain storage, model and delivery faults. Apply revision 0002 offline before serving; the production template adds dedicated read-model and diagnostics workers. Follow the [workflow runbook](../agapay-docs/security/F30-F31/RUNBOOK.md) and [verification results](../agapay-docs/security/F30-F31/RESULTS.md). A 200 liveness response does not establish live observations or received notifications.
+
+## Rain retention and notification evidence (F32–F33)
+
+Schema HEAD is now `0003_delivery_evidence`; existing rain journals independently require explicit version-3 upgrade. Rain snapshots use indexed transactional rollups; verified bounded archival and portable backup/restore preserve counters and ACK semantics. System Health exposes scoped delivery evidence and audited reconciliation without resend. Resident mobile adds optional encrypted received/open callback recovery and explicit versioned acknowledgement. Follow the [contracts, maintenance runbook and verification results](../agapay-docs/security/F32-F33/README.md). No provider or maintenance timer is automatically activated.
+
+## Reviewed forecast publication (F34–F35)
+
+Main schema HEAD is `0004_forecast_registry`. Operational predictions read one immutable published station product; the supervised publisher accepts only independently reviewed, site/datum/calibration-bound JSON adapters. The offline water-depth pipeline evaluates a transparent candidate against persistence and rate baselines using whole withheld events and actual observation availability. No real field model is trained or approved by installation. Private rainfall/basin experiments cannot change resident products. See [data prerequisites, registry, contracts and rollout](../agapay-docs/security/F34-F35/README.md).
+
+
+### Event uncertainty and reproducible profiles (F36–F37)
+
+Forecast approval now also requires separately calibrated event intervals, reviewed decision tradeoffs and subgroup/baseline evidence. Out-of-domain or expired publisher input gates withhold older products. The default policy remains provisional; no field model is supplied. CI separates core/ML/hybrid dependencies, generates synthetic integration artifacts, checks all forecast contracts, audits dependencies and exercises browser/container/PostgreSQL jobs. See [F36–F37 verification](../agapay-docs/security/F36-F37/RESULTS.md) and [runbook](../agapay-docs/security/F36-F37/RUNBOOK.md) for exact commands and remaining field/hosted acceptance.
+
+F40 adds versioned privacy cases/holds, reviewed resident erasure, bounded retention/access-review tools, production ownership attestation and encrypted quarantined recovery. Main schema HEAD is `0005_privacy_recovery`; apply migrations only through reviewed offline rollout. See [contracts and review package](../agapay-docs/security/F40/README.md), [runbook](../agapay-docs/security/F40/OPERATIONS-RUNBOOK.md) and [observed verification](../agapay-docs/security/F40/RESULTS.md). Real organizational approval and production restore acceptance remain pending.
+
+Resident notice reads support exact area/status filters and current terminal records before bounded pagination, with echoed scope, original check time and has-more metadata. See [resident home/alerts contracts and verification](../agapay-docs/design/resident-decisions/README.md).

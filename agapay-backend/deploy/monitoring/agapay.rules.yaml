@@ -1,0 +1,21 @@
+groups:
+  - name: agapay-workflows
+    rules:
+      - alert: AgapayWorkflowFault
+        expr: agapay_operator_fault == 1
+        for: 30s
+        labels:
+          service: agapay
+          severity: warning
+        annotations:
+          summary: "AGAPAY workflow fault {{ $labels.code }}"
+          runbook: "agapay-docs/security/F30-F31/RUNBOOK.md"
+      - alert: AgapayDiagnosticsUnavailable
+        expr: up{job="agapay-workflows"} == 0
+        for: 30s
+        labels:
+          service: agapay
+          severity: critical
+        annotations:
+          summary: "AGAPAY diagnostics cannot be scraped; dependency readiness is unknown"
+          runbook: "agapay-docs/security/F30-F31/RUNBOOK.md"

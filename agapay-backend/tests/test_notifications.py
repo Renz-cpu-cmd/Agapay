@@ -14,7 +14,7 @@ from app.models import (AlertTransition, AuthSession, NotificationDevice, Notifi
 from app.services.notification_provider import (
     FakeNotificationProvider, NoopNotificationProvider, PushTarget, SendOutcome, configured_provider)
 from app.services.notification_service import enqueue_transition, process_pending
-from app.services.telemetry_service import ingest_telemetry
+from station_support import ingest_authenticated as ingest_telemetry
 from app.schemas import TelemetryCreate
 from test_accounts import account, headers, reset_accounts, staff
 from test_alerts import episodes, payload, send, station, transitions
@@ -34,6 +34,18 @@ def resident(client, email="resident@example.com"):
 def register(client, access, **kwargs):
     response = client.post("/api/notification-devices", headers=access, json=registration(**kwargs))
     assert response.status_code == 200, response.text
+    # Delivery/provider tests opt in explicitly; audience isolation is tested
+    # separately without this helper.
+    from app.models import StationIdentity
+    with SessionLocal() as db:
+        stations = list(db.scalars(select(StationIdentity.station_id)))
+    for station_id in stations:
+        snapshot = client.get("/api/alert-subscriptions", headers=access).json()
+        prior = next((s for s in snapshot["subscriptions"] if s["kind"] == "station" and s["target_id"] == station_id), None)
+        if not prior or not prior["enabled"]:
+            result = client.post("/api/alert-subscriptions", headers=access, json=dict(
+                kind="station", target_id=station_id, enabled=True, expected_revision=prior["revision"] if prior else 0))
+            assert result.status_code == 200, result.text
     return response.json()
 
 
@@ -116,7 +128,7 @@ def test_logged_out_owner_releases_token(client, monkeypatch, old_sorts_first):
     identifiers = ["00000000-0000-4000-8000-000000000001",
                    "ffffffff-ffff-4fff-8fff-ffffffffffff"]
     generated = iter(identifiers if old_sorts_first else reversed(identifiers))
-    monkeypatch.setattr("app.models.uuid4", lambda: next(generated))
+    monkeypatch.setattr(NotificationDevice.__table__.c.id.default, "arg", lambda context: next(generated))
     owner = resident(client)
     old = register(client, owner)
     assert client.post("/api/auth/logout", headers=owner).status_code == 204
@@ -137,7 +149,8 @@ def test_direct_rise_creates_one_event_per_transition_one_delivery_per_device(cl
     send(client, station, 1, depth)
     assert len(rows(NotificationEvent)) == 1 and len(rows(NotificationDelivery)) == 2
     assert transitions(station)[0].new_severity == severity
-    assert client.post("/api/telemetry", json=payload(station, 1, depth)).status_code == 409
+    from station_support import device_headers
+    assert client.post("/api/telemetry", json=payload(station, 1, depth), headers=device_headers(station)).status_code == 409
     with SessionLocal() as db:
         enqueue_transition(db, db.get(AlertTransition, transitions(station)[0].id))
         db.commit()
@@ -199,7 +212,7 @@ def test_fake_delivery_is_idempotent_safe_and_never_sent(client, station, caplog
     delivery = rows(NotificationDelivery)[0]
     assert delivery.state == "TESTED" and delivery.attempts == 1
     message = next(iter(provider.messages.values()))
-    assert set(message.data) == {"type", "alert_id", "severity", "station_id", "status"}
+    assert set(message.data) == {"type", "alert_id", "severity", "station_id", "status", "delivery_id", "attempt_no", "expires_at"}
     assert message.data["alert_id"] == str(episodes(station)[0].id)
     assert "EVACUATE-level sensor alert" in message.title
     assert "follow official local authority instructions" in message.body

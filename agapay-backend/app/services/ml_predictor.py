@@ -1,4 +1,4 @@
-"""Forecast boundary. No model is trained or loaded by this implementation."""
+"""Validated observation/adapter boundary. The registry controls publication."""
 import logging
 from datetime import timedelta, timezone
 from typing import Protocol
@@ -7,7 +7,8 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Telemetry, utc_now
+from app.governance_models import HazardDecision
+from app.models import Telemetry, TelemetryProvenance, StationIdentity, utc_now
 from app.prediction_schemas import HORIZONS, ForecastPoint, ModelOutput, PredictionInput, PredictionResponse
 
 log = logging.getLogger(__name__)
@@ -46,7 +47,8 @@ class UntrainedPredictor:
 
 
 def get_predictor() -> Predictor:
-    # A future reviewed adapter replaces this dependency. Never load the empty
+    # Legacy dependency remains untrained. Operational reads use the registry.
+    # Never load the empty
     # model.h5/scaler.pkl placeholders or silently substitute a trend formula.
     return UntrainedPredictor()
 
@@ -73,22 +75,29 @@ def assess_input(history: PredictionInput):
 
 def predict_station(db: Session, station_id: str, predictor: Predictor, preview_allowed: bool) -> PredictionResponse:
     now = utc_now()
-    rows = list(db.scalars(select(Telemetry).where(
+    trusted = select(Telemetry).join(TelemetryProvenance, TelemetryProvenance.telemetry_id == Telemetry.id).join(
+        StationIdentity, StationIdentity.station_id == Telemetry.station_id).where(
+        TelemetryProvenance.source_class == "physical_device", TelemetryProvenance.stream == "operational",
+        StationIdentity.state == "commissioned", StationIdentity.version == Telemetry.config_version,
+        StationIdentity.device_id == TelemetryProvenance.ingress_identity)
+    rows = list(db.scalars(trusted.where(
         Telemetry.station_id == station_id,
+        Telemetry.eligible_for_current.is_(True),
+        Telemetry.received_at <= now,
         Telemetry.recorded_at >= now - timedelta(minutes=LOOKBACK_MINUTES),
     ).order_by(Telemetry.recorded_at.desc(), Telemetry.id.desc()).limit(3600)))
     rows.reverse()
     # Include the last known time even when there is no recent history.
-    latest = rows[-1] if rows else db.scalar(select(Telemetry).where(Telemetry.station_id == station_id).order_by(Telemetry.recorded_at.desc(), Telemetry.id.desc()).limit(1))
+    latest = rows[-1] if rows else db.scalar(trusted.where(Telemetry.station_id == station_id, Telemetry.eligible_for_current.is_(True)).order_by(Telemetry.recorded_at.desc(), Telemetry.id.desc()).limit(1))
     data = dict(station_id=station_id, checked_at=now, source="none", model_version=predictor.version,
                 sample_count=len(rows), valid_sample_count=sum(r.sensor_quality == "valid" and r.water_depth_cm is not None for r in rows),
                 input_window_start=as_utc(rows[0].recorded_at) if rows else None,
                 input_last_recorded_at=as_utc(latest.recorded_at) if latest else None,
-                timestamp_basis="server_received", preview_allowed=preview_allowed,
+                timestamp_basis="device_measured", preview_allowed=preview_allowed,
                 forecasts=[ForecastPoint(horizon_minutes=h) for h in HORIZONS])
     try:
-        history = PredictionInput(station_id=station_id, as_of=now, timestamp_basis="server_received", samples=[dict(
-            recorded_at=as_utc(r.recorded_at), water_depth_cm=r.water_depth_cm, rainfall_mm=r.rainfall_mm, sensor_quality=r.sensor_quality,
+        history = PredictionInput(station_id=station_id, as_of=now, timestamp_basis="device_measured", samples=[dict(
+            recorded_at=as_utc(r.recorded_at), water_depth_cm=r.water_depth_cm, rainfall_mm=None, sensor_quality=r.sensor_quality,
         ) for r in rows])
         input_status, reason = assess_input(history)
         if not rows and latest:
@@ -96,6 +105,19 @@ def predict_station(db: Session, station_id: str, predictor: Predictor, preview_
     except ValidationError:
         history = None
         input_status, reason = "invalid_data", "The input history failed validation."
+    review_ids = list(db.scalars(select(HazardDecision.telemetry_id).where(
+        HazardDecision.telemetry_id.in_([r.id for r in rows]), HazardDecision.review_required.is_(True))))
+    if review_ids:
+        input_status, reason = "invalid_data", "Sensor plausibility review is required for observations in the input window."
+        data["valid_sample_count"] -= len(review_ids)
+    from app.device_config import current_configuration
+    configuration=current_configuration(db,station_id)
+    if configuration and any(r.applied_config_hash!=configuration.config_hash for r in rows):
+        input_status,reason="invalid_data","Input configuration differs from the reviewed installation; refresh commissioning before model use."
+    from app.models import Station
+    station=db.scalar(select(Station).where(Station.station_id==station_id))
+    if station and station.status!='active':
+        input_status,reason='invalid_data','Station lifecycle is not active; maintenance observations cannot initialize operational models.'
     data["input_status"] = input_status
     if predictor.version is None:
         return PredictionResponse(**data, status="not_trained", reason="A trained forecast model is not configured. " + (reason if input_status != "usable" else ""))
@@ -124,11 +146,12 @@ def predict_station(db: Session, station_id: str, predictor: Predictor, preview_
 
 def preview_station(station_id: str, scenario: str) -> PredictionResponse:
     now = utc_now()
-    status_map = {"not_trained": "usable", "available": "usable", "service_error": "usable"}
+    status_map = {"not_trained": "usable", "unavailable":"usable", "available": "usable", "service_error": "usable"}
     last = now - timedelta(minutes=10) if scenario == "stale_data" else now
     reasons = {
         "available": "Sample values for interface testing. No trained model or real sensor data was used.",
         "not_trained": "Preview: no trained model is configured.",
+        "unavailable":"Preview: no published forecast product is available.",
         "insufficient_data": "Preview: more timestamped history is needed.",
         "stale_data": "Preview: the latest reading is too old.",
         "invalid_data": "Preview: sensor readings failed quality checks.",

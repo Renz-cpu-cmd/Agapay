@@ -30,6 +30,10 @@ def register_device(payload: DeviceRegistration, user: User = Depends(resident),
     current_user(credentials, db)
     if user.role != "resident":
         raise HTTPException(403, "Resident mobile access is required.")
+    from app.operations_models import AccountPreference
+    preference=db.get(AccountPreference,user.id,populate_existing=True)
+    if preference is not None and not preference.notifications_enabled:
+        raise HTTPException(409,'Sensor push delivery is off in account preferences; enable it explicitly before registering this device')
     raw_token = payload.provider_token.get_secret_value()
     digest = token_digest(raw_token)
     session_hash = token_digest(credentials.credentials)

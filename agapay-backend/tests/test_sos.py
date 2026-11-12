@@ -37,7 +37,7 @@ def test_create_snapshot_practice_history_and_private_access(client, resident):
     officer = staff(client, "officer")
     assert client.get("/api/sos", headers=officer).json()["total"] == 1
     assert client.post("/api/sos", headers=officer, json=payload()).status_code == 403
-    client.patch("/api/auth/me", headers=resident, json={"name": "Changed Resident"})
+    client.patch("/api/auth/me", headers=resident, json={"expected_version":1,"name": "Changed Resident"})
     assert client.get(f"/api/sos/{item['id']}", headers=resident).json()["resident_name"] == "Test Resident"
 
 
@@ -57,17 +57,17 @@ def test_staff_transitions_are_ordered_audited_and_idempotent(client, resident):
     data = payload()
     item = client.post("/api/sos", headers=resident, json=data).json()
     url = f"/api/sos/{item['id']}"
-    assert client.patch(url, headers=resident, json={"status": "ACKNOWLEDGED"}).status_code == 403
-    assert client.patch(url, headers=officer, json={"status": "RESOLVED"}).status_code == 409
-    ack = client.patch(url, headers=officer, json={"status": "ACKNOWLEDGED"}).json()
+    assert client.patch(url, headers=resident, json={"expected_version":1,"status": "ACKNOWLEDGED"}).status_code == 403
+    assert client.patch(url, headers=officer, json={"expected_version":1,"status": "RESOLVED"}).status_code == 409
+    ack = client.patch(url, headers=officer, json={"expected_version":1,"status": "ACKNOWLEDGED"}).json()
     assert ack["status"] == "ACKNOWLEDGED" and ack["acknowledged_at"].endswith("Z")
-    assert client.patch(url, headers=admin, json={"status": "ACKNOWLEDGED"}).json() == ack
-    resolved = client.patch(url, headers=admin, json={"status": "RESOLVED", "resolution_note": "Practice exercise complete."}).json()
+    assert client.patch(url, headers=admin, json={"expected_version":1,"status": "ACKNOWLEDGED"}).json() == ack
+    resolved = client.patch(url, headers=admin, json={"expected_version":2,"status": "RESOLVED", "resolution_note": "Practice exercise complete."}).json()
     assert resolved["status"] == "RESOLVED" and resolved["resolved_by_name"] == "Test Resident"
     assert resolved["acknowledged_at"] == ack["acknowledged_at"]
-    assert client.patch(url, headers=officer, json={"status": "RESOLVED", "resolution_note": "Overwrite"}).json() == resolved
-    assert client.patch(url, headers=officer, json={"status": "ACKNOWLEDGED"}).status_code == 409
-    assert client.patch(url, headers=officer, json={"status": "ACTIVE"}).status_code == 422
+    assert client.patch(url, headers=officer, json={"expected_version":1,"status": "RESOLVED", "resolution_note": "Overwrite"}).json() == resolved
+    assert client.patch(url, headers=officer, json={"expected_version":1,"status": "ACKNOWLEDGED"}).status_code == 409
+    assert client.patch(url, headers=officer, json={"expected_version":1,"status": "ACTIVE"}).status_code == 422
     assert client.get(url, headers=resident).json() == resolved
     assert client.post("/api/sos", headers=resident, json=data).json() == resolved
 
@@ -97,7 +97,7 @@ def test_owner_can_share_fresh_location_until_request_is_resolved(client, reside
     item = client.post("/api/sos", headers=resident, json=payload()).json()
     url = f"/api/sos/{item['id']}/location"
     captured = utc_now()
-    fix = dict(latitude=15.97883, longitude=120.56382, accuracy_m=7.5,
+    fix = dict(expected_version=1, latitude=15.97883, longitude=120.56382, accuracy_m=7.5,
                location_recorded_at=captured.isoformat())
 
     updated = client.patch(url, headers=resident, json=fix)
@@ -113,9 +113,9 @@ def test_owner_can_share_fresh_location_until_request_is_resolved(client, reside
     older = {**fix, "location_recorded_at": (captured - timedelta(seconds=1)).isoformat()}
     assert client.patch(url, headers=resident, json=older).status_code == 409
     assert client.patch(f"/api/sos/{item['id']}", headers=officer,
-                        json={"status": "ACKNOWLEDGED"}).status_code == 200
+                        json={"expected_version":2,"status": "ACKNOWLEDGED"}).status_code == 200
     assert client.patch(f"/api/sos/{item['id']}", headers=officer,
-                        json={"status": "RESOLVED"}).status_code == 200
+                        json={"expected_version":3,"status": "RESOLVED"}).status_code == 200
     assert client.patch(url, headers=resident, json={**fix, "location_recorded_at": utc_now().isoformat()}).status_code == 409
 
 
@@ -131,7 +131,7 @@ def test_live_location_rejects_invalid_or_injected_data(client, resident, change
     if callable(changes):
         changes = changes()
     item = client.post("/api/sos", headers=resident, json=payload()).json()
-    fix = dict(latitude=15.97883, longitude=120.56382, accuracy_m=7.5,
+    fix = dict(expected_version=1, latitude=15.97883, longitude=120.56382, accuracy_m=7.5,
                location_recorded_at=utc_now().isoformat())
     assert client.patch(f"/api/sos/{item['id']}/location", headers=resident,
                         json={**fix, **changes}).status_code == 422
@@ -140,7 +140,7 @@ def test_live_location_rejects_invalid_or_injected_data(client, resident, change
 def test_paging_filter_counts_and_revocation(client, resident):
     officer = staff(client, "officer")
     ids = [client.post("/api/sos", headers=resident, json=payload()).json()["id"] for _ in range(3)]
-    client.patch(f"/api/sos/{ids[0]}", headers=officer, json={"status": "ACKNOWLEDGED"})
+    client.patch(f"/api/sos/{ids[0]}", headers=officer, json={"expected_version":1,"status": "ACKNOWLEDGED"})
     page = client.get("/api/sos?status=ACTIVE&limit=1&offset=1", headers=officer).json()
     assert page["total"] == 2 and page["items"][0]["id"] == ids[1]
     assert page["counts"] == {"ACTIVE": 2, "ACKNOWLEDGED": 1, "RESOLVED": 0}
@@ -150,4 +150,4 @@ def test_paging_filter_counts_and_revocation(client, resident):
         user.is_active = False
         db.commit()
     assert client.get("/api/sos", headers=officer).status_code == 401
-    assert client.patch(f"/api/sos/{ids[1]}", headers=officer, json={"status": "ACKNOWLEDGED"}).status_code == 401
+    assert client.patch(f"/api/sos/{ids[1]}", headers=officer, json={"expected_version":1,"status": "ACKNOWLEDGED"}).status_code == 401

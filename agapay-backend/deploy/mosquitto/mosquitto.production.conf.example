@@ -1,0 +1,18 @@
+# REVIEW paths/certificates/ownership before starting. Not applied automatically.
+per_listener_settings true
+persistence true
+persistence_location /var/lib/mosquitto/
+listener 8883
+allow_anonymous false
+password_file /etc/mosquitto/passwords
+acl_file /etc/mosquitto/physical-production.acl
+certfile /etc/mosquitto/certs/server.crt
+keyfile /etc/mosquitto/certs/server.key
+retain_available false
+# Devices must never publish retained operational water/rain samples.
+# Optional private CA for client-certificate validation if the deployment uses it:
+# cafile /etc/mosquitto/certs/ca.crt
+tls_version tlsv1.2
+max_packet_size 8192
+message_size_limit 4096
+max_queued_messages 100

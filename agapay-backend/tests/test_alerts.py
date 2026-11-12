@@ -17,6 +17,8 @@ from app.services.alert_classifier import classify_depth
 from app.services.monitoring_service import monitoring_snapshot
 from app.services.telemetry_service import DuplicateTelemetryError, ingest_telemetry
 from test_accounts import account, headers, reset_accounts, staff
+from station_support import device_headers, device_token, ordering_fields
+from station_support import ingest_authenticated as ingest_telemetry
 
 
 @pytest.fixture
@@ -25,17 +27,18 @@ def station(client):
     with SessionLocal() as db:
         db.add(Station(station_id=station_id, station_name="Isolated alert test station"))
         db.commit()
+    device_token(station_id)
     return station_id
 
 
 def payload(station, sequence, depth):
-    return dict(station_id=station, sequence_no=sequence, water_depth_cm=depth,
+    return dict(**ordering_fields(station, sequence), station_id=station, sequence_no=sequence, water_depth_cm=depth,
                 rainfall_mm=0, sensor_quality="invalid" if depth is None else "valid",
                 device_uptime_ms=sequence * 1000, firmware_version="0.2.0")
 
 
 def send(client, station, sequence, depth):
-    response = client.post("/api/telemetry", json=payload(station, sequence, depth))
+    response = client.post("/api/telemetry", json=payload(station, sequence, depth), headers=device_headers(station))
     assert response.status_code == 201, response.text
     return response.json()
 
@@ -66,7 +69,7 @@ def test_normal_or_invalid_without_episode_creates_nothing(client, station, dept
     send(client, station, 1, depth)
     assert episodes(station) == [] and transitions(station) == []
     with SessionLocal() as db:
-        item = next(s for s in monitoring_snapshot(db, stale_after_seconds=30, history_limit=20).stations
+        item = next(s for s in monitoring_snapshot(db, stale_after_seconds=30, history_limit=20, station_ids=[station]).stations
                     if s.station_id == station)
         assert item.alert_tier == (None if depth is None else "NORMAL")
 
@@ -111,7 +114,7 @@ def test_invalid_samples_preserve_all_episode_fields_and_last_valid_monitoring(c
         assert AlertRead.model_validate(episodes(station)[0]).model_dump() == original
     assert len(transitions(station)) == 1
     with SessionLocal() as db:
-        item = next(s for s in monitoring_snapshot(db, stale_after_seconds=30, history_limit=20).stations
+        item = next(s for s in monitoring_snapshot(db, stale_after_seconds=30, history_limit=20, station_ids=[station]).stations
                     if s.station_id == station)
         assert item.alert_tier == "WARNING" and item.current_depth_cm == 85
         assert item.sensor_quality == "invalid" and item.latest_depth_cm is None
@@ -149,7 +152,7 @@ def test_duplicate_sample_and_changed_retry_never_mutate_history(client, station
     send(client, station, 1, 100)
     send(client, station, 2, 90)
     for depth in [100, 0, None]:
-        assert client.post("/api/telemetry", json=payload(station, 1, depth)).status_code == 409
+        assert client.post("/api/telemetry", json=payload(station, 1, depth), headers=device_headers(station)).status_code == 409
     episode, = episodes(station)
     assert episode.current_severity == "WARNING" and episode.highest_severity == "EVACUATE"
     assert episode.latest_sequence_no == 2 and len(transitions(station)) == 2
@@ -166,7 +169,7 @@ def test_station_specific_thresholds_and_exact_boundaries(client, station):
         send(client, station, sequence, depth)
     assert [t.new_severity for t in transitions(station)] == ["ADVISORY", "WARNING", "EVACUATE"]
     with SessionLocal() as db:
-        item = next(s for s in monitoring_snapshot(db, stale_after_seconds=30, history_limit=20).stations
+        item = next(s for s in monitoring_snapshot(db, stale_after_seconds=30, history_limit=20, station_ids=[station]).stations
                     if s.station_id == station)
         assert item.alert_tier == "EVACUATE"
 
@@ -178,14 +181,17 @@ def test_administrative_status_does_not_rewrite_sensor_history(client, station, 
     with SessionLocal() as db:
         db.scalar(select(Station).where(Station.station_id == station)).status = administrative_status
         db.commit()
-    send(client, station, 2, None)
-    assert episodes(station)[0].current_severity == "EVACUATE"
-    assert episodes(station)[0].last_transition_at == original.last_transition_at
-    send(client, station, 3, 90)
-    send(client, station, 4, 0)
+    if administrative_status == "inactive":
+        result = client.post("/api/telemetry", json=payload(station, 2, None), headers=device_headers(station))
+        assert result.status_code == 403
+    else:
+        send(client, station, 2, None)
+        send(client, station, 3, 90)
+        send(client, station, 4, 0)
     episode, = episodes(station)
-    assert episode.status == "RESOLVED" and episode.highest_severity == "EVACUATE"
-    assert [t.new_severity for t in transitions(station)] == ["EVACUATE", "WARNING", "NORMAL"]
+    assert episode.status == "ACTIVE" and episode.current_severity == episode.highest_severity == "EVACUATE"
+    assert episode.last_transition_at == original.last_transition_at
+    assert [t.new_severity for t in transitions(station)] == ["EVACUATE"]
 
 
 def test_alert_failure_rolls_back_telemetry_station_and_episode(client, station, monkeypatch):
@@ -224,7 +230,7 @@ def test_concurrent_ingestion_uses_one_episode(client, station, duplicate):
     with SessionLocal() as db:
         samples = db.scalars(select(Telemetry).where(Telemetry.station_id == station).order_by(Telemetry.id)).all()
         assert len(samples) == (1 if duplicate else 2)
-        assert episodes(station)[0].latest_telemetry_id == samples[-1].id
+        assert episodes(station)[0].latest_telemetry_id == max(samples, key=lambda s: s.sequence_no).id
 
 
 def test_database_constraints_prevent_duplicate_active_episode_and_transition(client, station):
@@ -237,11 +243,11 @@ def test_database_constraints_prevent_duplicate_active_episode_and_transition(cl
         sample = db.scalar(select(Telemetry).where(Telemetry.station_id == station, Telemetry.sequence_no == 2))
         values.update(trigger_telemetry_id=sample.id, trigger_sequence_no=2)
         db.add(Alert(**values))
-        with pytest.raises(IntegrityError, match="alerts.station_id"):
+        with pytest.raises(IntegrityError, match="alerts.station_id|uq_alert_active_station"):
             db.commit()
         db.rollback()
         db.add(AlertTransition(**{c.name: getattr(transition, c.name) for c in AlertTransition.__table__.columns if c.name != "id"}))
-        with pytest.raises(IntegrityError, match="alert_transitions.telemetry_id"):
+        with pytest.raises(IntegrityError, match="alert_transitions.telemetry_id|alert_transitions_telemetry_id"):
             db.commit()
         db.rollback()
 
@@ -296,9 +302,9 @@ def test_all_alert_reads_require_active_staff_account(client, station):
         assert client.get(url, headers=officer).status_code == 401
 
 
-def test_unknown_station_preserves_http_behavior(client):
+def test_unknown_station_cannot_ingest_anonymously(client):
     response = client.post("/api/telemetry", json=payload("MISSING_ALERT_STATION", 1, 100))
-    assert response.status_code == 404
+    assert response.status_code == 401
     assert not episodes("MISSING_ALERT_STATION")
 
 
@@ -310,14 +316,16 @@ def test_mqtt_callback_and_http_share_episode_and_duplicate_handling(client, sta
         def __init__(self, *args, **kwargs): pass
         def connect_async(self, *args, **kwargs): pass
         def loop_start(self): pass
+        def username_pw_set(self, *args): pass
     mqtt = SimpleNamespace(Client=FakeMqttClient, CallbackAPIVersion=SimpleNamespace(VERSION2=2))
     monkeypatch.setitem(sys.modules, "paho", SimpleNamespace(mqtt=SimpleNamespace(client=mqtt)))
     monkeypatch.setitem(sys.modules, "paho.mqtt", SimpleNamespace(client=mqtt))
     monkeypatch.setitem(sys.modules, "paho.mqtt.client", mqtt)
-    subscriber = start_mqtt_subscriber(Settings(mqtt_username="", mqtt_password="", mqtt_tls=False))
+    subscriber = start_mqtt_subscriber(Settings(mqtt_username="test-backend", mqtt_password="test-broker-only", mqtt_tls=False))
+    token = device_token(station)
     def deliver(sequence, depth):
         message = SimpleNamespace(topic=f"agapay/stations/{station}/telemetry",
-                                  payload=json.dumps(payload(station, sequence, depth)).encode())
+                                  payload=json.dumps({"ingest_token":token,"telemetry":payload(station, sequence, depth)}).encode())
         subscriber.on_message(subscriber, None, message)
     deliver(1, 85)
     deliver(1, 85)
@@ -343,9 +351,9 @@ def test_concurrent_severity_changes_retain_peak_and_serialized_order(client, st
     episode, = episodes(station)
     history = transitions(station)
     assert episode.highest_severity == "EVACUATE"
-    assert episode.latest_telemetry_id == readings[-1].id
-    assert episode.current_severity == ("WARNING" if readings[-1].water_depth_cm == 90 else "EVACUATE")
-    assert [t.telemetry_id for t in history] == [t.id for t in readings]
+    assert episode.latest_telemetry_id == max(readings, key=lambda s: s.sequence_no).id
+    assert episode.current_severity == "EVACUATE"
+    assert [t.telemetry_id for t in history] == [t.id for t in readings if t.eligible_for_current]
     assert all(before.new_severity == after.previous_severity for before, after in zip(history, history[1:]))
 
 

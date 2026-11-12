@@ -160,6 +160,26 @@ def test_acceptance_and_safe_payload(provider, monkeypatch):
     assert send.call_count == 1
 
 
+def test_evidence_metadata_sets_transport_expiry_and_retains_only_provider_reference(provider,monkeypatch):
+    from datetime import datetime,timedelta,timezone
+    send=Mock(return_value='projects/test/messages/accepted');monkeypatch.setattr(messaging,'send',send)
+    expiry=datetime.now(timezone.utc)+timedelta(seconds=120)
+    message=payload();message.data.update(delivery_id='17',attempt_no='1',receipt_token='a'*43,expires_at=expiry.isoformat())
+    result=provider.send_with_evidence(PushTarget('fcm','synthetic-token'),message,delivery_key='one')
+    assert result.outcome==SendOutcome.ACCEPTED and result.provider_reference=='projects/test/messages/accepted'
+    captured=send.call_args.args[0]
+    assert 0<captured.android.ttl.total_seconds()<=120
+    assert captured.apns.headers['apns-expiration']==str(int(expiry.timestamp()))
+    assert captured.data['receipt_token']=='a'*43
+
+
+def test_expired_notification_never_reaches_sdk(provider,monkeypatch):
+    send=Mock();monkeypatch.setattr(messaging,'send',send)
+    message=payload();message.data['expires_at']='2000-01-01T00:00:00+00:00'
+    assert provider.send_with_evidence(PushTarget('fcm','synthetic-token'),message,delivery_key='one').outcome==SendOutcome.DISABLED
+    send.assert_not_called()
+
+
 @pytest.mark.parametrize("error, expected", [
     (messaging.UnregisteredError("secret"), SendOutcome.INVALID_TOKEN),
     (messaging.SenderIdMismatchError("secret"), SendOutcome.PERMANENT_REJECTION),

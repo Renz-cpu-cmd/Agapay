@@ -40,9 +40,11 @@ class LoginRequest(AccountInput):
 
 class AdminCreateRequest(RegisterRequest):
     role: Role = "officer"
+    reason: Annotated[str, StringConstraints(strip_whitespace=True,min_length=3,max_length=500)]
 
 
 class ProfileUpdate(AccountInput):
+    expected_version: int = Field(ge=1)
     name: Name | None = None
     email: EmailStr | None = Field(default=None, max_length=254)
     phone: Phone | None = None
@@ -59,6 +61,7 @@ class ProfileUpdate(AccountInput):
 
 
 class AdminUpdateRequest(ProfileUpdate):
+    reason: Annotated[str, StringConstraints(strip_whitespace=True,min_length=3,max_length=500)]
     role: Role | None = None
     is_active: bool | None = None
 
@@ -72,12 +75,15 @@ class UserRead(BaseModel):
     barangay: str
     role: Role
     is_active: bool
+    version: int
+    email_verified_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
-    @field_validator("created_at", "updated_at")
+    @field_validator("created_at", "updated_at", "email_verified_at")
     @classmethod
-    def utc_dates(cls, value: datetime):
+    def utc_dates(cls, value: datetime | None):
+        if value is None:return None
         return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
 
 

@@ -1,0 +1,480 @@
+{
+  "sqlite": [
+    {
+      "name": "notification_receipt_consents",
+      "sql": "\nCREATE TABLE notification_receipt_consents (\n\tuser_id INTEGER NOT NULL, \n\tversion INTEGER NOT NULL, \n\tenabled BOOLEAN NOT NULL, \n\tPRIMARY KEY (user_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "user_id",
+        "version",
+        "enabled"
+      ],
+      "column_contract": {
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "enabled": {
+          "type": "BOOLEAN",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "user_id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "notification_delivery_controls",
+      "sql": "\nCREATE TABLE notification_delivery_controls (\n\tdelivery_id INTEGER NOT NULL, \n\tversion INTEGER NOT NULL, \n\texpires_at DATETIME NOT NULL, \n\treview_status VARCHAR(24) NOT NULL, \n\treviewed_at DATETIME, \n\tPRIMARY KEY (delivery_id), \n\tCONSTRAINT ck_delivery_review CHECK (review_status IN ('unreviewed','provider_accepted','not_accepted','closed_no_resend','followup_recorded')), \n\tFOREIGN KEY(delivery_id) REFERENCES notification_deliveries (id)\n)\n\n",
+      "columns": [
+        "delivery_id",
+        "version",
+        "expires_at",
+        "review_status",
+        "reviewed_at"
+      ],
+      "column_contract": {
+        "delivery_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "review_status": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "reviewed_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "delivery_id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_notification_delivery_controls_expires_at",
+          "sql": "CREATE INDEX ix_notification_delivery_controls_expires_at ON notification_delivery_controls (expires_at)"
+        }
+      ]
+    },
+    {
+      "name": "notification_delivery_attempts",
+      "sql": "\nCREATE TABLE notification_delivery_attempts (\n\tdelivery_id INTEGER NOT NULL, \n\tattempt_no INTEGER NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\treceipt_hash VARCHAR(64), \n\tstarted_at DATETIME NOT NULL, \n\toutcome VARCHAR(24) NOT NULL, \n\tprovider_reference VARCHAR(250), \n\tprovider_reported_at DATETIME, \n\tPRIMARY KEY (delivery_id, attempt_no), \n\tFOREIGN KEY(delivery_id) REFERENCES notification_deliveries (id), \n\tUNIQUE (receipt_hash)\n)\n\n",
+      "columns": [
+        "delivery_id",
+        "attempt_no",
+        "device_revision",
+        "receipt_hash",
+        "started_at",
+        "outcome",
+        "provider_reference",
+        "provider_reported_at"
+      ],
+      "column_contract": {
+        "delivery_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "attempt_no": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "receipt_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "started_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "outcome": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "provider_reference": {
+          "type": "VARCHAR(250)",
+          "nullable": true
+        },
+        "provider_reported_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "receipt_hash"
+        ]
+      ],
+      "primary_key": [
+        "delivery_id",
+        "attempt_no"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "notification_delivery_receipts",
+      "sql": "\nCREATE TABLE notification_delivery_receipts (\n\tdelivery_id INTEGER NOT NULL, \n\tattempt_no INTEGER NOT NULL, \n\tstage VARCHAR(16) NOT NULL, \n\tbasis VARCHAR(24) NOT NULL, \n\treported_at DATETIME, \n\trecorded_at DATETIME NOT NULL, \n\tPRIMARY KEY (delivery_id, attempt_no, stage), \n\tFOREIGN KEY(delivery_id, attempt_no) REFERENCES notification_delivery_attempts (delivery_id, attempt_no), \n\tCONSTRAINT ck_delivery_receipt_stage CHECK (stage IN ('RECEIVED','OPENED','ACKNOWLEDGED'))\n)\n\n",
+      "columns": [
+        "delivery_id",
+        "attempt_no",
+        "stage",
+        "basis",
+        "reported_at",
+        "recorded_at"
+      ],
+      "column_contract": {
+        "delivery_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "attempt_no": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "stage": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "basis": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "reported_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "recorded_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "delivery_id",
+        "attempt_no",
+        "stage"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "notification_delivery_reviews",
+      "sql": "\nCREATE TABLE notification_delivery_reviews (\n\tid INTEGER NOT NULL, \n\tdelivery_id INTEGER NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\texpected_version INTEGER NOT NULL, \n\tdecision VARCHAR(24) NOT NULL, \n\tevidence_kind VARCHAR(24) NOT NULL, \n\tevidence_sha256 VARCHAR(64) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(delivery_id) REFERENCES notification_deliveries (id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "delivery_id",
+        "actor_id",
+        "expected_version",
+        "decision",
+        "evidence_kind",
+        "evidence_sha256",
+        "reason",
+        "created_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "delivery_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "expected_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "decision": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "evidence_kind": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "evidence_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_notification_delivery_reviews_delivery_id",
+          "sql": "CREATE INDEX ix_notification_delivery_reviews_delivery_id ON notification_delivery_reviews (delivery_id)"
+        }
+      ]
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "notification_receipt_consents",
+      "sql": "\nCREATE TABLE notification_receipt_consents (\n\tuser_id INTEGER NOT NULL, \n\tversion INTEGER NOT NULL, \n\tenabled BOOLEAN NOT NULL, \n\tPRIMARY KEY (user_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "user_id",
+        "version",
+        "enabled"
+      ],
+      "column_contract": {
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "enabled": {
+          "type": "BOOLEAN",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "user_id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "notification_delivery_controls",
+      "sql": "\nCREATE TABLE notification_delivery_controls (\n\tdelivery_id BIGINT NOT NULL, \n\tversion INTEGER NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\treview_status VARCHAR(24) NOT NULL, \n\treviewed_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (delivery_id), \n\tCONSTRAINT ck_delivery_review CHECK (review_status IN ('unreviewed','provider_accepted','not_accepted','closed_no_resend','followup_recorded')), \n\tFOREIGN KEY(delivery_id) REFERENCES notification_deliveries (id)\n)\n\n",
+      "columns": [
+        "delivery_id",
+        "version",
+        "expires_at",
+        "review_status",
+        "reviewed_at"
+      ],
+      "column_contract": {
+        "delivery_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "review_status": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "reviewed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "delivery_id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_notification_delivery_controls_expires_at",
+          "sql": "CREATE INDEX ix_notification_delivery_controls_expires_at ON notification_delivery_controls (expires_at)"
+        }
+      ]
+    },
+    {
+      "name": "notification_delivery_attempts",
+      "sql": "\nCREATE TABLE notification_delivery_attempts (\n\tdelivery_id BIGINT NOT NULL, \n\tattempt_no INTEGER NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\treceipt_hash VARCHAR(64), \n\tstarted_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\toutcome VARCHAR(24) NOT NULL, \n\tprovider_reference VARCHAR(250), \n\tprovider_reported_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (delivery_id, attempt_no), \n\tFOREIGN KEY(delivery_id) REFERENCES notification_deliveries (id), \n\tUNIQUE (receipt_hash)\n)\n\n",
+      "columns": [
+        "delivery_id",
+        "attempt_no",
+        "device_revision",
+        "receipt_hash",
+        "started_at",
+        "outcome",
+        "provider_reference",
+        "provider_reported_at"
+      ],
+      "column_contract": {
+        "delivery_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "attempt_no": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "receipt_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "started_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "outcome": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "provider_reference": {
+          "type": "VARCHAR(250)",
+          "nullable": true
+        },
+        "provider_reported_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "receipt_hash"
+        ]
+      ],
+      "primary_key": [
+        "delivery_id",
+        "attempt_no"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "notification_delivery_receipts",
+      "sql": "\nCREATE TABLE notification_delivery_receipts (\n\tdelivery_id BIGINT NOT NULL, \n\tattempt_no INTEGER NOT NULL, \n\tstage VARCHAR(16) NOT NULL, \n\tbasis VARCHAR(24) NOT NULL, \n\treported_at TIMESTAMP WITH TIME ZONE, \n\trecorded_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (delivery_id, attempt_no, stage), \n\tFOREIGN KEY(delivery_id, attempt_no) REFERENCES notification_delivery_attempts (delivery_id, attempt_no), \n\tCONSTRAINT ck_delivery_receipt_stage CHECK (stage IN ('RECEIVED','OPENED','ACKNOWLEDGED'))\n)\n\n",
+      "columns": [
+        "delivery_id",
+        "attempt_no",
+        "stage",
+        "basis",
+        "reported_at",
+        "recorded_at"
+      ],
+      "column_contract": {
+        "delivery_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "attempt_no": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "stage": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "basis": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "reported_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "recorded_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "delivery_id",
+        "attempt_no",
+        "stage"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "notification_delivery_reviews",
+      "sql": "\nCREATE TABLE notification_delivery_reviews (\n\tid BIGSERIAL NOT NULL, \n\tdelivery_id BIGINT NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\texpected_version INTEGER NOT NULL, \n\tdecision VARCHAR(24) NOT NULL, \n\tevidence_kind VARCHAR(24) NOT NULL, \n\tevidence_sha256 VARCHAR(64) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(delivery_id) REFERENCES notification_deliveries (id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "delivery_id",
+        "actor_id",
+        "expected_version",
+        "decision",
+        "evidence_kind",
+        "evidence_sha256",
+        "reason",
+        "created_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "delivery_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "expected_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "decision": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "evidence_kind": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "evidence_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_notification_delivery_reviews_delivery_id",
+          "sql": "CREATE INDEX ix_notification_delivery_reviews_delivery_id ON notification_delivery_reviews (delivery_id)"
+        }
+      ]
+    }
+  ]
+}

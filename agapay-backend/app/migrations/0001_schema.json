@@ -1,0 +1,6010 @@
+{
+  "sqlite": [
+    {
+      "name": "administrator_setup",
+      "sql": "\nCREATE TABLE administrator_setup (\n\tid INTEGER NOT NULL, \n\tcompleted_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_single_administrator_setup CHECK (id = 1)\n)\n\n",
+      "columns": [
+        "id",
+        "completed_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "completed_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "alert_authorities",
+      "sql": "\nCREATE TABLE alert_authorities (\n\tid VARCHAR(50) NOT NULL, \n\tname VARCHAR(200) NOT NULL, \n\tevidence VARCHAR(2000) NOT NULL, \n\tauthority_class VARCHAR(20) NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "name",
+        "evidence",
+        "authority_class",
+        "active"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "name": {
+          "type": "VARCHAR(200)",
+          "nullable": false
+        },
+        "evidence": {
+          "type": "VARCHAR(2000)",
+          "nullable": false
+        },
+        "authority_class": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "active": {
+          "type": "BOOLEAN",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "auth_budgets",
+      "sql": "\nCREATE TABLE auth_budgets (\n\tkey_hash VARCHAR(64) NOT NULL, \n\tcount INTEGER NOT NULL, \n\treset_at INTEGER NOT NULL, \n\tPRIMARY KEY (key_hash)\n)\n\n",
+      "columns": [
+        "key_hash",
+        "count",
+        "reset_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_auth_budgets_reset_at",
+          "sql": "CREATE INDEX ix_auth_budgets_reset_at ON auth_budgets (reset_at)"
+        }
+      ],
+      "column_contract": {
+        "key_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "count": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reset_at": {
+          "type": "INTEGER",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "key_hash"
+      ]
+    },
+    {
+      "name": "mutation_audit",
+      "sql": "\nCREATE TABLE mutation_audit (\n\tid INTEGER NOT NULL, \n\tactor_id INTEGER, \n\tactor_label VARCHAR(160) NOT NULL, \n\tsubject_type VARCHAR(40) NOT NULL, \n\tsubject_id VARCHAR(100) NOT NULL, \n\taction VARCHAR(80) NOT NULL, \n\treason VARCHAR(1000) NOT NULL, \n\t\"before\" JSON NOT NULL, \n\t\"after\" JSON NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "actor_id",
+        "actor_label",
+        "subject_type",
+        "subject_id",
+        "action",
+        "reason",
+        "before",
+        "after",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_mutation_audit_subject_id",
+          "sql": "CREATE INDEX ix_mutation_audit_subject_id ON mutation_audit (subject_id)"
+        },
+        {
+          "name": "ix_mutation_audit_subject_type",
+          "sql": "CREATE INDEX ix_mutation_audit_subject_type ON mutation_audit (subject_type)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "actor_label": {
+          "type": "VARCHAR(160)",
+          "nullable": false
+        },
+        "subject_type": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "subject_id": {
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "before": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "after": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "stations",
+      "sql": "\nCREATE TABLE stations (\n\tid INTEGER NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tstation_name VARCHAR(255) NOT NULL, \n\tbarangay VARCHAR(255), \n\tmunicipality VARCHAR(255), \n\tlatitude FLOAT, \n\tlongitude FLOAT, \n\tsensor_height_cm FLOAT NOT NULL, \n\tthreshold_advisory_cm FLOAT NOT NULL, \n\tthreshold_warning_cm FLOAT NOT NULL, \n\tthreshold_evacuate_cm FLOAT NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\tlast_ping DATETIME, \n\tfirmware_version VARCHAR(50), \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_station_status CHECK (status IN ('active', 'inactive', 'maintenance'))\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "station_name",
+        "barangay",
+        "municipality",
+        "latitude",
+        "longitude",
+        "sensor_height_cm",
+        "threshold_advisory_cm",
+        "threshold_warning_cm",
+        "threshold_evacuate_cm",
+        "status",
+        "last_ping",
+        "firmware_version",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_stations_station_id",
+          "sql": "CREATE UNIQUE INDEX ix_stations_station_id ON stations (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "station_name": {
+          "type": "VARCHAR(255)",
+          "nullable": false
+        },
+        "barangay": {
+          "type": "VARCHAR(255)",
+          "nullable": true
+        },
+        "municipality": {
+          "type": "VARCHAR(255)",
+          "nullable": true
+        },
+        "latitude": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "longitude": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "sensor_height_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "threshold_advisory_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "threshold_warning_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "threshold_evacuate_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "status": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "last_ping": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "firmware_version": {
+          "type": "VARCHAR(50)",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "users",
+      "sql": "\nCREATE TABLE users (\n\tid INTEGER NOT NULL, \n\tname VARCHAR(120) NOT NULL, \n\temail VARCHAR(254) NOT NULL, \n\tpassword_hash VARCHAR(255) NOT NULL, \n\tphone VARCHAR(30) NOT NULL, \n\tbarangay VARCHAR(120) NOT NULL, \n\trole VARCHAR(20) NOT NULL, \n\tis_active BOOLEAN NOT NULL, \n\tversion INTEGER DEFAULT '1' NOT NULL, \n\temail_verified_at DATETIME, \n\tcreated_at DATETIME NOT NULL, \n\tupdated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_user_role CHECK (role IN ('admin', 'officer', 'resident'))\n)\n\n",
+      "columns": [
+        "id",
+        "name",
+        "email",
+        "password_hash",
+        "phone",
+        "barangay",
+        "role",
+        "is_active",
+        "version",
+        "email_verified_at",
+        "created_at",
+        "updated_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_users_email",
+          "sql": "CREATE UNIQUE INDEX ix_users_email ON users (email)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "name": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "email": {
+          "type": "VARCHAR(254)",
+          "nullable": false
+        },
+        "password_hash": {
+          "type": "VARCHAR(255)",
+          "nullable": false
+        },
+        "phone": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "barangay": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "role": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "is_active": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "email_verified_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "updated_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "verified_areas",
+      "sql": "\nCREATE TABLE verified_areas (\n\tid VARCHAR(50) NOT NULL, \n\tname VARCHAR(200) NOT NULL, \n\tidentifier_scheme VARCHAR(80) NOT NULL, \n\tarea_class VARCHAR(20) NOT NULL, \n\tevidence VARCHAR(2000) NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "name",
+        "identifier_scheme",
+        "area_class",
+        "evidence",
+        "active"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "name": {
+          "type": "VARCHAR(200)",
+          "nullable": false
+        },
+        "identifier_scheme": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "area_class": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "evidence": {
+          "type": "VARCHAR(2000)",
+          "nullable": false
+        },
+        "active": {
+          "type": "BOOLEAN",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "account_preferences",
+      "sql": "\nCREATE TABLE account_preferences (\n\tuser_id INTEGER NOT NULL, \n\trevision INTEGER NOT NULL, \n\tnotifications_enabled BOOLEAN NOT NULL, \n\tlocale VARCHAR(10) NOT NULL, \n\tresident_area_id VARCHAR(50), \n\trequested_language VARCHAR(80), \n\tupdated_at DATETIME NOT NULL, \n\tPRIMARY KEY (user_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id), \n\tFOREIGN KEY(resident_area_id) REFERENCES verified_areas (id)\n)\n\n",
+      "columns": [
+        "user_id",
+        "revision",
+        "notifications_enabled",
+        "locale",
+        "resident_area_id",
+        "requested_language",
+        "updated_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "notifications_enabled": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "locale": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "resident_area_id": {
+          "type": "VARCHAR(50)",
+          "nullable": true
+        },
+        "requested_language": {
+          "type": "VARCHAR(80)",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "user_id"
+      ]
+    },
+    {
+      "name": "auth_sessions",
+      "sql": "\nCREATE TABLE auth_sessions (\n\ttoken_hash VARCHAR(64) NOT NULL, \n\tpublic_id VARCHAR(36) NOT NULL, \n\taudience VARCHAR(12) DEFAULT 'legacy' NOT NULL, \n\tmfa_verified_at DATETIME, \n\tuser_id INTEGER NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\texpires_at DATETIME NOT NULL, \n\tPRIMARY KEY (token_hash), \n\tUNIQUE (public_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "token_hash",
+        "public_id",
+        "audience",
+        "mfa_verified_at",
+        "user_id",
+        "created_at",
+        "expires_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_auth_sessions_expires_at",
+          "sql": "CREATE INDEX ix_auth_sessions_expires_at ON auth_sessions (expires_at)"
+        },
+        {
+          "name": "ix_auth_sessions_user_id",
+          "sql": "CREATE INDEX ix_auth_sessions_user_id ON auth_sessions (user_id)"
+        }
+      ],
+      "column_contract": {
+        "token_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "public_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "audience": {
+          "type": "VARCHAR(12)",
+          "nullable": false
+        },
+        "mfa_verified_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "public_id"
+        ]
+      ],
+      "primary_key": [
+        "token_hash"
+      ]
+    },
+    {
+      "name": "authority_grants",
+      "sql": "\nCREATE TABLE authority_grants (\n\tauthority_id VARCHAR(50) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tarea_ids JSON NOT NULL, \n\tstation_ids JSON NOT NULL, \n\trevision INTEGER NOT NULL, \n\tcitywide BOOLEAN NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\tPRIMARY KEY (authority_id, user_id), \n\tFOREIGN KEY(authority_id) REFERENCES alert_authorities (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "authority_id",
+        "user_id",
+        "area_ids",
+        "station_ids",
+        "revision",
+        "citywide",
+        "active"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "authority_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "area_ids": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "station_ids": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "citywide": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "active": {
+          "type": "BOOLEAN",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "authority_id",
+        "user_id"
+      ]
+    },
+    {
+      "name": "governance_audit",
+      "sql": "\nCREATE TABLE governance_audit (\n\tid INTEGER NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\taction VARCHAR(80) NOT NULL, \n\tsubject VARCHAR(100) NOT NULL, \n\treason VARCHAR(1000) NOT NULL, \n\tdetails JSON NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "actor_id",
+        "action",
+        "subject",
+        "reason",
+        "details",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_governance_audit_action",
+          "sql": "CREATE INDEX ix_governance_audit_action ON governance_audit (action)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "subject": {
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "details": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "hazard_policies",
+      "sql": "\nCREATE TABLE hazard_policies (\n\tstation_id VARCHAR(50) NOT NULL, \n\tversion INTEGER NOT NULL, \n\trules JSON NOT NULL, \n\tevidence VARCHAR(2000) NOT NULL, \n\tapproved_by INTEGER, \n\tapproved_at DATETIME NOT NULL, \n\tPRIMARY KEY (station_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(approved_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "version",
+        "rules",
+        "evidence",
+        "approved_by",
+        "approved_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "rules": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "evidence": {
+          "type": "VARCHAR(2000)",
+          "nullable": false
+        },
+        "approved_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "approved_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ]
+    },
+    {
+      "name": "hazard_recovery",
+      "sql": "\nCREATE TABLE hazard_recovery (\n\tstation_id VARCHAR(50) NOT NULL, \n\tpolicy_version INTEGER NOT NULL, \n\tseverity VARCHAR(20) NOT NULL, \n\tcount INTEGER NOT NULL, \n\tstarted_at DATETIME NOT NULL, \n\tlast_at DATETIME NOT NULL, \n\tPRIMARY KEY (station_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "policy_version",
+        "severity",
+        "count",
+        "started_at",
+        "last_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "policy_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "severity": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "count": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "started_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "last_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ]
+    },
+    {
+      "name": "identity_actions",
+      "sql": "\nCREATE TABLE identity_actions (\n\ttoken_hash VARCHAR(64) NOT NULL, \n\tpurpose VARCHAR(30) NOT NULL, \n\tuser_id INTEGER, \n\temail VARCHAR(254), \n\taccount_version INTEGER, \n\tpayload JSON NOT NULL, \n\tsecret_ciphertext TEXT, \n\tattempts INTEGER NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\texpires_at DATETIME NOT NULL, \n\tused_at DATETIME, \n\tPRIMARY KEY (token_hash), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "token_hash",
+        "purpose",
+        "user_id",
+        "email",
+        "account_version",
+        "payload",
+        "secret_ciphertext",
+        "attempts",
+        "created_at",
+        "expires_at",
+        "used_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_identity_actions_expires_at",
+          "sql": "CREATE INDEX ix_identity_actions_expires_at ON identity_actions (expires_at)"
+        },
+        {
+          "name": "ix_identity_actions_purpose",
+          "sql": "CREATE INDEX ix_identity_actions_purpose ON identity_actions (purpose)"
+        },
+        {
+          "name": "ix_identity_actions_user_id",
+          "sql": "CREATE INDEX ix_identity_actions_user_id ON identity_actions (user_id)"
+        },
+        {
+          "name": "ix_identity_open_invitation",
+          "sql": "CREATE UNIQUE INDEX ix_identity_open_invitation ON identity_actions (email) WHERE purpose = 'invitation' AND used_at IS NULL"
+        }
+      ],
+      "column_contract": {
+        "token_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "purpose": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "email": {
+          "type": "VARCHAR(254)",
+          "nullable": true
+        },
+        "account_version": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "payload": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "secret_ciphertext": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "used_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "token_hash"
+      ]
+    },
+    {
+      "name": "mfa_credentials",
+      "sql": "\nCREATE TABLE mfa_credentials (\n\tuser_id INTEGER NOT NULL, \n\tsecret_ciphertext TEXT NOT NULL, \n\tlast_step INTEGER NOT NULL, \n\tenabled_at DATETIME NOT NULL, \n\tPRIMARY KEY (user_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "user_id",
+        "secret_ciphertext",
+        "last_step",
+        "enabled_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "secret_ciphertext": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "last_step": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "enabled_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "user_id"
+      ]
+    },
+    {
+      "name": "mfa_recovery_codes",
+      "sql": "\nCREATE TABLE mfa_recovery_codes (\n\tcode_hash VARCHAR(64) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tused_at DATETIME, \n\tPRIMARY KEY (code_hash), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "code_hash",
+        "user_id",
+        "used_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_mfa_recovery_codes_user_id",
+          "sql": "CREATE INDEX ix_mfa_recovery_codes_user_id ON mfa_recovery_codes (user_id)"
+        }
+      ],
+      "column_contract": {
+        "code_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "used_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "code_hash"
+      ]
+    },
+    {
+      "name": "notification_devices",
+      "sql": "\nCREATE TABLE notification_devices (\n\tid VARCHAR(36) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tinstallation_id VARCHAR(36) NOT NULL, \n\tplatform VARCHAR(10) NOT NULL, \n\tprovider VARCHAR(10) NOT NULL, \n\tprovider_token VARCHAR(4096), \n\ttoken_hash VARCHAR(64), \n\tsession_hash VARCHAR(64) NOT NULL, \n\trevision INTEGER NOT NULL, \n\tenabled BOOLEAN NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tupdated_at DATETIME NOT NULL, \n\tlast_seen_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_notification_installation UNIQUE (user_id, installation_id), \n\tCONSTRAINT ck_notification_platform CHECK (platform IN ('android', 'ios')), \n\tCONSTRAINT ck_notification_provider CHECK (provider = 'fcm'), \n\tCONSTRAINT ck_notification_token CHECK (NOT enabled OR (provider_token IS NOT NULL AND token_hash IS NOT NULL)), \n\tFOREIGN KEY(user_id) REFERENCES users (id), \n\tUNIQUE (token_hash)\n)\n\n",
+      "columns": [
+        "id",
+        "user_id",
+        "installation_id",
+        "platform",
+        "provider",
+        "provider_token",
+        "token_hash",
+        "session_hash",
+        "revision",
+        "enabled",
+        "created_at",
+        "updated_at",
+        "last_seen_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_notification_devices_session_hash",
+          "sql": "CREATE INDEX ix_notification_devices_session_hash ON notification_devices (session_hash)"
+        },
+        {
+          "name": "ix_notification_devices_user_id",
+          "sql": "CREATE INDEX ix_notification_devices_user_id ON notification_devices (user_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "installation_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "platform": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "provider": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "provider_token": {
+          "type": "VARCHAR(4096)",
+          "nullable": true
+        },
+        "token_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "session_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "enabled": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "updated_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "last_seen_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "user_id",
+          "installation_id"
+        ],
+        [
+          "token_hash"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "official_notices",
+      "sql": "\nCREATE TABLE official_notices (\n\tid VARCHAR(36) NOT NULL, \n\tauthority_id VARCHAR(50) NOT NULL, \n\tissuer_name VARCHAR(200) NOT NULL, \n\tauthority_class VARCHAR(20) NOT NULL, \n\tissued_by INTEGER NOT NULL, \n\tarea_ids JSON NOT NULL, \n\tarea_names JSON NOT NULL, \n\tmessage_type VARCHAR(10) NOT NULL, \n\treference_id VARCHAR(36), \n\tcategory VARCHAR(15) NOT NULL, \n\tstatus VARCHAR(10) NOT NULL, \n\turgency VARCHAR(15) NOT NULL, \n\tseverity VARCHAR(15) NOT NULL, \n\tcertainty VARCHAR(15) NOT NULL, \n\theadline VARCHAR(200) NOT NULL, \n\tinstruction VARCHAR(4000) NOT NULL, \n\treason VARCHAR(1000) NOT NULL, \n\tsent_at DATETIME NOT NULL, \n\teffective_at DATETIME NOT NULL, \n\texpires_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(authority_id) REFERENCES alert_authorities (id), \n\tFOREIGN KEY(issued_by) REFERENCES users (id), \n\tUNIQUE (reference_id), \n\tFOREIGN KEY(reference_id) REFERENCES official_notices (id)\n)\n\n",
+      "columns": [
+        "id",
+        "authority_id",
+        "issuer_name",
+        "authority_class",
+        "issued_by",
+        "area_ids",
+        "area_names",
+        "message_type",
+        "reference_id",
+        "category",
+        "status",
+        "urgency",
+        "severity",
+        "certainty",
+        "headline",
+        "instruction",
+        "reason",
+        "sent_at",
+        "effective_at",
+        "expires_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_official_notices_authority_id",
+          "sql": "CREATE INDEX ix_official_notices_authority_id ON official_notices (authority_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "authority_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "issuer_name": {
+          "type": "VARCHAR(200)",
+          "nullable": false
+        },
+        "authority_class": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "issued_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "area_ids": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "area_names": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "message_type": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "reference_id": {
+          "type": "VARCHAR(36)",
+          "nullable": true
+        },
+        "category": {
+          "type": "VARCHAR(15)",
+          "nullable": false
+        },
+        "status": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "urgency": {
+          "type": "VARCHAR(15)",
+          "nullable": false
+        },
+        "severity": {
+          "type": "VARCHAR(15)",
+          "nullable": false
+        },
+        "certainty": {
+          "type": "VARCHAR(15)",
+          "nullable": false
+        },
+        "headline": {
+          "type": "VARCHAR(200)",
+          "nullable": false
+        },
+        "instruction": {
+          "type": "VARCHAR(4000)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "sent_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "effective_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "reference_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "resident_subscriptions",
+      "sql": "\nCREATE TABLE resident_subscriptions (\n\tuser_id INTEGER NOT NULL, \n\tkind VARCHAR(10) NOT NULL, \n\ttarget_id VARCHAR(50) NOT NULL, \n\tenabled BOOLEAN NOT NULL, \n\trevision INTEGER NOT NULL, \n\tupdated_at DATETIME NOT NULL, \n\tPRIMARY KEY (user_id, kind, target_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "user_id",
+        "kind",
+        "target_id",
+        "enabled",
+        "revision",
+        "updated_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "target_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "enabled": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "updated_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "user_id",
+        "kind",
+        "target_id"
+      ]
+    },
+    {
+      "name": "response_resources",
+      "sql": "\nCREATE TABLE response_resources (\n\tid VARCHAR(80) NOT NULL, \n\tkind VARCHAR(20) NOT NULL, \n\tauthority_id VARCHAR(50) NOT NULL, \n\tarea_ids JSON NOT NULL, \n\tmode VARCHAR(12) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tdata JSON NOT NULL, \n\tsource VARCHAR(1200) NOT NULL, \n\tverification VARCHAR(20) NOT NULL, \n\tpublished BOOLEAN NOT NULL, \n\tverified_at DATETIME, \n\texpires_at DATETIME, \n\tupdated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(authority_id) REFERENCES alert_authorities (id)\n)\n\n",
+      "columns": [
+        "id",
+        "kind",
+        "authority_id",
+        "area_ids",
+        "mode",
+        "version",
+        "data",
+        "source",
+        "verification",
+        "published",
+        "verified_at",
+        "expires_at",
+        "updated_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_response_resources_authority_id",
+          "sql": "CREATE INDEX ix_response_resources_authority_id ON response_resources (authority_id)"
+        },
+        {
+          "name": "ix_response_resources_kind",
+          "sql": "CREATE INDEX ix_response_resources_kind ON response_resources (kind)"
+        },
+        {
+          "name": "ix_response_resources_mode",
+          "sql": "CREATE INDEX ix_response_resources_mode ON response_resources (mode)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "authority_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "area_ids": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "mode": {
+          "type": "VARCHAR(12)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "data": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "source": {
+          "type": "VARCHAR(1200)",
+          "nullable": false
+        },
+        "verification": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "published": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "verified_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "sos_drill_incidents",
+      "sql": "\nCREATE TABLE sos_drill_incidents (\n\tid INTEGER NOT NULL, \n\tlabel VARCHAR(120) NOT NULL, \n\tcorrelation_reason VARCHAR(500) NOT NULL, \n\tcreated_by INTEGER NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(created_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "label",
+        "correlation_reason",
+        "created_by",
+        "created_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "label": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "correlation_reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "created_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "sos_drill_policies",
+      "sql": "\nCREATE TABLE sos_drill_policies (\n\tid INTEGER NOT NULL, \n\tversion INTEGER NOT NULL, \n\tsettings JSON NOT NULL, \n\treviewed_by INTEGER NOT NULL, \n\treviewed_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(reviewed_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "version",
+        "settings",
+        "reviewed_by",
+        "reviewed_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "settings": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "reviewed_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reviewed_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "sos_requests",
+      "sql": "\nCREATE TABLE sos_requests (\n\tid INTEGER NOT NULL, \n\tversion INTEGER DEFAULT '1' NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\trequest_id VARCHAR(36) NOT NULL, \n\tpayload_hash VARCHAR(64) NOT NULL, \n\tresident_name VARCHAR(120) NOT NULL, \n\tphone VARCHAR(30) NOT NULL, \n\tbarangay VARCHAR(120) NOT NULL, \n\tlocation VARCHAR(300) NOT NULL, \n\tmessage VARCHAR(1000) NOT NULL, \n\tlatitude FLOAT, \n\tlongitude FLOAT, \n\tlocation_source VARCHAR(20) NOT NULL, \n\taccuracy_m FLOAT, \n\tlocation_recorded_at DATETIME, \n\tpractice BOOLEAN NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tacknowledged_by INTEGER, \n\tacknowledged_by_name VARCHAR(120), \n\tacknowledged_at DATETIME, \n\tresolved_by INTEGER, \n\tresolved_by_name VARCHAR(120), \n\tresolved_at DATETIME, \n\tresolution_note VARCHAR(500), \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_sos_resident_request UNIQUE (user_id, request_id), \n\tCONSTRAINT ck_sos_status CHECK (status IN ('ACTIVE', 'ACKNOWLEDGED', 'RESOLVED')), \n\tFOREIGN KEY(user_id) REFERENCES users (id), \n\tFOREIGN KEY(acknowledged_by) REFERENCES users (id), \n\tFOREIGN KEY(resolved_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "version",
+        "user_id",
+        "request_id",
+        "payload_hash",
+        "resident_name",
+        "phone",
+        "barangay",
+        "location",
+        "message",
+        "latitude",
+        "longitude",
+        "location_source",
+        "accuracy_m",
+        "location_recorded_at",
+        "practice",
+        "status",
+        "created_at",
+        "acknowledged_by",
+        "acknowledged_by_name",
+        "acknowledged_at",
+        "resolved_by",
+        "resolved_by_name",
+        "resolved_at",
+        "resolution_note"
+      ],
+      "indexes": [
+        {
+          "name": "ix_sos_requests_created_at",
+          "sql": "CREATE INDEX ix_sos_requests_created_at ON sos_requests (created_at)"
+        },
+        {
+          "name": "ix_sos_requests_status",
+          "sql": "CREATE INDEX ix_sos_requests_status ON sos_requests (status)"
+        },
+        {
+          "name": "ix_sos_requests_user_id",
+          "sql": "CREATE INDEX ix_sos_requests_user_id ON sos_requests (user_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "request_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "payload_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "resident_name": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "phone": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "barangay": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "location": {
+          "type": "VARCHAR(300)",
+          "nullable": false
+        },
+        "message": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "latitude": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "longitude": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "location_source": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "accuracy_m": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "location_recorded_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "practice": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "status": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "acknowledged_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "acknowledged_by_name": {
+          "type": "VARCHAR(120)",
+          "nullable": true
+        },
+        "acknowledged_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "resolved_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "resolved_by_name": {
+          "type": "VARCHAR(120)",
+          "nullable": true
+        },
+        "resolved_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "resolution_note": {
+          "type": "VARCHAR(500)",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "user_id",
+          "request_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_areas",
+      "sql": "\nCREATE TABLE station_areas (\n\tstation_id VARCHAR(50) NOT NULL, \n\tarea_id VARCHAR(50) NOT NULL, \n\tenabled BOOLEAN NOT NULL, \n\trevision INTEGER NOT NULL, \n\tPRIMARY KEY (station_id, area_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(area_id) REFERENCES verified_areas (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "area_id",
+        "enabled",
+        "revision"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "area_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "enabled": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id",
+        "area_id"
+      ]
+    },
+    {
+      "name": "station_audit_events",
+      "sql": "\nCREATE TABLE station_audit_events (\n\tid INTEGER NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\tactor_name VARCHAR(120) NOT NULL, \n\taction VARCHAR(40) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tdetails JSON NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "actor_id",
+        "actor_name",
+        "action",
+        "reason",
+        "details",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_station_audit_events_station_id",
+          "sql": "CREATE INDEX ix_station_audit_events_station_id ON station_audit_events (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "actor_name": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "details": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_configurations",
+      "sql": "\nCREATE TABLE station_configurations (\n\tid INTEGER NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\trevision INTEGER NOT NULL, \n\tconfig_hash VARCHAR(64) NOT NULL, \n\tinstallation JSON NOT NULL, \n\tvalidation_status VARCHAR(30) NOT NULL, \n\tevidence VARCHAR(2000) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\treviewer_id INTEGER NOT NULL, \n\teffective_at DATETIME NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tUNIQUE (station_id, revision), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(reviewer_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "revision",
+        "config_hash",
+        "installation",
+        "validation_status",
+        "evidence",
+        "reason",
+        "reviewer_id",
+        "effective_at",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_station_configurations_station_id",
+          "sql": "CREATE INDEX ix_station_configurations_station_id ON station_configurations (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "config_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "installation": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "validation_status": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "evidence": {
+          "type": "VARCHAR(2000)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "reviewer_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "effective_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "station_id",
+          "revision"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_identities",
+      "sql": "\nCREATE TABLE station_identities (\n\tstation_id VARCHAR(50) NOT NULL, \n\tdevice_id VARCHAR(80) NOT NULL, \n\tstate VARCHAR(20) NOT NULL, \n\tcoordinates_verified BOOLEAN NOT NULL, \n\treference_datum VARCHAR(200) NOT NULL, \n\tcalibration_note VARCHAR(1000) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tcommissioned_at DATETIME, \n\tPRIMARY KEY (station_id), \n\tCONSTRAINT ck_station_identity_state CHECK (state IN ('pending', 'commissioned', 'decommissioned')), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tUNIQUE (device_id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "device_id",
+        "state",
+        "coordinates_verified",
+        "reference_datum",
+        "calibration_note",
+        "version",
+        "commissioned_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "coordinates_verified": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "reference_datum": {
+          "type": "VARCHAR(200)",
+          "nullable": false
+        },
+        "calibration_note": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "commissioned_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "device_id"
+        ]
+      ],
+      "primary_key": [
+        "station_id"
+      ]
+    },
+    {
+      "name": "station_operations",
+      "sql": "\nCREATE TABLE station_operations (\n\tstation_id VARCHAR(50) NOT NULL, \n\trevision INTEGER NOT NULL, \n\tnotification_epoch INTEGER NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\tupdated_at DATETIME NOT NULL, \n\tPRIMARY KEY (station_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "revision",
+        "notification_epoch",
+        "reason",
+        "actor_id",
+        "updated_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "notification_epoch": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "updated_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ]
+    },
+    {
+      "name": "station_source_registry",
+      "sql": "\nCREATE TABLE station_source_registry (\n\tstation_id VARCHAR(50) NOT NULL, \n\tconfig_version INTEGER NOT NULL, \n\tdevice_id VARCHAR(80) NOT NULL, \n\tsource_class VARCHAR(30) NOT NULL, \n\tstream VARCHAR(20) NOT NULL, \n\tevidence VARCHAR(1000) NOT NULL, \n\treviewed_by INTEGER, \n\treviewed_at DATETIME NOT NULL, \n\tPRIMARY KEY (station_id, config_version), \n\tCONSTRAINT ck_registry_source CHECK (source_class IN ('physical_device', 'simulator', 'unverified')), \n\tCONSTRAINT ck_registry_stream CHECK (stream IN ('operational', 'exercise')), \n\tCONSTRAINT ck_registry_operational CHECK (stream = 'exercise' OR source_class = 'physical_device'), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(reviewed_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "config_version",
+        "device_id",
+        "source_class",
+        "stream",
+        "evidence",
+        "reviewed_by",
+        "reviewed_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "config_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "source_class": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "stream": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "evidence": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "reviewed_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "reviewed_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id",
+        "config_version"
+      ]
+    },
+    {
+      "name": "telemetry",
+      "sql": "\nCREATE TABLE telemetry (\n\tid INTEGER NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tsequence_no BIGINT NOT NULL, \n\tboot_id VARCHAR(80) DEFAULT 'legacy' NOT NULL, \n\tboot_sequence BIGINT DEFAULT '0' NOT NULL, \n\tschema_version INTEGER DEFAULT '1' NOT NULL, \n\tconfig_version INTEGER DEFAULT '0' NOT NULL, \n\tsource_id VARCHAR(80) DEFAULT 'legacy' NOT NULL, \n\tfirmware_version VARCHAR(50) DEFAULT 'legacy' NOT NULL, \n\tmeasured_at DATETIME, \n\treceived_at DATETIME NOT NULL, \n\teligible_for_current BOOLEAN DEFAULT false NOT NULL, \n\tdisposition VARCHAR(40) DEFAULT 'legacy' NOT NULL, \n\twater_depth_cm FLOAT, \n\trainfall_mm FLOAT, \n\trainfall_interval JSON, \n\tapplied_config_hash VARCHAR(64), \n\tsensor_fault VARCHAR(40) DEFAULT 'none' NOT NULL, \n\tlocal_alert_profile VARCHAR(30) DEFAULT 'depth' NOT NULL, \n\tsensor_quality VARCHAR(20) NOT NULL, \n\tdevice_uptime_ms BIGINT NOT NULL, \n\trecorded_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_telemetry_boot_sequence UNIQUE (station_id, config_version, boot_id, sequence_no), \n\tCONSTRAINT ck_telemetry_sensor_quality CHECK (sensor_quality IN ('valid', 'invalid')), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "sequence_no",
+        "boot_id",
+        "boot_sequence",
+        "schema_version",
+        "config_version",
+        "source_id",
+        "firmware_version",
+        "measured_at",
+        "received_at",
+        "eligible_for_current",
+        "disposition",
+        "water_depth_cm",
+        "rainfall_mm",
+        "rainfall_interval",
+        "applied_config_hash",
+        "sensor_fault",
+        "local_alert_profile",
+        "sensor_quality",
+        "device_uptime_ms",
+        "recorded_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_telemetry_recorded_at",
+          "sql": "CREATE INDEX ix_telemetry_recorded_at ON telemetry (recorded_at)"
+        },
+        {
+          "name": "ix_telemetry_station_id",
+          "sql": "CREATE INDEX ix_telemetry_station_id ON telemetry (station_id)"
+        },
+        {
+          "name": "ix_telemetry_station_measured_id",
+          "sql": "CREATE INDEX ix_telemetry_station_measured_id ON telemetry (station_id, measured_at, id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "boot_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "boot_sequence": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "schema_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "config_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "source_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "firmware_version": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "measured_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "received_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "eligible_for_current": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "disposition": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "water_depth_cm": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "rainfall_mm": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "rainfall_interval": {
+          "type": "JSON",
+          "nullable": true
+        },
+        "applied_config_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "sensor_fault": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "local_alert_profile": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "sensor_quality": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "device_uptime_ms": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "recorded_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "station_id",
+          "config_version",
+          "boot_id",
+          "sequence_no"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "telemetry_boots",
+      "sql": "\nCREATE TABLE telemetry_boots (\n\tstation_id VARCHAR(50) NOT NULL, \n\tconfig_version INTEGER NOT NULL, \n\tboot_id VARCHAR(80) NOT NULL, \n\tboot_sequence BIGINT NOT NULL, \n\thighest_sequence BIGINT DEFAULT '0' NOT NULL, \n\thighest_uptime_ms BIGINT DEFAULT '-1' NOT NULL, \n\tPRIMARY KEY (station_id, config_version, boot_id), \n\tCONSTRAINT uq_telemetry_boot_ordinal UNIQUE (station_id, config_version, boot_sequence), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "config_version",
+        "boot_id",
+        "boot_sequence",
+        "highest_sequence",
+        "highest_uptime_ms"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "config_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "boot_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "boot_sequence": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "highest_sequence": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "highest_uptime_ms": {
+          "type": "BIGINT",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "station_id",
+          "config_version",
+          "boot_sequence"
+        ]
+      ],
+      "primary_key": [
+        "station_id",
+        "config_version",
+        "boot_id"
+      ]
+    },
+    {
+      "name": "alerts",
+      "sql": "\nCREATE TABLE alerts (\n\tid INTEGER NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tcurrent_severity VARCHAR(20) NOT NULL, \n\thighest_severity VARCHAR(20) NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\tsource VARCHAR(20) NOT NULL, \n\ttrigger_telemetry_id INTEGER NOT NULL, \n\tlatest_telemetry_id INTEGER NOT NULL, \n\ttrigger_sequence_no BIGINT NOT NULL, \n\tlatest_sequence_no BIGINT NOT NULL, \n\ttrigger_depth_cm FLOAT NOT NULL, \n\tlatest_depth_cm FLOAT NOT NULL, \n\ttriggered_at DATETIME NOT NULL, \n\tlast_transition_at DATETIME NOT NULL, \n\tresolved_at DATETIME, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_alert_source CHECK (source = 'sensor'), \n\tCONSTRAINT ck_alert_severity CHECK (current_severity IN ('NORMAL', 'ADVISORY', 'WARNING', 'EVACUATE')), \n\tCONSTRAINT ck_alert_highest_severity CHECK (highest_severity IN ('ADVISORY', 'WARNING', 'EVACUATE')), \n\tCONSTRAINT ck_alert_lifecycle CHECK ((status = 'ACTIVE' AND current_severity <> 'NORMAL' AND resolved_at IS NULL) OR (status = 'RESOLVED' AND current_severity = 'NORMAL' AND resolved_at IS NOT NULL)), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tUNIQUE (trigger_telemetry_id), \n\tFOREIGN KEY(trigger_telemetry_id) REFERENCES telemetry (id), \n\tFOREIGN KEY(latest_telemetry_id) REFERENCES telemetry (id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "current_severity",
+        "highest_severity",
+        "status",
+        "source",
+        "trigger_telemetry_id",
+        "latest_telemetry_id",
+        "trigger_sequence_no",
+        "latest_sequence_no",
+        "trigger_depth_cm",
+        "latest_depth_cm",
+        "triggered_at",
+        "last_transition_at",
+        "resolved_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_alert_station_status",
+          "sql": "CREATE INDEX ix_alert_station_status ON alerts (station_id, status)"
+        },
+        {
+          "name": "ix_alert_status_triggered",
+          "sql": "CREATE INDEX ix_alert_status_triggered ON alerts (status, triggered_at)"
+        },
+        {
+          "name": "ix_alerts_triggered_at",
+          "sql": "CREATE INDEX ix_alerts_triggered_at ON alerts (triggered_at)"
+        },
+        {
+          "name": "uq_alert_active_station",
+          "sql": "CREATE UNIQUE INDEX uq_alert_active_station ON alerts (station_id) WHERE status = 'ACTIVE'"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "current_severity": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "highest_severity": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "status": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "source": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "trigger_telemetry_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "latest_telemetry_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "trigger_sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "latest_sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "trigger_depth_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "latest_depth_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "triggered_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "last_transition_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "resolved_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "trigger_telemetry_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "hazard_decisions",
+      "sql": "\nCREATE TABLE hazard_decisions (\n\ttelemetry_id INTEGER NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tpolicy_version INTEGER, \n\tobservation_tier VARCHAR(20), \n\tepisode_tier VARCHAR(20) NOT NULL, \n\treason VARCHAR(100) NOT NULL, \n\treview_required BOOLEAN NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (telemetry_id), \n\tFOREIGN KEY(telemetry_id) REFERENCES telemetry (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "telemetry_id",
+        "station_id",
+        "policy_version",
+        "observation_tier",
+        "episode_tier",
+        "reason",
+        "review_required",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_hazard_decisions_station_id",
+          "sql": "CREATE INDEX ix_hazard_decisions_station_id ON hazard_decisions (station_id)"
+        }
+      ],
+      "column_contract": {
+        "telemetry_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "policy_version": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "observation_tier": {
+          "type": "VARCHAR(20)",
+          "nullable": true
+        },
+        "episode_tier": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        "review_required": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "telemetry_id"
+      ]
+    },
+    {
+      "name": "identity_mail",
+      "sql": "\nCREATE TABLE identity_mail (\n\tid INTEGER NOT NULL, \n\taction_hash VARCHAR(64) NOT NULL, \n\trecipient VARCHAR(254) NOT NULL, \n\tbody_ciphertext TEXT NOT NULL, \n\tstate VARCHAR(16) NOT NULL, \n\texpires_at DATETIME NOT NULL, \n\tcompleted_at DATETIME, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(action_hash) REFERENCES identity_actions (token_hash)\n)\n\n",
+      "columns": [
+        "id",
+        "action_hash",
+        "recipient",
+        "body_ciphertext",
+        "state",
+        "expires_at",
+        "completed_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_identity_mail_state",
+          "sql": "CREATE INDEX ix_identity_mail_state ON identity_mail (state)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "action_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "recipient": {
+          "type": "VARCHAR(254)",
+          "nullable": false
+        },
+        "body_ciphertext": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "completed_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "resource_revisions",
+      "sql": "\nCREATE TABLE resource_revisions (\n\tid INTEGER NOT NULL, \n\tresource_id VARCHAR(80) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\taction VARCHAR(20) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tsnapshot JSON NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_resource_revision UNIQUE (resource_id, version), \n\tFOREIGN KEY(resource_id) REFERENCES response_resources (id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "resource_id",
+        "version",
+        "actor_id",
+        "action",
+        "reason",
+        "snapshot",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_resource_revisions_resource_id",
+          "sql": "CREATE INDEX ix_resource_revisions_resource_id ON resource_revisions (resource_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "resource_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "snapshot": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "resource_id",
+          "version"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "sos_drill_responses",
+      "sql": "\nCREATE TABLE sos_drill_responses (\n\tsos_id INTEGER NOT NULL, \n\tpolicy_version INTEGER NOT NULL, \n\tpolicy JSON NOT NULL, \n\tcoordinator_id INTEGER NOT NULL, \n\tassigned_to INTEGER, \n\tphase VARCHAR(24) NOT NULL, \n\tattention VARCHAR(24) NOT NULL, \n\tdue_at DATETIME, \n\tattempted_users JSON NOT NULL, \n\tincident_id INTEGER, \n\tclosure_reason VARCHAR(40), \n\tPRIMARY KEY (sos_id), \n\tFOREIGN KEY(sos_id) REFERENCES sos_requests (id), \n\tFOREIGN KEY(coordinator_id) REFERENCES users (id), \n\tFOREIGN KEY(assigned_to) REFERENCES users (id), \n\tFOREIGN KEY(incident_id) REFERENCES sos_drill_incidents (id)\n)\n\n",
+      "columns": [
+        "sos_id",
+        "policy_version",
+        "policy",
+        "coordinator_id",
+        "assigned_to",
+        "phase",
+        "attention",
+        "due_at",
+        "attempted_users",
+        "incident_id",
+        "closure_reason"
+      ],
+      "indexes": [
+        {
+          "name": "ix_sos_drill_responses_due_at",
+          "sql": "CREATE INDEX ix_sos_drill_responses_due_at ON sos_drill_responses (due_at)"
+        }
+      ],
+      "column_contract": {
+        "sos_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "policy_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "policy": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "coordinator_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "assigned_to": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "phase": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "attention": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "due_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "attempted_users": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "incident_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "closure_reason": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "sos_id"
+      ]
+    },
+    {
+      "name": "sos_response_events",
+      "sql": "\nCREATE TABLE sos_response_events (\n\tid INTEGER NOT NULL, \n\tsos_id INTEGER NOT NULL, \n\trequest_version INTEGER NOT NULL, \n\taction VARCHAR(40) NOT NULL, \n\tactor_id INTEGER, \n\tactor_name VARCHAR(120) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tdetails JSON NOT NULL, \n\tresident_message VARCHAR(400) NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_sos_response_event_version UNIQUE (sos_id, request_version), \n\tFOREIGN KEY(sos_id) REFERENCES sos_requests (id)\n)\n\n",
+      "columns": [
+        "id",
+        "sos_id",
+        "request_version",
+        "action",
+        "actor_id",
+        "actor_name",
+        "reason",
+        "details",
+        "resident_message",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_sos_response_events_sos_id",
+          "sql": "CREATE INDEX ix_sos_response_events_sos_id ON sos_response_events (sos_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "sos_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "request_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "actor_name": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "details": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "resident_message": {
+          "type": "VARCHAR(400)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "sos_id",
+          "request_version"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_credentials",
+      "sql": "\nCREATE TABLE station_credentials (\n\tid VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tidentity_version INTEGER NOT NULL, \n\ttoken_hash VARCHAR(64) NOT NULL, \n\tlabel VARCHAR(80) NOT NULL, \n\ttransport VARCHAR(10) NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\texpires_at DATETIME NOT NULL, \n\trevoked_at DATETIME, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_station_credential_transport CHECK (transport IN ('http', 'mqtt', 'both')), \n\tFOREIGN KEY(station_id) REFERENCES station_identities (station_id), \n\tUNIQUE (token_hash)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "identity_version",
+        "token_hash",
+        "label",
+        "transport",
+        "created_at",
+        "expires_at",
+        "revoked_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_station_credentials_station_id",
+          "sql": "CREATE INDEX ix_station_credentials_station_id ON station_credentials (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "identity_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "token_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "label": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "transport": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "revoked_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "token_hash"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_ingress_budgets",
+      "sql": "\nCREATE TABLE station_ingress_budgets (\n\tstation_id VARCHAR(50) NOT NULL, \n\tchannel VARCHAR(20) NOT NULL, \n\twindow_start DATETIME NOT NULL, \n\tattempts INTEGER NOT NULL, \n\tPRIMARY KEY (station_id, channel), \n\tFOREIGN KEY(station_id) REFERENCES station_identities (station_id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "channel",
+        "window_start",
+        "attempts"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "channel": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "window_start": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id",
+        "channel"
+      ]
+    },
+    {
+      "name": "station_telemetry_state",
+      "sql": "\nCREATE TABLE station_telemetry_state (\n\tstation_id VARCHAR(50) NOT NULL, \n\tconfig_version INTEGER NOT NULL, \n\tboot_id VARCHAR(80) NOT NULL, \n\tboot_sequence BIGINT NOT NULL, \n\tsequence_no BIGINT NOT NULL, \n\tdevice_uptime_ms BIGINT NOT NULL, \n\tmeasured_at DATETIME NOT NULL, \n\tlatest_telemetry_id INTEGER NOT NULL, \n\tPRIMARY KEY (station_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(latest_telemetry_id) REFERENCES telemetry (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "config_version",
+        "boot_id",
+        "boot_sequence",
+        "sequence_no",
+        "device_uptime_ms",
+        "measured_at",
+        "latest_telemetry_id"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "config_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "boot_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "boot_sequence": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "device_uptime_ms": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "measured_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "latest_telemetry_id": {
+          "type": "INTEGER",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ]
+    },
+    {
+      "name": "alert_transitions",
+      "sql": "\nCREATE TABLE alert_transitions (\n\tid INTEGER NOT NULL, \n\talert_id INTEGER NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\ttelemetry_id INTEGER NOT NULL, \n\tsequence_no BIGINT NOT NULL, \n\tprevious_severity VARCHAR(20) NOT NULL, \n\tnew_severity VARCHAR(20) NOT NULL, \n\twater_depth_cm FLOAT NOT NULL, \n\ttransitioned_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_transition_previous CHECK (previous_severity IN ('NORMAL', 'ADVISORY', 'WARNING', 'EVACUATE')), \n\tCONSTRAINT ck_transition_new CHECK (new_severity IN ('NORMAL', 'ADVISORY', 'WARNING', 'EVACUATE')), \n\tCONSTRAINT ck_transition_changed CHECK (previous_severity <> new_severity), \n\tFOREIGN KEY(alert_id) REFERENCES alerts (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tUNIQUE (telemetry_id), \n\tFOREIGN KEY(telemetry_id) REFERENCES telemetry (id)\n)\n\n",
+      "columns": [
+        "id",
+        "alert_id",
+        "station_id",
+        "telemetry_id",
+        "sequence_no",
+        "previous_severity",
+        "new_severity",
+        "water_depth_cm",
+        "transitioned_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_alert_transition_history",
+          "sql": "CREATE INDEX ix_alert_transition_history ON alert_transitions (alert_id, id)"
+        },
+        {
+          "name": "ix_alert_transitions_station_id",
+          "sql": "CREATE INDEX ix_alert_transitions_station_id ON alert_transitions (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "alert_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "telemetry_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "previous_severity": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "new_severity": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "water_depth_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "transitioned_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "telemetry_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "exercise_telemetry",
+      "sql": "\nCREATE TABLE exercise_telemetry (\n\tid INTEGER NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tconfig_version INTEGER NOT NULL, \n\tboot_id VARCHAR(80) NOT NULL, \n\tboot_sequence BIGINT NOT NULL, \n\tsequence_no BIGINT NOT NULL, \n\tpayload JSON NOT NULL, \n\tmeasured_at DATETIME, \n\treceived_at DATETIME NOT NULL, \n\tcredential_id VARCHAR(36) NOT NULL, \n\tingress_transport VARCHAR(10) NOT NULL, \n\tingress_identity VARCHAR(80) NOT NULL, \n\tsource_class VARCHAR(30) NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_exercise_boot_sequence UNIQUE (station_id, config_version, boot_id, sequence_no), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(credential_id) REFERENCES station_credentials (id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "config_version",
+        "boot_id",
+        "boot_sequence",
+        "sequence_no",
+        "payload",
+        "measured_at",
+        "received_at",
+        "credential_id",
+        "ingress_transport",
+        "ingress_identity",
+        "source_class"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_telemetry_station_id",
+          "sql": "CREATE INDEX ix_exercise_telemetry_station_id ON exercise_telemetry (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "config_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "boot_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "boot_sequence": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "payload": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "measured_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "received_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "credential_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "ingress_transport": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "ingress_identity": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "source_class": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "station_id",
+          "config_version",
+          "boot_id",
+          "sequence_no"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "telemetry_provenance",
+      "sql": "\nCREATE TABLE telemetry_provenance (\n\ttelemetry_id INTEGER NOT NULL, \n\tcredential_id VARCHAR(36) NOT NULL, \n\tingress_transport VARCHAR(10) NOT NULL, \n\tingress_identity VARCHAR(80) NOT NULL, \n\tsource_class VARCHAR(30) NOT NULL, \n\tstream VARCHAR(20) NOT NULL, \n\tregistry_version INTEGER NOT NULL, \n\tPRIMARY KEY (telemetry_id), \n\tFOREIGN KEY(telemetry_id) REFERENCES telemetry (id), \n\tFOREIGN KEY(credential_id) REFERENCES station_credentials (id)\n)\n\n",
+      "columns": [
+        "telemetry_id",
+        "credential_id",
+        "ingress_transport",
+        "ingress_identity",
+        "source_class",
+        "stream",
+        "registry_version"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "telemetry_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "credential_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "ingress_transport": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "ingress_identity": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "source_class": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "stream": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "registry_version": {
+          "type": "INTEGER",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "telemetry_id"
+      ]
+    },
+    {
+      "name": "notification_events",
+      "sql": "\nCREATE TABLE notification_events (\n\tid INTEGER NOT NULL, \n\ttransition_id INTEGER NOT NULL, \n\tnotification_type VARCHAR(30) NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tUNIQUE (transition_id), \n\tFOREIGN KEY(transition_id) REFERENCES alert_transitions (id)\n)\n\n",
+      "columns": [
+        "id",
+        "transition_id",
+        "notification_type",
+        "created_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "transition_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "notification_type": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "transition_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "citywide_dispatches",
+      "sql": "\nCREATE TABLE citywide_dispatches (\n\tevent_id INTEGER NOT NULL, \n\tauthority_id VARCHAR(50) NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\treason VARCHAR(1000) NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\texpires_at DATETIME NOT NULL, \n\tPRIMARY KEY (event_id), \n\tFOREIGN KEY(event_id) REFERENCES notification_events (id), \n\tFOREIGN KEY(authority_id) REFERENCES alert_authorities (id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "event_id",
+        "authority_id",
+        "actor_id",
+        "reason",
+        "created_at",
+        "expires_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "event_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "authority_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "event_id"
+      ]
+    },
+    {
+      "name": "notification_audiences",
+      "sql": "\nCREATE TABLE notification_audiences (\n\tevent_id INTEGER NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tarea_ids JSON NOT NULL, \n\tPRIMARY KEY (event_id), \n\tFOREIGN KEY(event_id) REFERENCES notification_events (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "event_id",
+        "station_id",
+        "area_ids"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "event_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "area_ids": {
+          "type": "JSON",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "event_id"
+      ]
+    },
+    {
+      "name": "notification_deliveries",
+      "sql": "\nCREATE TABLE notification_deliveries (\n\tid INTEGER NOT NULL, \n\tevent_id INTEGER NOT NULL, \n\tdevice_id VARCHAR(36) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\tstate VARCHAR(20) NOT NULL, \n\tattempts INTEGER NOT NULL, \n\tresult_category VARCHAR(40), \n\tprovider_mode VARCHAR(20), \n\tcreated_at DATETIME NOT NULL, \n\tattempted_at DATETIME, \n\tnext_attempt_at DATETIME, \n\tcompleted_at DATETIME, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_notification_event_device UNIQUE (event_id, device_id), \n\tCONSTRAINT ck_notification_delivery_state CHECK (state IN ('PENDING', 'PROCESSING', 'SENT', 'FAILED', 'SUPPRESSED', 'TESTED', 'UNKNOWN')), \n\tFOREIGN KEY(event_id) REFERENCES notification_events (id), \n\tFOREIGN KEY(device_id) REFERENCES notification_devices (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "event_id",
+        "device_id",
+        "user_id",
+        "device_revision",
+        "state",
+        "attempts",
+        "result_category",
+        "provider_mode",
+        "created_at",
+        "attempted_at",
+        "next_attempt_at",
+        "completed_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_notification_deliveries_device_id",
+          "sql": "CREATE INDEX ix_notification_deliveries_device_id ON notification_deliveries (device_id)"
+        },
+        {
+          "name": "ix_notification_deliveries_event_id",
+          "sql": "CREATE INDEX ix_notification_deliveries_event_id ON notification_deliveries (event_id)"
+        },
+        {
+          "name": "ix_notification_deliveries_user_id",
+          "sql": "CREATE INDEX ix_notification_deliveries_user_id ON notification_deliveries (user_id)"
+        },
+        {
+          "name": "ix_notification_pending",
+          "sql": "CREATE INDEX ix_notification_pending ON notification_deliveries (state, next_attempt_at)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "event_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "result_category": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        },
+        "provider_mode": {
+          "type": "VARCHAR(20)",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "attempted_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "next_attempt_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "completed_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "event_id",
+          "device_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_delivery_gates",
+      "sql": "\nCREATE TABLE station_delivery_gates (\n\tevent_id INTEGER NOT NULL, \n\tnotification_epoch INTEGER NOT NULL, \n\texternal_allowed BOOLEAN NOT NULL, \n\tlifecycle_state VARCHAR(30) NOT NULL, \n\tPRIMARY KEY (event_id), \n\tFOREIGN KEY(event_id) REFERENCES notification_events (id)\n)\n\n",
+      "columns": [
+        "event_id",
+        "notification_epoch",
+        "external_allowed",
+        "lifecycle_state"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "event_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "notification_epoch": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "external_allowed": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "lifecycle_state": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "event_id"
+      ]
+    },
+    {
+      "name": "notification_recipients",
+      "sql": "\nCREATE TABLE notification_recipients (\n\tdelivery_id INTEGER NOT NULL, \n\tkind VARCHAR(10) NOT NULL, \n\ttarget_id VARCHAR(50) NOT NULL, \n\tsubscription_revision INTEGER NOT NULL, \n\tarea_binding_revision INTEGER, \n\tPRIMARY KEY (delivery_id), \n\tFOREIGN KEY(delivery_id) REFERENCES notification_deliveries (id)\n)\n\n",
+      "columns": [
+        "delivery_id",
+        "kind",
+        "target_id",
+        "subscription_revision",
+        "area_binding_revision"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "delivery_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "target_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "subscription_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "area_binding_revision": {
+          "type": "INTEGER",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "delivery_id"
+      ]
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "administrator_setup",
+      "sql": "\nCREATE TABLE administrator_setup (\n\tid SERIAL NOT NULL, \n\tcompleted_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_single_administrator_setup CHECK (id = 1)\n)\n\n",
+      "columns": [
+        "id",
+        "completed_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "completed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "alert_authorities",
+      "sql": "\nCREATE TABLE alert_authorities (\n\tid VARCHAR(50) NOT NULL, \n\tname VARCHAR(200) NOT NULL, \n\tevidence VARCHAR(2000) NOT NULL, \n\tauthority_class VARCHAR(20) NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "name",
+        "evidence",
+        "authority_class",
+        "active"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "name": {
+          "type": "VARCHAR(200)",
+          "nullable": false
+        },
+        "evidence": {
+          "type": "VARCHAR(2000)",
+          "nullable": false
+        },
+        "authority_class": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "active": {
+          "type": "BOOLEAN",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "auth_budgets",
+      "sql": "\nCREATE TABLE auth_budgets (\n\tkey_hash VARCHAR(64) NOT NULL, \n\tcount INTEGER NOT NULL, \n\treset_at INTEGER NOT NULL, \n\tPRIMARY KEY (key_hash)\n)\n\n",
+      "columns": [
+        "key_hash",
+        "count",
+        "reset_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_auth_budgets_reset_at",
+          "sql": "CREATE INDEX ix_auth_budgets_reset_at ON auth_budgets (reset_at)"
+        }
+      ],
+      "column_contract": {
+        "key_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "count": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reset_at": {
+          "type": "INTEGER",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "key_hash"
+      ]
+    },
+    {
+      "name": "mutation_audit",
+      "sql": "\nCREATE TABLE mutation_audit (\n\tid BIGSERIAL NOT NULL, \n\tactor_id INTEGER, \n\tactor_label VARCHAR(160) NOT NULL, \n\tsubject_type VARCHAR(40) NOT NULL, \n\tsubject_id VARCHAR(100) NOT NULL, \n\taction VARCHAR(80) NOT NULL, \n\treason VARCHAR(1000) NOT NULL, \n\tbefore JSON NOT NULL, \n\tafter JSON NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "actor_id",
+        "actor_label",
+        "subject_type",
+        "subject_id",
+        "action",
+        "reason",
+        "before",
+        "after",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_mutation_audit_subject_id",
+          "sql": "CREATE INDEX ix_mutation_audit_subject_id ON mutation_audit (subject_id)"
+        },
+        {
+          "name": "ix_mutation_audit_subject_type",
+          "sql": "CREATE INDEX ix_mutation_audit_subject_type ON mutation_audit (subject_type)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "actor_label": {
+          "type": "VARCHAR(160)",
+          "nullable": false
+        },
+        "subject_type": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "subject_id": {
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "before": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "after": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "stations",
+      "sql": "\nCREATE TABLE stations (\n\tid SERIAL NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tstation_name VARCHAR(255) NOT NULL, \n\tbarangay VARCHAR(255), \n\tmunicipality VARCHAR(255), \n\tlatitude FLOAT, \n\tlongitude FLOAT, \n\tsensor_height_cm FLOAT NOT NULL, \n\tthreshold_advisory_cm FLOAT NOT NULL, \n\tthreshold_warning_cm FLOAT NOT NULL, \n\tthreshold_evacuate_cm FLOAT NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\tlast_ping TIMESTAMP WITH TIME ZONE, \n\tfirmware_version VARCHAR(50), \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_station_status CHECK (status IN ('active', 'inactive', 'maintenance'))\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "station_name",
+        "barangay",
+        "municipality",
+        "latitude",
+        "longitude",
+        "sensor_height_cm",
+        "threshold_advisory_cm",
+        "threshold_warning_cm",
+        "threshold_evacuate_cm",
+        "status",
+        "last_ping",
+        "firmware_version",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_stations_station_id",
+          "sql": "CREATE UNIQUE INDEX ix_stations_station_id ON stations (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "station_name": {
+          "type": "VARCHAR(255)",
+          "nullable": false
+        },
+        "barangay": {
+          "type": "VARCHAR(255)",
+          "nullable": true
+        },
+        "municipality": {
+          "type": "VARCHAR(255)",
+          "nullable": true
+        },
+        "latitude": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "longitude": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "sensor_height_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "threshold_advisory_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "threshold_warning_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "threshold_evacuate_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "status": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "last_ping": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "firmware_version": {
+          "type": "VARCHAR(50)",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "users",
+      "sql": "\nCREATE TABLE users (\n\tid SERIAL NOT NULL, \n\tname VARCHAR(120) NOT NULL, \n\temail VARCHAR(254) NOT NULL, \n\tpassword_hash VARCHAR(255) NOT NULL, \n\tphone VARCHAR(30) NOT NULL, \n\tbarangay VARCHAR(120) NOT NULL, \n\trole VARCHAR(20) NOT NULL, \n\tis_active BOOLEAN NOT NULL, \n\tversion INTEGER DEFAULT '1' NOT NULL, \n\temail_verified_at TIMESTAMP WITH TIME ZONE, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tupdated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_user_role CHECK (role IN ('admin', 'officer', 'resident'))\n)\n\n",
+      "columns": [
+        "id",
+        "name",
+        "email",
+        "password_hash",
+        "phone",
+        "barangay",
+        "role",
+        "is_active",
+        "version",
+        "email_verified_at",
+        "created_at",
+        "updated_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_users_email",
+          "sql": "CREATE UNIQUE INDEX ix_users_email ON users (email)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "name": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "email": {
+          "type": "VARCHAR(254)",
+          "nullable": false
+        },
+        "password_hash": {
+          "type": "VARCHAR(255)",
+          "nullable": false
+        },
+        "phone": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "barangay": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "role": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "is_active": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "email_verified_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "verified_areas",
+      "sql": "\nCREATE TABLE verified_areas (\n\tid VARCHAR(50) NOT NULL, \n\tname VARCHAR(200) NOT NULL, \n\tidentifier_scheme VARCHAR(80) NOT NULL, \n\tarea_class VARCHAR(20) NOT NULL, \n\tevidence VARCHAR(2000) NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "name",
+        "identifier_scheme",
+        "area_class",
+        "evidence",
+        "active"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "name": {
+          "type": "VARCHAR(200)",
+          "nullable": false
+        },
+        "identifier_scheme": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "area_class": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "evidence": {
+          "type": "VARCHAR(2000)",
+          "nullable": false
+        },
+        "active": {
+          "type": "BOOLEAN",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "account_preferences",
+      "sql": "\nCREATE TABLE account_preferences (\n\tuser_id INTEGER NOT NULL, \n\trevision INTEGER NOT NULL, \n\tnotifications_enabled BOOLEAN NOT NULL, \n\tlocale VARCHAR(10) NOT NULL, \n\tresident_area_id VARCHAR(50), \n\trequested_language VARCHAR(80), \n\tupdated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (user_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id), \n\tFOREIGN KEY(resident_area_id) REFERENCES verified_areas (id)\n)\n\n",
+      "columns": [
+        "user_id",
+        "revision",
+        "notifications_enabled",
+        "locale",
+        "resident_area_id",
+        "requested_language",
+        "updated_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "notifications_enabled": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "locale": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "resident_area_id": {
+          "type": "VARCHAR(50)",
+          "nullable": true
+        },
+        "requested_language": {
+          "type": "VARCHAR(80)",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "user_id"
+      ]
+    },
+    {
+      "name": "auth_sessions",
+      "sql": "\nCREATE TABLE auth_sessions (\n\ttoken_hash VARCHAR(64) NOT NULL, \n\tpublic_id VARCHAR(36) NOT NULL, \n\taudience VARCHAR(12) DEFAULT 'legacy' NOT NULL, \n\tmfa_verified_at TIMESTAMP WITH TIME ZONE, \n\tuser_id INTEGER NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (token_hash), \n\tUNIQUE (public_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "token_hash",
+        "public_id",
+        "audience",
+        "mfa_verified_at",
+        "user_id",
+        "created_at",
+        "expires_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_auth_sessions_expires_at",
+          "sql": "CREATE INDEX ix_auth_sessions_expires_at ON auth_sessions (expires_at)"
+        },
+        {
+          "name": "ix_auth_sessions_user_id",
+          "sql": "CREATE INDEX ix_auth_sessions_user_id ON auth_sessions (user_id)"
+        }
+      ],
+      "column_contract": {
+        "token_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "public_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "audience": {
+          "type": "VARCHAR(12)",
+          "nullable": false
+        },
+        "mfa_verified_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "public_id"
+        ]
+      ],
+      "primary_key": [
+        "token_hash"
+      ]
+    },
+    {
+      "name": "authority_grants",
+      "sql": "\nCREATE TABLE authority_grants (\n\tauthority_id VARCHAR(50) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tarea_ids JSON NOT NULL, \n\tstation_ids JSON NOT NULL, \n\trevision INTEGER NOT NULL, \n\tcitywide BOOLEAN NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\tPRIMARY KEY (authority_id, user_id), \n\tFOREIGN KEY(authority_id) REFERENCES alert_authorities (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "authority_id",
+        "user_id",
+        "area_ids",
+        "station_ids",
+        "revision",
+        "citywide",
+        "active"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "authority_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "area_ids": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "station_ids": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "citywide": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "active": {
+          "type": "BOOLEAN",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "authority_id",
+        "user_id"
+      ]
+    },
+    {
+      "name": "governance_audit",
+      "sql": "\nCREATE TABLE governance_audit (\n\tid BIGSERIAL NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\taction VARCHAR(80) NOT NULL, \n\tsubject VARCHAR(100) NOT NULL, \n\treason VARCHAR(1000) NOT NULL, \n\tdetails JSON NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "actor_id",
+        "action",
+        "subject",
+        "reason",
+        "details",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_governance_audit_action",
+          "sql": "CREATE INDEX ix_governance_audit_action ON governance_audit (action)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "subject": {
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "details": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "hazard_policies",
+      "sql": "\nCREATE TABLE hazard_policies (\n\tstation_id VARCHAR(50) NOT NULL, \n\tversion INTEGER NOT NULL, \n\trules JSON NOT NULL, \n\tevidence VARCHAR(2000) NOT NULL, \n\tapproved_by INTEGER, \n\tapproved_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (station_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(approved_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "version",
+        "rules",
+        "evidence",
+        "approved_by",
+        "approved_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "rules": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "evidence": {
+          "type": "VARCHAR(2000)",
+          "nullable": false
+        },
+        "approved_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "approved_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ]
+    },
+    {
+      "name": "hazard_recovery",
+      "sql": "\nCREATE TABLE hazard_recovery (\n\tstation_id VARCHAR(50) NOT NULL, \n\tpolicy_version INTEGER NOT NULL, \n\tseverity VARCHAR(20) NOT NULL, \n\tcount INTEGER NOT NULL, \n\tstarted_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tlast_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (station_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "policy_version",
+        "severity",
+        "count",
+        "started_at",
+        "last_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "policy_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "severity": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "count": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "started_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "last_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ]
+    },
+    {
+      "name": "identity_actions",
+      "sql": "\nCREATE TABLE identity_actions (\n\ttoken_hash VARCHAR(64) NOT NULL, \n\tpurpose VARCHAR(30) NOT NULL, \n\tuser_id INTEGER, \n\temail VARCHAR(254), \n\taccount_version INTEGER, \n\tpayload JSON NOT NULL, \n\tsecret_ciphertext TEXT, \n\tattempts INTEGER NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tused_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (token_hash), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "token_hash",
+        "purpose",
+        "user_id",
+        "email",
+        "account_version",
+        "payload",
+        "secret_ciphertext",
+        "attempts",
+        "created_at",
+        "expires_at",
+        "used_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_identity_actions_expires_at",
+          "sql": "CREATE INDEX ix_identity_actions_expires_at ON identity_actions (expires_at)"
+        },
+        {
+          "name": "ix_identity_actions_purpose",
+          "sql": "CREATE INDEX ix_identity_actions_purpose ON identity_actions (purpose)"
+        },
+        {
+          "name": "ix_identity_actions_user_id",
+          "sql": "CREATE INDEX ix_identity_actions_user_id ON identity_actions (user_id)"
+        },
+        {
+          "name": "ix_identity_open_invitation",
+          "sql": "CREATE UNIQUE INDEX ix_identity_open_invitation ON identity_actions (email) WHERE purpose = 'invitation' AND used_at IS NULL"
+        }
+      ],
+      "column_contract": {
+        "token_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "purpose": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "email": {
+          "type": "VARCHAR(254)",
+          "nullable": true
+        },
+        "account_version": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "payload": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "secret_ciphertext": {
+          "type": "TEXT",
+          "nullable": true
+        },
+        "attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "used_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "token_hash"
+      ]
+    },
+    {
+      "name": "mfa_credentials",
+      "sql": "\nCREATE TABLE mfa_credentials (\n\tuser_id INTEGER NOT NULL, \n\tsecret_ciphertext TEXT NOT NULL, \n\tlast_step INTEGER NOT NULL, \n\tenabled_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (user_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "user_id",
+        "secret_ciphertext",
+        "last_step",
+        "enabled_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "secret_ciphertext": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "last_step": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "enabled_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "user_id"
+      ]
+    },
+    {
+      "name": "mfa_recovery_codes",
+      "sql": "\nCREATE TABLE mfa_recovery_codes (\n\tcode_hash VARCHAR(64) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tused_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (code_hash), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "code_hash",
+        "user_id",
+        "used_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_mfa_recovery_codes_user_id",
+          "sql": "CREATE INDEX ix_mfa_recovery_codes_user_id ON mfa_recovery_codes (user_id)"
+        }
+      ],
+      "column_contract": {
+        "code_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "used_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "code_hash"
+      ]
+    },
+    {
+      "name": "notification_devices",
+      "sql": "\nCREATE TABLE notification_devices (\n\tid VARCHAR(36) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tinstallation_id VARCHAR(36) NOT NULL, \n\tplatform VARCHAR(10) NOT NULL, \n\tprovider VARCHAR(10) NOT NULL, \n\tprovider_token VARCHAR(4096), \n\ttoken_hash VARCHAR(64), \n\tsession_hash VARCHAR(64) NOT NULL, \n\trevision INTEGER NOT NULL, \n\tenabled BOOLEAN NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tupdated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tlast_seen_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_notification_installation UNIQUE (user_id, installation_id), \n\tCONSTRAINT ck_notification_platform CHECK (platform IN ('android', 'ios')), \n\tCONSTRAINT ck_notification_provider CHECK (provider = 'fcm'), \n\tCONSTRAINT ck_notification_token CHECK (NOT enabled OR (provider_token IS NOT NULL AND token_hash IS NOT NULL)), \n\tFOREIGN KEY(user_id) REFERENCES users (id), \n\tUNIQUE (token_hash)\n)\n\n",
+      "columns": [
+        "id",
+        "user_id",
+        "installation_id",
+        "platform",
+        "provider",
+        "provider_token",
+        "token_hash",
+        "session_hash",
+        "revision",
+        "enabled",
+        "created_at",
+        "updated_at",
+        "last_seen_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_notification_devices_session_hash",
+          "sql": "CREATE INDEX ix_notification_devices_session_hash ON notification_devices (session_hash)"
+        },
+        {
+          "name": "ix_notification_devices_user_id",
+          "sql": "CREATE INDEX ix_notification_devices_user_id ON notification_devices (user_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "installation_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "platform": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "provider": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "provider_token": {
+          "type": "VARCHAR(4096)",
+          "nullable": true
+        },
+        "token_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "session_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "enabled": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "last_seen_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "user_id",
+          "installation_id"
+        ],
+        [
+          "token_hash"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "official_notices",
+      "sql": "\nCREATE TABLE official_notices (\n\tid VARCHAR(36) NOT NULL, \n\tauthority_id VARCHAR(50) NOT NULL, \n\tissuer_name VARCHAR(200) NOT NULL, \n\tauthority_class VARCHAR(20) NOT NULL, \n\tissued_by INTEGER NOT NULL, \n\tarea_ids JSON NOT NULL, \n\tarea_names JSON NOT NULL, \n\tmessage_type VARCHAR(10) NOT NULL, \n\treference_id VARCHAR(36), \n\tcategory VARCHAR(15) NOT NULL, \n\tstatus VARCHAR(10) NOT NULL, \n\turgency VARCHAR(15) NOT NULL, \n\tseverity VARCHAR(15) NOT NULL, \n\tcertainty VARCHAR(15) NOT NULL, \n\theadline VARCHAR(200) NOT NULL, \n\tinstruction VARCHAR(4000) NOT NULL, \n\treason VARCHAR(1000) NOT NULL, \n\tsent_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\teffective_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(authority_id) REFERENCES alert_authorities (id), \n\tFOREIGN KEY(issued_by) REFERENCES users (id), \n\tUNIQUE (reference_id), \n\tFOREIGN KEY(reference_id) REFERENCES official_notices (id)\n)\n\n",
+      "columns": [
+        "id",
+        "authority_id",
+        "issuer_name",
+        "authority_class",
+        "issued_by",
+        "area_ids",
+        "area_names",
+        "message_type",
+        "reference_id",
+        "category",
+        "status",
+        "urgency",
+        "severity",
+        "certainty",
+        "headline",
+        "instruction",
+        "reason",
+        "sent_at",
+        "effective_at",
+        "expires_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_official_notices_authority_id",
+          "sql": "CREATE INDEX ix_official_notices_authority_id ON official_notices (authority_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "authority_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "issuer_name": {
+          "type": "VARCHAR(200)",
+          "nullable": false
+        },
+        "authority_class": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "issued_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "area_ids": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "area_names": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "message_type": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "reference_id": {
+          "type": "VARCHAR(36)",
+          "nullable": true
+        },
+        "category": {
+          "type": "VARCHAR(15)",
+          "nullable": false
+        },
+        "status": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "urgency": {
+          "type": "VARCHAR(15)",
+          "nullable": false
+        },
+        "severity": {
+          "type": "VARCHAR(15)",
+          "nullable": false
+        },
+        "certainty": {
+          "type": "VARCHAR(15)",
+          "nullable": false
+        },
+        "headline": {
+          "type": "VARCHAR(200)",
+          "nullable": false
+        },
+        "instruction": {
+          "type": "VARCHAR(4000)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "sent_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "effective_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "reference_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "resident_subscriptions",
+      "sql": "\nCREATE TABLE resident_subscriptions (\n\tuser_id INTEGER NOT NULL, \n\tkind VARCHAR(10) NOT NULL, \n\ttarget_id VARCHAR(50) NOT NULL, \n\tenabled BOOLEAN NOT NULL, \n\trevision INTEGER NOT NULL, \n\tupdated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (user_id, kind, target_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "user_id",
+        "kind",
+        "target_id",
+        "enabled",
+        "revision",
+        "updated_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "target_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "enabled": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "user_id",
+        "kind",
+        "target_id"
+      ]
+    },
+    {
+      "name": "response_resources",
+      "sql": "\nCREATE TABLE response_resources (\n\tid VARCHAR(80) NOT NULL, \n\tkind VARCHAR(20) NOT NULL, \n\tauthority_id VARCHAR(50) NOT NULL, \n\tarea_ids JSON NOT NULL, \n\tmode VARCHAR(12) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tdata JSON NOT NULL, \n\tsource VARCHAR(1200) NOT NULL, \n\tverification VARCHAR(20) NOT NULL, \n\tpublished BOOLEAN NOT NULL, \n\tverified_at TIMESTAMP WITH TIME ZONE, \n\texpires_at TIMESTAMP WITH TIME ZONE, \n\tupdated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(authority_id) REFERENCES alert_authorities (id)\n)\n\n",
+      "columns": [
+        "id",
+        "kind",
+        "authority_id",
+        "area_ids",
+        "mode",
+        "version",
+        "data",
+        "source",
+        "verification",
+        "published",
+        "verified_at",
+        "expires_at",
+        "updated_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_response_resources_authority_id",
+          "sql": "CREATE INDEX ix_response_resources_authority_id ON response_resources (authority_id)"
+        },
+        {
+          "name": "ix_response_resources_kind",
+          "sql": "CREATE INDEX ix_response_resources_kind ON response_resources (kind)"
+        },
+        {
+          "name": "ix_response_resources_mode",
+          "sql": "CREATE INDEX ix_response_resources_mode ON response_resources (mode)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "authority_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "area_ids": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "mode": {
+          "type": "VARCHAR(12)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "data": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "source": {
+          "type": "VARCHAR(1200)",
+          "nullable": false
+        },
+        "verification": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "published": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "verified_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "sos_drill_incidents",
+      "sql": "\nCREATE TABLE sos_drill_incidents (\n\tid BIGSERIAL NOT NULL, \n\tlabel VARCHAR(120) NOT NULL, \n\tcorrelation_reason VARCHAR(500) NOT NULL, \n\tcreated_by INTEGER NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(created_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "label",
+        "correlation_reason",
+        "created_by",
+        "created_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "label": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "correlation_reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "created_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "sos_drill_policies",
+      "sql": "\nCREATE TABLE sos_drill_policies (\n\tid SERIAL NOT NULL, \n\tversion INTEGER NOT NULL, \n\tsettings JSON NOT NULL, \n\treviewed_by INTEGER NOT NULL, \n\treviewed_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(reviewed_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "version",
+        "settings",
+        "reviewed_by",
+        "reviewed_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "settings": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "reviewed_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reviewed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "sos_requests",
+      "sql": "\nCREATE TABLE sos_requests (\n\tid SERIAL NOT NULL, \n\tversion INTEGER DEFAULT '1' NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\trequest_id VARCHAR(36) NOT NULL, \n\tpayload_hash VARCHAR(64) NOT NULL, \n\tresident_name VARCHAR(120) NOT NULL, \n\tphone VARCHAR(30) NOT NULL, \n\tbarangay VARCHAR(120) NOT NULL, \n\tlocation VARCHAR(300) NOT NULL, \n\tmessage VARCHAR(1000) NOT NULL, \n\tlatitude FLOAT, \n\tlongitude FLOAT, \n\tlocation_source VARCHAR(20) NOT NULL, \n\taccuracy_m FLOAT, \n\tlocation_recorded_at TIMESTAMP WITH TIME ZONE, \n\tpractice BOOLEAN NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tacknowledged_by INTEGER, \n\tacknowledged_by_name VARCHAR(120), \n\tacknowledged_at TIMESTAMP WITH TIME ZONE, \n\tresolved_by INTEGER, \n\tresolved_by_name VARCHAR(120), \n\tresolved_at TIMESTAMP WITH TIME ZONE, \n\tresolution_note VARCHAR(500), \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_sos_resident_request UNIQUE (user_id, request_id), \n\tCONSTRAINT ck_sos_status CHECK (status IN ('ACTIVE', 'ACKNOWLEDGED', 'RESOLVED')), \n\tFOREIGN KEY(user_id) REFERENCES users (id), \n\tFOREIGN KEY(acknowledged_by) REFERENCES users (id), \n\tFOREIGN KEY(resolved_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "version",
+        "user_id",
+        "request_id",
+        "payload_hash",
+        "resident_name",
+        "phone",
+        "barangay",
+        "location",
+        "message",
+        "latitude",
+        "longitude",
+        "location_source",
+        "accuracy_m",
+        "location_recorded_at",
+        "practice",
+        "status",
+        "created_at",
+        "acknowledged_by",
+        "acknowledged_by_name",
+        "acknowledged_at",
+        "resolved_by",
+        "resolved_by_name",
+        "resolved_at",
+        "resolution_note"
+      ],
+      "indexes": [
+        {
+          "name": "ix_sos_requests_created_at",
+          "sql": "CREATE INDEX ix_sos_requests_created_at ON sos_requests (created_at)"
+        },
+        {
+          "name": "ix_sos_requests_status",
+          "sql": "CREATE INDEX ix_sos_requests_status ON sos_requests (status)"
+        },
+        {
+          "name": "ix_sos_requests_user_id",
+          "sql": "CREATE INDEX ix_sos_requests_user_id ON sos_requests (user_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "request_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "payload_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "resident_name": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "phone": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "barangay": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "location": {
+          "type": "VARCHAR(300)",
+          "nullable": false
+        },
+        "message": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "latitude": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "longitude": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "location_source": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "accuracy_m": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "location_recorded_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "practice": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "status": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "acknowledged_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "acknowledged_by_name": {
+          "type": "VARCHAR(120)",
+          "nullable": true
+        },
+        "acknowledged_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "resolved_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "resolved_by_name": {
+          "type": "VARCHAR(120)",
+          "nullable": true
+        },
+        "resolved_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "resolution_note": {
+          "type": "VARCHAR(500)",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "user_id",
+          "request_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_areas",
+      "sql": "\nCREATE TABLE station_areas (\n\tstation_id VARCHAR(50) NOT NULL, \n\tarea_id VARCHAR(50) NOT NULL, \n\tenabled BOOLEAN NOT NULL, \n\trevision INTEGER NOT NULL, \n\tPRIMARY KEY (station_id, area_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(area_id) REFERENCES verified_areas (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "area_id",
+        "enabled",
+        "revision"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "area_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "enabled": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id",
+        "area_id"
+      ]
+    },
+    {
+      "name": "station_audit_events",
+      "sql": "\nCREATE TABLE station_audit_events (\n\tid BIGSERIAL NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\tactor_name VARCHAR(120) NOT NULL, \n\taction VARCHAR(40) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tdetails JSON NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "actor_id",
+        "actor_name",
+        "action",
+        "reason",
+        "details",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_station_audit_events_station_id",
+          "sql": "CREATE INDEX ix_station_audit_events_station_id ON station_audit_events (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "actor_name": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "details": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_configurations",
+      "sql": "\nCREATE TABLE station_configurations (\n\tid SERIAL NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\trevision INTEGER NOT NULL, \n\tconfig_hash VARCHAR(64) NOT NULL, \n\tinstallation JSON NOT NULL, \n\tvalidation_status VARCHAR(30) NOT NULL, \n\tevidence VARCHAR(2000) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\treviewer_id INTEGER NOT NULL, \n\teffective_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tUNIQUE (station_id, revision), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(reviewer_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "revision",
+        "config_hash",
+        "installation",
+        "validation_status",
+        "evidence",
+        "reason",
+        "reviewer_id",
+        "effective_at",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_station_configurations_station_id",
+          "sql": "CREATE INDEX ix_station_configurations_station_id ON station_configurations (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "config_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "installation": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "validation_status": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "evidence": {
+          "type": "VARCHAR(2000)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "reviewer_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "effective_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "station_id",
+          "revision"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_identities",
+      "sql": "\nCREATE TABLE station_identities (\n\tstation_id VARCHAR(50) NOT NULL, \n\tdevice_id VARCHAR(80) NOT NULL, \n\tstate VARCHAR(20) NOT NULL, \n\tcoordinates_verified BOOLEAN NOT NULL, \n\treference_datum VARCHAR(200) NOT NULL, \n\tcalibration_note VARCHAR(1000) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tcommissioned_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (station_id), \n\tCONSTRAINT ck_station_identity_state CHECK (state IN ('pending', 'commissioned', 'decommissioned')), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tUNIQUE (device_id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "device_id",
+        "state",
+        "coordinates_verified",
+        "reference_datum",
+        "calibration_note",
+        "version",
+        "commissioned_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "coordinates_verified": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "reference_datum": {
+          "type": "VARCHAR(200)",
+          "nullable": false
+        },
+        "calibration_note": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "commissioned_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "device_id"
+        ]
+      ],
+      "primary_key": [
+        "station_id"
+      ]
+    },
+    {
+      "name": "station_operations",
+      "sql": "\nCREATE TABLE station_operations (\n\tstation_id VARCHAR(50) NOT NULL, \n\trevision INTEGER NOT NULL, \n\tnotification_epoch INTEGER NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\tupdated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (station_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "revision",
+        "notification_epoch",
+        "reason",
+        "actor_id",
+        "updated_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "notification_epoch": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ]
+    },
+    {
+      "name": "station_source_registry",
+      "sql": "\nCREATE TABLE station_source_registry (\n\tstation_id VARCHAR(50) NOT NULL, \n\tconfig_version INTEGER NOT NULL, \n\tdevice_id VARCHAR(80) NOT NULL, \n\tsource_class VARCHAR(30) NOT NULL, \n\tstream VARCHAR(20) NOT NULL, \n\tevidence VARCHAR(1000) NOT NULL, \n\treviewed_by INTEGER, \n\treviewed_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (station_id, config_version), \n\tCONSTRAINT ck_registry_source CHECK (source_class IN ('physical_device', 'simulator', 'unverified')), \n\tCONSTRAINT ck_registry_stream CHECK (stream IN ('operational', 'exercise')), \n\tCONSTRAINT ck_registry_operational CHECK (stream = 'exercise' OR source_class = 'physical_device'), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(reviewed_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "config_version",
+        "device_id",
+        "source_class",
+        "stream",
+        "evidence",
+        "reviewed_by",
+        "reviewed_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "config_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "source_class": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "stream": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "evidence": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "reviewed_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "reviewed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id",
+        "config_version"
+      ]
+    },
+    {
+      "name": "telemetry",
+      "sql": "\nCREATE TABLE telemetry (\n\tid BIGSERIAL NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tsequence_no BIGINT NOT NULL, \n\tboot_id VARCHAR(80) DEFAULT 'legacy' NOT NULL, \n\tboot_sequence BIGINT DEFAULT '0' NOT NULL, \n\tschema_version INTEGER DEFAULT '1' NOT NULL, \n\tconfig_version INTEGER DEFAULT '0' NOT NULL, \n\tsource_id VARCHAR(80) DEFAULT 'legacy' NOT NULL, \n\tfirmware_version VARCHAR(50) DEFAULT 'legacy' NOT NULL, \n\tmeasured_at TIMESTAMP WITH TIME ZONE, \n\treceived_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\teligible_for_current BOOLEAN DEFAULT false NOT NULL, \n\tdisposition VARCHAR(40) DEFAULT 'legacy' NOT NULL, \n\twater_depth_cm FLOAT, \n\trainfall_mm FLOAT, \n\trainfall_interval JSON, \n\tapplied_config_hash VARCHAR(64), \n\tsensor_fault VARCHAR(40) DEFAULT 'none' NOT NULL, \n\tlocal_alert_profile VARCHAR(30) DEFAULT 'depth' NOT NULL, \n\tsensor_quality VARCHAR(20) NOT NULL, \n\tdevice_uptime_ms BIGINT NOT NULL, \n\trecorded_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_telemetry_boot_sequence UNIQUE (station_id, config_version, boot_id, sequence_no), \n\tCONSTRAINT ck_telemetry_sensor_quality CHECK (sensor_quality IN ('valid', 'invalid')), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "sequence_no",
+        "boot_id",
+        "boot_sequence",
+        "schema_version",
+        "config_version",
+        "source_id",
+        "firmware_version",
+        "measured_at",
+        "received_at",
+        "eligible_for_current",
+        "disposition",
+        "water_depth_cm",
+        "rainfall_mm",
+        "rainfall_interval",
+        "applied_config_hash",
+        "sensor_fault",
+        "local_alert_profile",
+        "sensor_quality",
+        "device_uptime_ms",
+        "recorded_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_telemetry_recorded_at",
+          "sql": "CREATE INDEX ix_telemetry_recorded_at ON telemetry (recorded_at)"
+        },
+        {
+          "name": "ix_telemetry_station_id",
+          "sql": "CREATE INDEX ix_telemetry_station_id ON telemetry (station_id)"
+        },
+        {
+          "name": "ix_telemetry_station_measured_id",
+          "sql": "CREATE INDEX ix_telemetry_station_measured_id ON telemetry (station_id, measured_at, id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "boot_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "boot_sequence": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "schema_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "config_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "source_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "firmware_version": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "measured_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "received_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "eligible_for_current": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "disposition": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "water_depth_cm": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "rainfall_mm": {
+          "type": "FLOAT",
+          "nullable": true
+        },
+        "rainfall_interval": {
+          "type": "JSON",
+          "nullable": true
+        },
+        "applied_config_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "sensor_fault": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "local_alert_profile": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "sensor_quality": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "device_uptime_ms": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "recorded_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "station_id",
+          "config_version",
+          "boot_id",
+          "sequence_no"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "telemetry_boots",
+      "sql": "\nCREATE TABLE telemetry_boots (\n\tstation_id VARCHAR(50) NOT NULL, \n\tconfig_version INTEGER NOT NULL, \n\tboot_id VARCHAR(80) NOT NULL, \n\tboot_sequence BIGINT NOT NULL, \n\thighest_sequence BIGINT DEFAULT '0' NOT NULL, \n\thighest_uptime_ms BIGINT DEFAULT '-1' NOT NULL, \n\tPRIMARY KEY (station_id, config_version, boot_id), \n\tCONSTRAINT uq_telemetry_boot_ordinal UNIQUE (station_id, config_version, boot_sequence), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "config_version",
+        "boot_id",
+        "boot_sequence",
+        "highest_sequence",
+        "highest_uptime_ms"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "config_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "boot_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "boot_sequence": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "highest_sequence": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "highest_uptime_ms": {
+          "type": "BIGINT",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "station_id",
+          "config_version",
+          "boot_sequence"
+        ]
+      ],
+      "primary_key": [
+        "station_id",
+        "config_version",
+        "boot_id"
+      ]
+    },
+    {
+      "name": "alerts",
+      "sql": "\nCREATE TABLE alerts (\n\tid BIGSERIAL NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tcurrent_severity VARCHAR(20) NOT NULL, \n\thighest_severity VARCHAR(20) NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\tsource VARCHAR(20) NOT NULL, \n\ttrigger_telemetry_id BIGINT NOT NULL, \n\tlatest_telemetry_id BIGINT NOT NULL, \n\ttrigger_sequence_no BIGINT NOT NULL, \n\tlatest_sequence_no BIGINT NOT NULL, \n\ttrigger_depth_cm FLOAT NOT NULL, \n\tlatest_depth_cm FLOAT NOT NULL, \n\ttriggered_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tlast_transition_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tresolved_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_alert_source CHECK (source = 'sensor'), \n\tCONSTRAINT ck_alert_severity CHECK (current_severity IN ('NORMAL', 'ADVISORY', 'WARNING', 'EVACUATE')), \n\tCONSTRAINT ck_alert_highest_severity CHECK (highest_severity IN ('ADVISORY', 'WARNING', 'EVACUATE')), \n\tCONSTRAINT ck_alert_lifecycle CHECK ((status = 'ACTIVE' AND current_severity <> 'NORMAL' AND resolved_at IS NULL) OR (status = 'RESOLVED' AND current_severity = 'NORMAL' AND resolved_at IS NOT NULL)), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tUNIQUE (trigger_telemetry_id), \n\tFOREIGN KEY(trigger_telemetry_id) REFERENCES telemetry (id), \n\tFOREIGN KEY(latest_telemetry_id) REFERENCES telemetry (id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "current_severity",
+        "highest_severity",
+        "status",
+        "source",
+        "trigger_telemetry_id",
+        "latest_telemetry_id",
+        "trigger_sequence_no",
+        "latest_sequence_no",
+        "trigger_depth_cm",
+        "latest_depth_cm",
+        "triggered_at",
+        "last_transition_at",
+        "resolved_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_alert_station_status",
+          "sql": "CREATE INDEX ix_alert_station_status ON alerts (station_id, status)"
+        },
+        {
+          "name": "ix_alert_status_triggered",
+          "sql": "CREATE INDEX ix_alert_status_triggered ON alerts (status, triggered_at)"
+        },
+        {
+          "name": "ix_alerts_triggered_at",
+          "sql": "CREATE INDEX ix_alerts_triggered_at ON alerts (triggered_at)"
+        },
+        {
+          "name": "uq_alert_active_station",
+          "sql": "CREATE UNIQUE INDEX uq_alert_active_station ON alerts (station_id) WHERE status = 'ACTIVE'"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "current_severity": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "highest_severity": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "status": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "source": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "trigger_telemetry_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "latest_telemetry_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "trigger_sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "latest_sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "trigger_depth_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "latest_depth_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "triggered_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "last_transition_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "resolved_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "trigger_telemetry_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "hazard_decisions",
+      "sql": "\nCREATE TABLE hazard_decisions (\n\ttelemetry_id BIGINT NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tpolicy_version INTEGER, \n\tobservation_tier VARCHAR(20), \n\tepisode_tier VARCHAR(20) NOT NULL, \n\treason VARCHAR(100) NOT NULL, \n\treview_required BOOLEAN NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (telemetry_id), \n\tFOREIGN KEY(telemetry_id) REFERENCES telemetry (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "telemetry_id",
+        "station_id",
+        "policy_version",
+        "observation_tier",
+        "episode_tier",
+        "reason",
+        "review_required",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_hazard_decisions_station_id",
+          "sql": "CREATE INDEX ix_hazard_decisions_station_id ON hazard_decisions (station_id)"
+        }
+      ],
+      "column_contract": {
+        "telemetry_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "policy_version": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "observation_tier": {
+          "type": "VARCHAR(20)",
+          "nullable": true
+        },
+        "episode_tier": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        "review_required": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "telemetry_id"
+      ]
+    },
+    {
+      "name": "identity_mail",
+      "sql": "\nCREATE TABLE identity_mail (\n\tid BIGSERIAL NOT NULL, \n\taction_hash VARCHAR(64) NOT NULL, \n\trecipient VARCHAR(254) NOT NULL, \n\tbody_ciphertext TEXT NOT NULL, \n\tstate VARCHAR(16) NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tcompleted_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(action_hash) REFERENCES identity_actions (token_hash)\n)\n\n",
+      "columns": [
+        "id",
+        "action_hash",
+        "recipient",
+        "body_ciphertext",
+        "state",
+        "expires_at",
+        "completed_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_identity_mail_state",
+          "sql": "CREATE INDEX ix_identity_mail_state ON identity_mail (state)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "action_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "recipient": {
+          "type": "VARCHAR(254)",
+          "nullable": false
+        },
+        "body_ciphertext": {
+          "type": "TEXT",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "completed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "resource_revisions",
+      "sql": "\nCREATE TABLE resource_revisions (\n\tid BIGSERIAL NOT NULL, \n\tresource_id VARCHAR(80) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\taction VARCHAR(20) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tsnapshot JSON NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_resource_revision UNIQUE (resource_id, version), \n\tFOREIGN KEY(resource_id) REFERENCES response_resources (id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "resource_id",
+        "version",
+        "actor_id",
+        "action",
+        "reason",
+        "snapshot",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_resource_revisions_resource_id",
+          "sql": "CREATE INDEX ix_resource_revisions_resource_id ON resource_revisions (resource_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "resource_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "snapshot": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "resource_id",
+          "version"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "sos_drill_responses",
+      "sql": "\nCREATE TABLE sos_drill_responses (\n\tsos_id INTEGER NOT NULL, \n\tpolicy_version INTEGER NOT NULL, \n\tpolicy JSON NOT NULL, \n\tcoordinator_id INTEGER NOT NULL, \n\tassigned_to INTEGER, \n\tphase VARCHAR(24) NOT NULL, \n\tattention VARCHAR(24) NOT NULL, \n\tdue_at TIMESTAMP WITH TIME ZONE, \n\tattempted_users JSON NOT NULL, \n\tincident_id BIGINT, \n\tclosure_reason VARCHAR(40), \n\tPRIMARY KEY (sos_id), \n\tFOREIGN KEY(sos_id) REFERENCES sos_requests (id), \n\tFOREIGN KEY(coordinator_id) REFERENCES users (id), \n\tFOREIGN KEY(assigned_to) REFERENCES users (id), \n\tFOREIGN KEY(incident_id) REFERENCES sos_drill_incidents (id)\n)\n\n",
+      "columns": [
+        "sos_id",
+        "policy_version",
+        "policy",
+        "coordinator_id",
+        "assigned_to",
+        "phase",
+        "attention",
+        "due_at",
+        "attempted_users",
+        "incident_id",
+        "closure_reason"
+      ],
+      "indexes": [
+        {
+          "name": "ix_sos_drill_responses_due_at",
+          "sql": "CREATE INDEX ix_sos_drill_responses_due_at ON sos_drill_responses (due_at)"
+        }
+      ],
+      "column_contract": {
+        "sos_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "policy_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "policy": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "coordinator_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "assigned_to": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "phase": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "attention": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "due_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "attempted_users": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "incident_id": {
+          "type": "BIGINT",
+          "nullable": true
+        },
+        "closure_reason": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "sos_id"
+      ]
+    },
+    {
+      "name": "sos_response_events",
+      "sql": "\nCREATE TABLE sos_response_events (\n\tid BIGSERIAL NOT NULL, \n\tsos_id INTEGER NOT NULL, \n\trequest_version INTEGER NOT NULL, \n\taction VARCHAR(40) NOT NULL, \n\tactor_id INTEGER, \n\tactor_name VARCHAR(120) NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tdetails JSON NOT NULL, \n\tresident_message VARCHAR(400) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_sos_response_event_version UNIQUE (sos_id, request_version), \n\tFOREIGN KEY(sos_id) REFERENCES sos_requests (id)\n)\n\n",
+      "columns": [
+        "id",
+        "sos_id",
+        "request_version",
+        "action",
+        "actor_id",
+        "actor_name",
+        "reason",
+        "details",
+        "resident_message",
+        "created_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_sos_response_events_sos_id",
+          "sql": "CREATE INDEX ix_sos_response_events_sos_id ON sos_response_events (sos_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "sos_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "request_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "actor_name": {
+          "type": "VARCHAR(120)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "details": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "resident_message": {
+          "type": "VARCHAR(400)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "sos_id",
+          "request_version"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_credentials",
+      "sql": "\nCREATE TABLE station_credentials (\n\tid VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tidentity_version INTEGER NOT NULL, \n\ttoken_hash VARCHAR(64) NOT NULL, \n\tlabel VARCHAR(80) NOT NULL, \n\ttransport VARCHAR(10) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\trevoked_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_station_credential_transport CHECK (transport IN ('http', 'mqtt', 'both')), \n\tFOREIGN KEY(station_id) REFERENCES station_identities (station_id), \n\tUNIQUE (token_hash)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "identity_version",
+        "token_hash",
+        "label",
+        "transport",
+        "created_at",
+        "expires_at",
+        "revoked_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_station_credentials_station_id",
+          "sql": "CREATE INDEX ix_station_credentials_station_id ON station_credentials (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "identity_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "token_hash": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "label": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "transport": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "revoked_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "token_hash"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_ingress_budgets",
+      "sql": "\nCREATE TABLE station_ingress_budgets (\n\tstation_id VARCHAR(50) NOT NULL, \n\tchannel VARCHAR(20) NOT NULL, \n\twindow_start TIMESTAMP WITH TIME ZONE NOT NULL, \n\tattempts INTEGER NOT NULL, \n\tPRIMARY KEY (station_id, channel), \n\tFOREIGN KEY(station_id) REFERENCES station_identities (station_id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "channel",
+        "window_start",
+        "attempts"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "channel": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "window_start": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id",
+        "channel"
+      ]
+    },
+    {
+      "name": "station_telemetry_state",
+      "sql": "\nCREATE TABLE station_telemetry_state (\n\tstation_id VARCHAR(50) NOT NULL, \n\tconfig_version INTEGER NOT NULL, \n\tboot_id VARCHAR(80) NOT NULL, \n\tboot_sequence BIGINT NOT NULL, \n\tsequence_no BIGINT NOT NULL, \n\tdevice_uptime_ms BIGINT NOT NULL, \n\tmeasured_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tlatest_telemetry_id BIGINT NOT NULL, \n\tPRIMARY KEY (station_id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(latest_telemetry_id) REFERENCES telemetry (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "config_version",
+        "boot_id",
+        "boot_sequence",
+        "sequence_no",
+        "device_uptime_ms",
+        "measured_at",
+        "latest_telemetry_id"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "config_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "boot_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "boot_sequence": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "device_uptime_ms": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "measured_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "latest_telemetry_id": {
+          "type": "BIGINT",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ]
+    },
+    {
+      "name": "alert_transitions",
+      "sql": "\nCREATE TABLE alert_transitions (\n\tid BIGSERIAL NOT NULL, \n\talert_id BIGINT NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\ttelemetry_id BIGINT NOT NULL, \n\tsequence_no BIGINT NOT NULL, \n\tprevious_severity VARCHAR(20) NOT NULL, \n\tnew_severity VARCHAR(20) NOT NULL, \n\twater_depth_cm FLOAT NOT NULL, \n\ttransitioned_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_transition_previous CHECK (previous_severity IN ('NORMAL', 'ADVISORY', 'WARNING', 'EVACUATE')), \n\tCONSTRAINT ck_transition_new CHECK (new_severity IN ('NORMAL', 'ADVISORY', 'WARNING', 'EVACUATE')), \n\tCONSTRAINT ck_transition_changed CHECK (previous_severity <> new_severity), \n\tFOREIGN KEY(alert_id) REFERENCES alerts (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tUNIQUE (telemetry_id), \n\tFOREIGN KEY(telemetry_id) REFERENCES telemetry (id)\n)\n\n",
+      "columns": [
+        "id",
+        "alert_id",
+        "station_id",
+        "telemetry_id",
+        "sequence_no",
+        "previous_severity",
+        "new_severity",
+        "water_depth_cm",
+        "transitioned_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_alert_transition_history",
+          "sql": "CREATE INDEX ix_alert_transition_history ON alert_transitions (alert_id, id)"
+        },
+        {
+          "name": "ix_alert_transitions_station_id",
+          "sql": "CREATE INDEX ix_alert_transitions_station_id ON alert_transitions (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "alert_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "telemetry_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "previous_severity": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "new_severity": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "water_depth_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "transitioned_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "telemetry_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "exercise_telemetry",
+      "sql": "\nCREATE TABLE exercise_telemetry (\n\tid BIGSERIAL NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tconfig_version INTEGER NOT NULL, \n\tboot_id VARCHAR(80) NOT NULL, \n\tboot_sequence BIGINT NOT NULL, \n\tsequence_no BIGINT NOT NULL, \n\tpayload JSON NOT NULL, \n\tmeasured_at TIMESTAMP WITH TIME ZONE, \n\treceived_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tcredential_id VARCHAR(36) NOT NULL, \n\tingress_transport VARCHAR(10) NOT NULL, \n\tingress_identity VARCHAR(80) NOT NULL, \n\tsource_class VARCHAR(30) NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_exercise_boot_sequence UNIQUE (station_id, config_version, boot_id, sequence_no), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(credential_id) REFERENCES station_credentials (id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "config_version",
+        "boot_id",
+        "boot_sequence",
+        "sequence_no",
+        "payload",
+        "measured_at",
+        "received_at",
+        "credential_id",
+        "ingress_transport",
+        "ingress_identity",
+        "source_class"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_telemetry_station_id",
+          "sql": "CREATE INDEX ix_exercise_telemetry_station_id ON exercise_telemetry (station_id)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "config_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "boot_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "boot_sequence": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "sequence_no": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "payload": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "measured_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "received_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "credential_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "ingress_transport": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "ingress_identity": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "source_class": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "station_id",
+          "config_version",
+          "boot_id",
+          "sequence_no"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "telemetry_provenance",
+      "sql": "\nCREATE TABLE telemetry_provenance (\n\ttelemetry_id BIGINT NOT NULL, \n\tcredential_id VARCHAR(36) NOT NULL, \n\tingress_transport VARCHAR(10) NOT NULL, \n\tingress_identity VARCHAR(80) NOT NULL, \n\tsource_class VARCHAR(30) NOT NULL, \n\tstream VARCHAR(20) NOT NULL, \n\tregistry_version INTEGER NOT NULL, \n\tPRIMARY KEY (telemetry_id), \n\tFOREIGN KEY(telemetry_id) REFERENCES telemetry (id), \n\tFOREIGN KEY(credential_id) REFERENCES station_credentials (id)\n)\n\n",
+      "columns": [
+        "telemetry_id",
+        "credential_id",
+        "ingress_transport",
+        "ingress_identity",
+        "source_class",
+        "stream",
+        "registry_version"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "telemetry_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "credential_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "ingress_transport": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "ingress_identity": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "source_class": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "stream": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "registry_version": {
+          "type": "INTEGER",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "telemetry_id"
+      ]
+    },
+    {
+      "name": "notification_events",
+      "sql": "\nCREATE TABLE notification_events (\n\tid BIGSERIAL NOT NULL, \n\ttransition_id BIGINT NOT NULL, \n\tnotification_type VARCHAR(30) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tUNIQUE (transition_id), \n\tFOREIGN KEY(transition_id) REFERENCES alert_transitions (id)\n)\n\n",
+      "columns": [
+        "id",
+        "transition_id",
+        "notification_type",
+        "created_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "transition_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "notification_type": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "transition_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "citywide_dispatches",
+      "sql": "\nCREATE TABLE citywide_dispatches (\n\tevent_id BIGINT NOT NULL, \n\tauthority_id VARCHAR(50) NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\treason VARCHAR(1000) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (event_id), \n\tFOREIGN KEY(event_id) REFERENCES notification_events (id), \n\tFOREIGN KEY(authority_id) REFERENCES alert_authorities (id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "event_id",
+        "authority_id",
+        "actor_id",
+        "reason",
+        "created_at",
+        "expires_at"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "event_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "authority_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(1000)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "event_id"
+      ]
+    },
+    {
+      "name": "notification_audiences",
+      "sql": "\nCREATE TABLE notification_audiences (\n\tevent_id BIGINT NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tarea_ids JSON NOT NULL, \n\tPRIMARY KEY (event_id), \n\tFOREIGN KEY(event_id) REFERENCES notification_events (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "event_id",
+        "station_id",
+        "area_ids"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "event_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "area_ids": {
+          "type": "JSON",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "event_id"
+      ]
+    },
+    {
+      "name": "notification_deliveries",
+      "sql": "\nCREATE TABLE notification_deliveries (\n\tid BIGSERIAL NOT NULL, \n\tevent_id BIGINT NOT NULL, \n\tdevice_id VARCHAR(36) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\tstate VARCHAR(20) NOT NULL, \n\tattempts INTEGER NOT NULL, \n\tresult_category VARCHAR(40), \n\tprovider_mode VARCHAR(20), \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tattempted_at TIMESTAMP WITH TIME ZONE, \n\tnext_attempt_at TIMESTAMP WITH TIME ZONE, \n\tcompleted_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_notification_event_device UNIQUE (event_id, device_id), \n\tCONSTRAINT ck_notification_delivery_state CHECK (state IN ('PENDING', 'PROCESSING', 'SENT', 'FAILED', 'SUPPRESSED', 'TESTED', 'UNKNOWN')), \n\tFOREIGN KEY(event_id) REFERENCES notification_events (id), \n\tFOREIGN KEY(device_id) REFERENCES notification_devices (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "event_id",
+        "device_id",
+        "user_id",
+        "device_revision",
+        "state",
+        "attempts",
+        "result_category",
+        "provider_mode",
+        "created_at",
+        "attempted_at",
+        "next_attempt_at",
+        "completed_at"
+      ],
+      "indexes": [
+        {
+          "name": "ix_notification_deliveries_device_id",
+          "sql": "CREATE INDEX ix_notification_deliveries_device_id ON notification_deliveries (device_id)"
+        },
+        {
+          "name": "ix_notification_deliveries_event_id",
+          "sql": "CREATE INDEX ix_notification_deliveries_event_id ON notification_deliveries (event_id)"
+        },
+        {
+          "name": "ix_notification_deliveries_user_id",
+          "sql": "CREATE INDEX ix_notification_deliveries_user_id ON notification_deliveries (user_id)"
+        },
+        {
+          "name": "ix_notification_pending",
+          "sql": "CREATE INDEX ix_notification_pending ON notification_deliveries (state, next_attempt_at)"
+        }
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "event_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "result_category": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        },
+        "provider_mode": {
+          "type": "VARCHAR(20)",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "attempted_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "next_attempt_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "completed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "event_id",
+          "device_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ]
+    },
+    {
+      "name": "station_delivery_gates",
+      "sql": "\nCREATE TABLE station_delivery_gates (\n\tevent_id BIGINT NOT NULL, \n\tnotification_epoch INTEGER NOT NULL, \n\texternal_allowed BOOLEAN NOT NULL, \n\tlifecycle_state VARCHAR(30) NOT NULL, \n\tPRIMARY KEY (event_id), \n\tFOREIGN KEY(event_id) REFERENCES notification_events (id)\n)\n\n",
+      "columns": [
+        "event_id",
+        "notification_epoch",
+        "external_allowed",
+        "lifecycle_state"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "event_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "notification_epoch": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "external_allowed": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "lifecycle_state": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "event_id"
+      ]
+    },
+    {
+      "name": "notification_recipients",
+      "sql": "\nCREATE TABLE notification_recipients (\n\tdelivery_id BIGINT NOT NULL, \n\tkind VARCHAR(10) NOT NULL, \n\ttarget_id VARCHAR(50) NOT NULL, \n\tsubscription_revision INTEGER NOT NULL, \n\tarea_binding_revision INTEGER, \n\tPRIMARY KEY (delivery_id), \n\tFOREIGN KEY(delivery_id) REFERENCES notification_deliveries (id)\n)\n\n",
+      "columns": [
+        "delivery_id",
+        "kind",
+        "target_id",
+        "subscription_revision",
+        "area_binding_revision"
+      ],
+      "indexes": [],
+      "column_contract": {
+        "delivery_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "target_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "subscription_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "area_binding_revision": {
+          "type": "INTEGER",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "delivery_id"
+      ]
+    }
+  ]
+}

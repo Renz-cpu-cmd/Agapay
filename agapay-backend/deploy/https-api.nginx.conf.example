@@ -1,0 +1,28 @@
+# Reviewed template only. Never load before replacing DNS, certificates and firewall rules.
+# Keep FastAPI bound to 127.0.0.1:8000; expose only the HTTPS reverse proxy.
+server {
+    listen 80;
+    server_name api.REPLACE_WITH_REVIEWED_DOMAIN;
+    return 308 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name api.REPLACE_WITH_REVIEWED_DOMAIN;
+    ssl_certificate /etc/agapay/tls/api-fullchain.pem;
+    ssl_certificate_key /etc/agapay/tls/api-private.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    client_max_body_size 16k;
+    add_header Strict-Transport-Security "max-age=15552000" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        # Do not invent a trusted client IP. Signed BFF identity has a separate contract.
+        proxy_set_header X-Forwarded-For "";
+        # Uvicorn trusts scheme only from the explicitly configured loopback peer.
+        # Overwrite the incoming value; never forward the caller's assertion.
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 30s;
+    }
+}

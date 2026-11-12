@@ -1,0 +1,566 @@
+{
+  "sqlite": [
+    {
+      "name": "exercise_sensor_triggers",
+      "sql": "\nCREATE TABLE exercise_sensor_triggers (\n\tid VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\ttelemetry_id INTEGER NOT NULL, \n\tsource_class VARCHAR(30) NOT NULL, \n\tingress_identity VARCHAR(80) NOT NULL, \n\tingress_transport VARCHAR(10) NOT NULL, \n\tregistry_version INTEGER NOT NULL, \n\tcredential_id VARCHAR(36) NOT NULL, \n\tmeasured_at DATETIME NOT NULL, \n\treceived_at DATETIME NOT NULL, \n\tprocessed_at DATETIME NOT NULL, \n\twater_depth_cm FLOAT NOT NULL, \n\tprevious_tier VARCHAR(10) NOT NULL, \n\tcurrent_tier VARCHAR(10) NOT NULL, \n\treason VARCHAR(40) NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_exercise_trigger_tier UNIQUE (session_id, station_id, current_tier), \n\tCONSTRAINT uq_exercise_trigger_telemetry UNIQUE (session_id, telemetry_id), \n\tCONSTRAINT ck_exercise_trigger_previous CHECK (previous_tier IN ('NORMAL','ADVISORY','WARNING','EVACUATE')), \n\tCONSTRAINT ck_exercise_trigger_current CHECK (current_tier IN ('ADVISORY','WARNING','EVACUATE')), \n\tCONSTRAINT ck_exercise_trigger_upward CHECK (CASE current_tier WHEN 'NORMAL' THEN 0 WHEN 'ADVISORY' THEN 1 WHEN 'WARNING' THEN 2 WHEN 'EVACUATE' THEN 3 END > CASE previous_tier WHEN 'NORMAL' THEN 0 WHEN 'ADVISORY' THEN 1 WHEN 'WARNING' THEN 2 WHEN 'EVACUATE' THEN 3 END), \n\tCONSTRAINT ck_exercise_trigger_reason CHECK (reason = 'observed_tier_increase'), \n\tCONSTRAINT ck_exercise_trigger_status CHECK (status IN ('DELIVERIES_CREATED','NO_RECIPIENTS','SEND_LIMIT')), \n\tCONSTRAINT ck_exercise_trigger_source CHECK (source_class = 'physical_device'), \n\tFOREIGN KEY(session_id) REFERENCES exercise_sessions (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(telemetry_id) REFERENCES telemetry (id)\n)\n\n",
+      "columns": [
+        "id",
+        "session_id",
+        "station_id",
+        "telemetry_id",
+        "source_class",
+        "ingress_identity",
+        "ingress_transport",
+        "registry_version",
+        "credential_id",
+        "measured_at",
+        "received_at",
+        "processed_at",
+        "water_depth_cm",
+        "previous_tier",
+        "current_tier",
+        "reason",
+        "status"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "telemetry_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "source_class": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "ingress_identity": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "ingress_transport": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "registry_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "credential_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "measured_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "received_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "processed_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "water_depth_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "previous_tier": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "current_tier": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "status": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "session_id",
+          "station_id",
+          "current_tier"
+        ],
+        [
+          "session_id",
+          "telemetry_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_sensor_triggers_session_id",
+          "sql": "CREATE INDEX ix_exercise_sensor_triggers_session_id ON exercise_sensor_triggers (session_id)"
+        }
+      ]
+    },
+    {
+      "name": "exercise_station_arms",
+      "sql": "\nCREATE TABLE exercise_station_arms (\n\tsession_id VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tarmed_by INTEGER NOT NULL, \n\tarmed_at DATETIME NOT NULL, \n\tbaseline_tier VARCHAR(10), \n\tbaseline_telemetry_id INTEGER, \n\tprevious_tier VARCHAR(10), \n\tcursor_telemetry_id INTEGER NOT NULL, \n\trevision INTEGER NOT NULL, \n\tdisarmed_at DATETIME, \n\tPRIMARY KEY (session_id, station_id), \n\tCONSTRAINT ck_exercise_arm_tier CHECK (previous_tier IS NULL OR previous_tier IN ('NORMAL','ADVISORY','WARNING','EVACUATE')), \n\tCONSTRAINT ck_exercise_arm_baseline CHECK (baseline_tier IS NULL OR baseline_tier IN ('NORMAL','ADVISORY','WARNING','EVACUATE')), \n\tFOREIGN KEY(session_id) REFERENCES exercise_sessions (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(armed_by) REFERENCES users (id), \n\tFOREIGN KEY(baseline_telemetry_id) REFERENCES telemetry (id)\n)\n\n",
+      "columns": [
+        "session_id",
+        "station_id",
+        "armed_by",
+        "armed_at",
+        "baseline_tier",
+        "baseline_telemetry_id",
+        "previous_tier",
+        "cursor_telemetry_id",
+        "revision",
+        "disarmed_at"
+      ],
+      "column_contract": {
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "armed_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "armed_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "baseline_tier": {
+          "type": "VARCHAR(10)",
+          "nullable": true
+        },
+        "baseline_telemetry_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "previous_tier": {
+          "type": "VARCHAR(10)",
+          "nullable": true
+        },
+        "cursor_telemetry_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "disarmed_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "session_id",
+        "station_id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "exercise_sensor_deliveries",
+      "sql": "\nCREATE TABLE exercise_sensor_deliveries (\n\tid VARCHAR(36) NOT NULL, \n\ttrigger_id VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tdevice_id VARCHAR(36) NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\tidempotency_key VARCHAR(80) NOT NULL, \n\tmessage_type VARCHAR(20) NOT NULL, \n\tstate VARCHAR(16) NOT NULL, \n\tattempts INTEGER NOT NULL, \n\toutcome VARCHAR(40), \n\tcreated_at DATETIME NOT NULL, \n\tattempted_at DATETIME, \n\tcompleted_at DATETIME, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_exercise_sensor_delivery UNIQUE (trigger_id, device_id), \n\tCONSTRAINT ck_exercise_sensor_type CHECK (message_type = 'EXERCISE_TEST'), \n\tCONSTRAINT ck_exercise_sensor_state CHECK (state IN ('PENDING','PROCESSING','TESTED','SENT','REJECTED','SUPPRESSED','UNKNOWN')), \n\tCONSTRAINT ck_exercise_sensor_single_attempt CHECK (attempts >= 0 AND attempts <= 1), \n\tFOREIGN KEY(trigger_id) REFERENCES exercise_sensor_triggers (id), \n\tFOREIGN KEY(session_id) REFERENCES exercise_sessions (id), \n\tFOREIGN KEY(device_id) REFERENCES notification_devices (id), \n\tUNIQUE (idempotency_key)\n)\n\n",
+      "columns": [
+        "id",
+        "trigger_id",
+        "session_id",
+        "device_id",
+        "device_revision",
+        "idempotency_key",
+        "message_type",
+        "state",
+        "attempts",
+        "outcome",
+        "created_at",
+        "attempted_at",
+        "completed_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "trigger_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "idempotency_key": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "message_type": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "outcome": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "attempted_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "completed_at": {
+          "type": "DATETIME",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "trigger_id",
+          "device_id"
+        ],
+        [
+          "idempotency_key"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_sensor_deliveries_created_at",
+          "sql": "CREATE INDEX ix_exercise_sensor_deliveries_created_at ON exercise_sensor_deliveries (created_at)"
+        },
+        {
+          "name": "ix_exercise_sensor_deliveries_device_id",
+          "sql": "CREATE INDEX ix_exercise_sensor_deliveries_device_id ON exercise_sensor_deliveries (device_id)"
+        },
+        {
+          "name": "ix_exercise_sensor_deliveries_session_id",
+          "sql": "CREATE INDEX ix_exercise_sensor_deliveries_session_id ON exercise_sensor_deliveries (session_id)"
+        },
+        {
+          "name": "ix_exercise_sensor_deliveries_trigger_id",
+          "sql": "CREATE INDEX ix_exercise_sensor_deliveries_trigger_id ON exercise_sensor_deliveries (trigger_id)"
+        }
+      ]
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "exercise_sensor_triggers",
+      "sql": "\nCREATE TABLE exercise_sensor_triggers (\n\tid VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\ttelemetry_id BIGINT NOT NULL, \n\tsource_class VARCHAR(30) NOT NULL, \n\tingress_identity VARCHAR(80) NOT NULL, \n\tingress_transport VARCHAR(10) NOT NULL, \n\tregistry_version INTEGER NOT NULL, \n\tcredential_id VARCHAR(36) NOT NULL, \n\tmeasured_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\treceived_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tprocessed_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\twater_depth_cm FLOAT NOT NULL, \n\tprevious_tier VARCHAR(10) NOT NULL, \n\tcurrent_tier VARCHAR(10) NOT NULL, \n\treason VARCHAR(40) NOT NULL, \n\tstatus VARCHAR(20) NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_exercise_trigger_tier UNIQUE (session_id, station_id, current_tier), \n\tCONSTRAINT uq_exercise_trigger_telemetry UNIQUE (session_id, telemetry_id), \n\tCONSTRAINT ck_exercise_trigger_previous CHECK (previous_tier IN ('NORMAL','ADVISORY','WARNING','EVACUATE')), \n\tCONSTRAINT ck_exercise_trigger_current CHECK (current_tier IN ('ADVISORY','WARNING','EVACUATE')), \n\tCONSTRAINT ck_exercise_trigger_upward CHECK (CASE current_tier WHEN 'NORMAL' THEN 0 WHEN 'ADVISORY' THEN 1 WHEN 'WARNING' THEN 2 WHEN 'EVACUATE' THEN 3 END > CASE previous_tier WHEN 'NORMAL' THEN 0 WHEN 'ADVISORY' THEN 1 WHEN 'WARNING' THEN 2 WHEN 'EVACUATE' THEN 3 END), \n\tCONSTRAINT ck_exercise_trigger_reason CHECK (reason = 'observed_tier_increase'), \n\tCONSTRAINT ck_exercise_trigger_status CHECK (status IN ('DELIVERIES_CREATED','NO_RECIPIENTS','SEND_LIMIT')), \n\tCONSTRAINT ck_exercise_trigger_source CHECK (source_class = 'physical_device'), \n\tFOREIGN KEY(session_id) REFERENCES exercise_sessions (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(telemetry_id) REFERENCES telemetry (id)\n)\n\n",
+      "columns": [
+        "id",
+        "session_id",
+        "station_id",
+        "telemetry_id",
+        "source_class",
+        "ingress_identity",
+        "ingress_transport",
+        "registry_version",
+        "credential_id",
+        "measured_at",
+        "received_at",
+        "processed_at",
+        "water_depth_cm",
+        "previous_tier",
+        "current_tier",
+        "reason",
+        "status"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "telemetry_id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "source_class": {
+          "type": "VARCHAR(30)",
+          "nullable": false
+        },
+        "ingress_identity": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "ingress_transport": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "registry_version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "credential_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "measured_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "received_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "processed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "water_depth_cm": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "previous_tier": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "current_tier": {
+          "type": "VARCHAR(10)",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "status": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        }
+      },
+      "unique_contract": [
+        [
+          "session_id",
+          "station_id",
+          "current_tier"
+        ],
+        [
+          "session_id",
+          "telemetry_id"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_sensor_triggers_session_id",
+          "sql": "CREATE INDEX ix_exercise_sensor_triggers_session_id ON exercise_sensor_triggers (session_id)"
+        }
+      ]
+    },
+    {
+      "name": "exercise_station_arms",
+      "sql": "\nCREATE TABLE exercise_station_arms (\n\tsession_id VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tarmed_by INTEGER NOT NULL, \n\tarmed_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tbaseline_tier VARCHAR(10), \n\tbaseline_telemetry_id BIGINT, \n\tprevious_tier VARCHAR(10), \n\tcursor_telemetry_id INTEGER NOT NULL, \n\trevision INTEGER NOT NULL, \n\tdisarmed_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (session_id, station_id), \n\tCONSTRAINT ck_exercise_arm_tier CHECK (previous_tier IS NULL OR previous_tier IN ('NORMAL','ADVISORY','WARNING','EVACUATE')), \n\tCONSTRAINT ck_exercise_arm_baseline CHECK (baseline_tier IS NULL OR baseline_tier IN ('NORMAL','ADVISORY','WARNING','EVACUATE')), \n\tFOREIGN KEY(session_id) REFERENCES exercise_sessions (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(armed_by) REFERENCES users (id), \n\tFOREIGN KEY(baseline_telemetry_id) REFERENCES telemetry (id)\n)\n\n",
+      "columns": [
+        "session_id",
+        "station_id",
+        "armed_by",
+        "armed_at",
+        "baseline_tier",
+        "baseline_telemetry_id",
+        "previous_tier",
+        "cursor_telemetry_id",
+        "revision",
+        "disarmed_at"
+      ],
+      "column_contract": {
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "armed_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "armed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "baseline_tier": {
+          "type": "VARCHAR(10)",
+          "nullable": true
+        },
+        "baseline_telemetry_id": {
+          "type": "BIGINT",
+          "nullable": true
+        },
+        "previous_tier": {
+          "type": "VARCHAR(10)",
+          "nullable": true
+        },
+        "cursor_telemetry_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "disarmed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "session_id",
+        "station_id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "exercise_sensor_deliveries",
+      "sql": "\nCREATE TABLE exercise_sensor_deliveries (\n\tid VARCHAR(36) NOT NULL, \n\ttrigger_id VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tdevice_id VARCHAR(36) NOT NULL, \n\tdevice_revision INTEGER NOT NULL, \n\tidempotency_key VARCHAR(80) NOT NULL, \n\tmessage_type VARCHAR(20) NOT NULL, \n\tstate VARCHAR(16) NOT NULL, \n\tattempts INTEGER NOT NULL, \n\toutcome VARCHAR(40), \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tattempted_at TIMESTAMP WITH TIME ZONE, \n\tcompleted_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_exercise_sensor_delivery UNIQUE (trigger_id, device_id), \n\tCONSTRAINT ck_exercise_sensor_type CHECK (message_type = 'EXERCISE_TEST'), \n\tCONSTRAINT ck_exercise_sensor_state CHECK (state IN ('PENDING','PROCESSING','TESTED','SENT','REJECTED','SUPPRESSED','UNKNOWN')), \n\tCONSTRAINT ck_exercise_sensor_single_attempt CHECK (attempts >= 0 AND attempts <= 1), \n\tFOREIGN KEY(trigger_id) REFERENCES exercise_sensor_triggers (id), \n\tFOREIGN KEY(session_id) REFERENCES exercise_sessions (id), \n\tFOREIGN KEY(device_id) REFERENCES notification_devices (id), \n\tUNIQUE (idempotency_key)\n)\n\n",
+      "columns": [
+        "id",
+        "trigger_id",
+        "session_id",
+        "device_id",
+        "device_revision",
+        "idempotency_key",
+        "message_type",
+        "state",
+        "attempts",
+        "outcome",
+        "created_at",
+        "attempted_at",
+        "completed_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "trigger_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "device_revision": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "idempotency_key": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "message_type": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "attempts": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "outcome": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "attempted_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "completed_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        }
+      },
+      "unique_contract": [
+        [
+          "trigger_id",
+          "device_id"
+        ],
+        [
+          "idempotency_key"
+        ]
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_exercise_sensor_deliveries_created_at",
+          "sql": "CREATE INDEX ix_exercise_sensor_deliveries_created_at ON exercise_sensor_deliveries (created_at)"
+        },
+        {
+          "name": "ix_exercise_sensor_deliveries_device_id",
+          "sql": "CREATE INDEX ix_exercise_sensor_deliveries_device_id ON exercise_sensor_deliveries (device_id)"
+        },
+        {
+          "name": "ix_exercise_sensor_deliveries_session_id",
+          "sql": "CREATE INDEX ix_exercise_sensor_deliveries_session_id ON exercise_sensor_deliveries (session_id)"
+        },
+        {
+          "name": "ix_exercise_sensor_deliveries_trigger_id",
+          "sql": "CREATE INDEX ix_exercise_sensor_deliveries_trigger_id ON exercise_sensor_deliveries (trigger_id)"
+        }
+      ]
+    }
+  ]
+}

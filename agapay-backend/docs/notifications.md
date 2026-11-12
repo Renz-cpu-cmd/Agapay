@@ -1,5 +1,7 @@
 # Notification delivery foundation
 
+Current additions: [F32–F33 contracts and runbook](../../agapay-docs/security/F32-F33/README.md) cover supervised continuous workers, immutable intent expiry, authenticated delivery evidence/reconciliation, optional consented app callbacks and explicit resident acknowledgement. Apply main schema HEAD `0003_delivery_evidence` offline first. Provider acceptance and callback stages remain separate; no automatic uncertain replay is enabled.
+
 Status: **disabled by default**. The Firebase Admin HTTP v1 adapter is implemented,
 but no Firebase project/credentials or physical delivery have been verified.
 The app and CI require no Firebase configuration. See [FCM setup](firebase-fcm-setup.md).
@@ -20,10 +22,10 @@ do not create push events in this first policy. Recovery and downshifts remain
 in persistent Community Alert history; invalid telemetry never creates all-clear.
 
 An event is persisted even with zero recipients. Eligible recipients are captured
-at transition time: all enabled devices with retained provider tokens/hashes
-belonging to active residents, across AGAPAY stations. There is no geographic
-personalization or barangay matching. Later registration does not replay history.
-Device/simulator historical origin is not known.
+at transition time from explicit station/verified-area subscriptions and enabled
+resident registrations. Citywide delivery requires an audited authorized override.
+Later registration does not replay history. Trusted ingress provenance remains
+separate from firmware strings and notification transport.
 
 ## Device contract
 
@@ -109,7 +111,7 @@ transition. Each delivery stores its target user/device revision, attempts,
 state, timestamps, provider mode, and a small fixed result category. No provider
 response dumps or exception strings are persisted.
 
-After API startup has created the development tables, process one batch from
+After the explicit reviewed database migrations, process one batch from
 `agapay-backend`:
 
 ```powershell

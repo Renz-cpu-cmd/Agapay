@@ -1,6 +1,8 @@
 from ipaddress import ip_address
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,7 +11,7 @@ from app.account_schemas import LoginRequest, ProfileUpdate, RegisterRequest, Se
 from app.config import Settings, get_settings
 from app.database import get_db
 from app.models import User
-from app.services.accounts import bearer, commit_account, create_user, current_user, issue_session, limiter, passwords, request_ip, revoke_session, revoke_sessions, token_digest, verify_password
+from app.services.accounts import bearer, commit_account, create_user, current_user, issue_session, limiter, passwords, request_ip, lock_account, revoke_session, revoke_sessions, token_digest, verify_password
 from app.services.administrator_setup import create_first_administrator, setup_complete
 
 router = APIRouter(prefix="/api/auth", tags=["accounts"])
@@ -45,7 +47,7 @@ def setup_administrator(payload: RegisterRequest, request: Request, db: Session 
 
 @router.post("/register", response_model=SessionRead, status_code=201)
 def register(payload: RegisterRequest, request: Request, db: Session = Depends(get_db)):
-    limiter.hit("register:" + request_ip(request), 20, 3600)
+    limiter.hit("register-account:" + str(payload.email), 5, 3600)
     user = create_user(db, payload)
     return issue_session(db, user)
 
@@ -53,7 +55,7 @@ def register(payload: RegisterRequest, request: Request, db: Session = Depends(g
 @router.post("/login", response_model=SessionRead)
 def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
     key = "login:" + str(payload.email)
-    limiter.hit("login-ip:" + request_ip(request), 300)
+    limiter.hit("login-client-account:" + request_ip(request) + ":" + str(payload.email), 30)
     limiter.hit(key, 10)
     user = db.scalar(select(User).where(User.email == str(payload.email)))
     if not verify_password(payload.password, user) or not user.is_active:
@@ -61,7 +63,20 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
     if (payload.audience == "web" and user.role not in ("admin", "officer")) or (payload.audience == "mobile" and user.role != "resident"):
         raise HTTPException(403, "Use the resident mobile app for resident accounts, or the web command center for staff accounts.")
     limiter.clear(key)
-    return issue_session(db, user)
+    observed_hash=user.password_hash
+    lock_account(db,user.id);db.refresh(user)
+    if not user.is_active or (user.password_hash!=observed_hash and not verify_password(payload.password,user)):
+        raise HTTPException(401,"Email or password is incorrect.")
+    if (payload.audience=="web" and user.role not in ("admin","officer")) or (payload.audience=="mobile" and user.role!="resident"):
+        raise HTTPException(403,"Use the correct client for the current account role.")
+    from app.identity_models import MfaCredential
+    from app.services.identity_security import mfa_challenge
+    if user.role in ("admin","officer") and (get_settings().staff_mfa_required or db.get(MfaCredential,user.id)):
+        enrolled=db.get(MfaCredential,user.id) is not None
+        if not enrolled and not user.email_verified_at:
+            raise HTTPException(403,"Verify your email before enrolling a staff authenticator. Use account recovery with Verify email.")
+        return JSONResponse(status_code=202,content=jsonable_encoder(mfa_challenge(db,user,enrollment=not enrolled)))
+    return issue_session(db, user, audience=payload.audience)
 
 
 @router.get("/me", response_model=UserRead)
@@ -70,16 +85,27 @@ def me(user: User = Depends(current_user)):
 
 
 @router.patch("/me", response_model=UserRead)
-def update_profile(payload: ProfileUpdate, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    changes = payload.model_dump(exclude_unset=True, exclude={"current_password", "password"})
+def update_profile(payload: ProfileUpdate, user: User = Depends(current_user), db: Session = Depends(get_db),
+                   credentials: HTTPAuthorizationCredentials = Depends(bearer)):
+    lock_account(db,user.id)
+    user=current_user(credentials,db)
+    from app.services.identity_security import expected_version
+    from app.services.mutation_audit import record,snapshot
+    expected_version(user,payload.expected_version)
+    changes = payload.model_dump(exclude_unset=True, exclude={"current_password", "password", "expected_version"})
     if payload.password or (payload.email is not None and payload.email != user.email):
         if not payload.current_password or not verify_password(payload.current_password, user):
             raise HTTPException(400, "Enter your current password to change your email or password.")
+    before=snapshot(user)
+    email_changed=payload.email is not None and payload.email!=user.email
     for key, value in changes.items():
         setattr(user, key, value)
+    if email_changed:user.email_verified_at=None
     if payload.password:
         user.password_hash = passwords.hash(payload.password)
         revoke_sessions(db, user.id)
+    user.version+=1
+    record(db,user,'account',user.id,'profile_updated','Account owner profile edit',before,{**snapshot(user),'password_changed':bool(payload.password),'email_verified':user.email_verified_at is not None})
     commit_account(db)
     db.refresh(user)
     return user
