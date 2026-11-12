@@ -2,8 +2,18 @@
   "station_id": "STATION_001",
   "sequence_no": 1000001,
   "water_depth_cm": 42.7,
-  "rainfall_mm": 0.7,
+  "rainfall_mm": null,
   "sensor_quality": "valid",
   "device_uptime_ms": 15342,
-  "firmware_version": "0.1.0"
+  "firmware_version": "0.3.0",
+  "schema_version": 3,
+  "config_version": 1,
+  "source_id": "EXAMPLE_DEVICE_001",
+  "boot_id": "STATION_001-1",
+  "boot_sequence": 1,
+  "measured_at": "2026-10-21T12:00:00.000Z",
+  "rainfall_interval": null,
+  "applied_config_hash": "c5eed6b3f6b820c6a77342c4e30b64cbd9c46657eec086e115b5fff590d7557b",
+  "sensor_fault": "none",
+  "local_alert_profile": "depth"
 }

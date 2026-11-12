@@ -1,11 +1,27 @@
+
+#include <WiFi.h>
+
 // ============================================================
-// AGAPAY COMPLETE HARDWARE INTEGRATION TEST
-// ESP32 + Ultrasonic + Rain Gauge + LEDs + Buzzer
+// AGAPAY COMPLETE HARDWARE INTEGRATION TEST V2.0
+//
+// ESP32 + Ultrasonic + Rain Gauge + LEDs + Buzzer + WiFi
 //
 // IMPORTANT:
 // Distance thresholds below are BENCH TEST thresholds only.
 // They are NOT final calibrated flood thresholds.
 // ============================================================
+
+
+// ======================= WIFI CONFIGURATION ==================
+
+const char* WIFI_SSID = "j";
+const char* WIFI_PASSWORD = "one2eight";
+
+unsigned long lastWifiAttemptMs = 0;
+
+const unsigned long WIFI_RETRY_MS = 10000;
+
+bool wifiWasConnected = false;
 
 
 // ======================= PIN DEFINITIONS =====================
@@ -34,17 +50,12 @@
 volatile unsigned long rainTipCount = 0;
 volatile unsigned long lastRainInterruptUs = 0;
 
-const unsigned long RAIN_DEBOUNCE_US = 50000;   // 50 ms
+const unsigned long RAIN_DEBOUNCE_US = 50000;
 
 const float MM_PER_TIP = 0.70;
 
 
 // ================= TEMPORARY BENCH THRESHOLDS ================
-//
-// As water/object moves CLOSER to sensor,
-// measured distance becomes SMALLER.
-//
-// THESE ARE NOT FINAL AGAPAY FLOOD THRESHOLDS.
 
 const float ADVISORY_DISTANCE_CM = 60.0;
 const float WARNING_DISTANCE_CM  = 35.0;
@@ -59,6 +70,66 @@ enum AlertTier {
   WARNING,
   EVACUATE
 };
+
+
+// ======================== WIFI CONNECTION ====================
+
+void connectWiFi() {
+
+  Serial.println();
+  Serial.println("AGAPAY: Connecting to WiFi...");
+
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  lastWifiAttemptMs = millis();
+}
+
+
+// ====================== WIFI MAINTENANCE =====================
+
+void maintainWiFi() {
+
+  if (WiFi.status() == WL_CONNECTED) {
+
+    if (!wifiWasConnected) {
+
+      Serial.println();
+      Serial.println("==================================");
+      Serial.println("AGAPAY WIFI CONNECTED!");
+      Serial.println("==================================");
+
+      Serial.print("IP Address: ");
+      Serial.println(WiFi.localIP());
+
+      Serial.print("Signal Strength: ");
+      Serial.print(WiFi.RSSI());
+      Serial.println(" dBm");
+
+      wifiWasConnected = true;
+    }
+
+    return;
+  }
+
+
+  // Detect lost connection.
+
+  if (wifiWasConnected) {
+
+    Serial.println();
+    Serial.println("WARNING: WiFi connection lost!");
+
+    wifiWasConnected = false;
+  }
+
+
+  // Retry without blocking sensor operations.
+
+  if (millis() - lastWifiAttemptMs >= WIFI_RETRY_MS) {
+
+    connectWiFi();
+  }
+}
 
 
 // ======================= RAIN INTERRUPT =======================
@@ -135,7 +206,7 @@ bool measureDistance(float &distanceCm) {
   }
 
 
-  // Sort valid readings
+  // Sort valid readings.
 
   for (int i = 0; i < validCount - 1; i++) {
 
@@ -153,7 +224,7 @@ bool measureDistance(float &distanceCm) {
   }
 
 
-  // Median value
+  // Median value.
 
   distanceCm =
       readings[validCount / 2];
@@ -189,7 +260,7 @@ AlertTier classifyAlert(float distanceCm) {
 
 void applyAlert(AlertTier tier) {
 
-  // First turn everything OFF
+  // First turn everything OFF.
 
   digitalWrite(LED_GREEN, LOW);
   digitalWrite(LED_YELLOW, LOW);
@@ -216,8 +287,8 @@ void applyAlert(AlertTier tier) {
 
     case WARNING:
 
-      // For now WARNING also uses yellow.
-      // Later we can implement blinking behavior.
+      // WARNING currently uses yellow.
+      // Blinking behavior can be added later.
 
       digitalWrite(LED_YELLOW, HIGH);
 
@@ -265,14 +336,16 @@ void setup() {
 
   Serial.begin(115200);
 
+  delay(1000);
 
-  // Ultrasonic
+
+  // Ultrasonic sensor.
 
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
 
-  // Rain gauge
+  // Rain gauge.
 
   pinMode(RAIN_PIN, INPUT_PULLUP);
 
@@ -283,19 +356,19 @@ void setup() {
   );
 
 
-  // LEDs
+  // LEDs.
 
   pinMode(LED_GREEN, OUTPUT);
   pinMode(LED_YELLOW, OUTPUT);
   pinMode(LED_RED, OUTPUT);
 
 
-  // Buzzer
+  // Buzzer.
 
   pinMode(BUZZER_PIN, OUTPUT);
 
 
-  // Initial safe state
+  // Initial safe state for bench testing.
 
   digitalWrite(LED_GREEN, LOW);
   digitalWrite(LED_YELLOW, LOW);
@@ -304,9 +377,18 @@ void setup() {
   digitalWrite(BUZZER_PIN, BUZZER_OFF);
 
 
+  // Initialize WiFi.
+
+  WiFi.mode(WIFI_STA);
+
+  connectWiFi();
+
+
+  // Startup information.
+
   Serial.println();
   Serial.println("============================================");
-  Serial.println("       AGAPAY SENSOR NODE TEST");
+  Serial.println("       AGAPAY SENSOR NODE TEST V2.0");
   Serial.println("============================================");
   Serial.println("Ultrasonic : GPIO 5 / GPIO 18");
   Serial.println("Rain Gauge : GPIO 4");
@@ -315,6 +397,7 @@ void setup() {
   Serial.println("Red LED    : GPIO 14");
   Serial.println("Buzzer     : GPIO 25");
   Serial.println("Rain Gauge : 0.70 mm/tip");
+  Serial.println("WiFi       : ENABLED");
   Serial.println("--------------------------------------------");
   Serial.println("BENCH TEST MODE - NOT FINAL FLOOD THRESHOLDS");
   Serial.println("============================================");
@@ -325,13 +408,23 @@ void setup() {
 
 void loop() {
 
+  // Maintain WiFi connection without waiting
+  // for WiFi to become available.
+
+  maintainWiFi();
+
+
+  // ================= ULTRASONIC =================
+
   float distanceCm = 0;
 
   bool ultrasonicValid =
       measureDistance(distanceCm);
 
 
-  // Safely copy interrupt counter
+  // ================= RAIN GAUGE =================
+
+  // Safely copy interrupt counter.
 
   noInterrupts();
 
@@ -345,11 +438,11 @@ void loop() {
       tips * MM_PER_TIP;
 
 
+  // ================= SERIAL OUTPUT =================
+
   Serial.println();
   Serial.println("--------------------------------------------");
 
-
-  // ================= ULTRASONIC =================
 
   if (ultrasonicValid) {
 
@@ -370,8 +463,8 @@ void loop() {
 
   else {
 
-    // Keep buzzer OFF for this bench test
-    // and show invalid sensor condition.
+    // Existing bench-test sensor-error behavior.
+    // Production fail-safe handling will be revised.
 
     digitalWrite(LED_GREEN, LOW);
     digitalWrite(LED_YELLOW, LOW);
@@ -393,6 +486,31 @@ void loop() {
   Serial.print("Rainfall : ");
   Serial.print(rainfallMm, 2);
   Serial.println(" mm");
+
+
+  // ================= WIFI STATUS =================
+
+  if (WiFi.status() == WL_CONNECTED) {
+
+    Serial.println("WiFi     : CONNECTED");
+
+    Serial.print("IP       : ");
+    Serial.println(WiFi.localIP());
+
+  }
+
+  else {
+
+    Serial.println("WiFi     : DISCONNECTED");
+  }
+
+
+  // MQTT will be added after WiFi is verified.
+
+  Serial.println("MQTT     : NOT CONFIGURED");
+
+
+  Serial.println("--------------------------------------------");
 
 
   delay(1000);

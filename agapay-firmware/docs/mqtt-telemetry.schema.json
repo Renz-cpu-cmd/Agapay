@@ -1,72 +1,344 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://agapay.local/schemas/mqtt-telemetry-v1.json",
-  "title": "AGAPAY MQTT Telemetry v1",
-  "type": "object",
+  "$defs": {
+    "RainfallInterval": {
+      "additionalProperties": false,
+      "properties": {
+        "interval_start": {
+          "format": "date-time",
+          "title": "Interval Start",
+          "type": "string"
+        },
+        "interval_end": {
+          "format": "date-time",
+          "title": "Interval End",
+          "type": "string"
+        },
+        "tip_count": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "title": "Tip Count",
+          "type": "integer"
+        },
+        "mm_per_tip": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "title": "Mm Per Tip",
+          "type": "number"
+        },
+        "calibration_version": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Calibration Version",
+          "type": "string"
+        },
+        "quality": {
+          "enum": [
+            "valid",
+            "partial",
+            "invalid"
+          ],
+          "title": "Quality",
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "physical_rain_gauge",
+            "simulated_rain_gauge"
+          ],
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "interval_start",
+        "interval_end",
+        "tip_count",
+        "mm_per_tip",
+        "calibration_version",
+        "quality",
+        "source"
+      ],
+      "title": "RainfallInterval",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
+  "properties": {
+    "station_id": {
+      "pattern": "^[A-Z0-9_-]{3,50}$",
+      "title": "Station Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "enum": [
+        2,
+        3
+      ],
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "config_version": {
+      "maximum": 2147483647,
+      "minimum": 1,
+      "title": "Config Version",
+      "type": "integer"
+    },
+    "source_id": {
+      "pattern": "^[A-Za-z0-9_-]{3,80}$",
+      "title": "Source Id",
+      "type": "string"
+    },
+    "boot_id": {
+      "pattern": "^[A-Za-z0-9_-]{3,80}$",
+      "title": "Boot Id",
+      "type": "string"
+    },
+    "boot_sequence": {
+      "maximum": 9223372036854775807,
+      "minimum": 1,
+      "title": "Boot Sequence",
+      "type": "integer"
+    },
+    "measured_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Measured At"
+    },
+    "sequence_no": {
+      "maximum": 9223372036854775807,
+      "minimum": 1,
+      "title": "Sequence No",
+      "type": "integer"
+    },
+    "water_depth_cm": {
+      "anyOf": [
+        {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Water Depth Cm"
+    },
+    "rainfall_mm": {
+      "anyOf": [
+        {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "deprecated": true,
+      "title": "Rainfall Mm"
+    },
+    "rainfall_interval": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RainfallInterval"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "applied_config_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Applied Config Hash"
+    },
+    "sensor_fault": {
+      "default": "none",
+      "enum": [
+        "none",
+        "blind_zone",
+        "no_echo",
+        "out_of_range",
+        "insufficient_echoes",
+        "configuration_invalid"
+      ],
+      "title": "Sensor Fault",
+      "type": "string"
+    },
+    "local_alert_profile": {
+      "default": "depth",
+      "enum": [
+        "depth",
+        "cardboard_bench"
+      ],
+      "title": "Local Alert Profile",
+      "type": "string"
+    },
+    "sensor_quality": {
+      "enum": [
+        "valid",
+        "invalid"
+      ],
+      "title": "Sensor Quality",
+      "type": "string"
+    },
+    "device_uptime_ms": {
+      "maximum": 9223372036854775807,
+      "minimum": 0,
+      "title": "Device Uptime Ms",
+      "type": "integer"
+    },
+    "firmware_version": {
+      "maxLength": 50,
+      "minLength": 1,
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$",
+      "title": "Firmware Version",
+      "type": "string"
+    }
+  },
   "required": [
     "station_id",
+    "schema_version",
+    "config_version",
+    "source_id",
+    "boot_id",
+    "boot_sequence",
+    "measured_at",
     "sequence_no",
-    "water_depth_cm",
-    "rainfall_mm",
     "sensor_quality",
     "device_uptime_ms",
     "firmware_version"
   ],
-  "properties": {
-    "station_id": {
-      "type": "string",
-      "pattern": "^[A-Z0-9_-]{3,50}$"
-    },
-    "sequence_no": {
-      "type": "integer",
-      "minimum": 1
-    },
-    "water_depth_cm": {
-      "type": ["number", "null"],
-      "minimum": 0,
-      "maximum": 1000
-    },
-    "rainfall_mm": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 1000
-    },
-    "sensor_quality": {
-      "type": "string",
-      "enum": ["valid", "invalid"]
-    },
-    "device_uptime_ms": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "firmware_version": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 50,
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"
-    }
-  },
+  "title": "TelemetryCreate",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "allOf": [
     {
       "if": {
         "properties": {
-          "sensor_quality": {"const": "valid"}
-        },
-        "required": ["sensor_quality"]
+          "schema_version": {
+            "const": 3
+          }
+        }
       },
       "then": {
+        "required": [
+          "applied_config_hash"
+        ],
+        "properties": {
+          "applied_config_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      },
+      "else": {
+        "required": [
+          "rainfall_mm"
+        ],
+        "properties": {
+          "rainfall_mm": {
+            "type": "number"
+          },
+          "rainfall_interval": {
+            "type": "null"
+          },
+          "applied_config_hash": {
+            "type": "null"
+          },
+          "sensor_fault": {
+            "const": "none"
+          },
+          "local_alert_profile": {
+            "const": "depth"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "sensor_quality": {
+            "const": "valid"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "water_depth_cm"
+        ],
         "properties": {
           "water_depth_cm": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1000
+            "type": "number"
+          },
+          "sensor_fault": {
+            "const": "none"
           }
         }
       },
       "else": {
         "properties": {
-          "water_depth_cm": {"type": "null"}
+          "water_depth_cm": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "schema_version": {
+                "const": 3
+              }
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "required": [
+                    "rainfall_interval"
+                  ]
+                }
+              },
+              {
+                "properties": {
+                  "rainfall_interval": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "rainfall_interval"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "rainfall_mm": {
+            "type": "null"
+          }
         }
       }
     }

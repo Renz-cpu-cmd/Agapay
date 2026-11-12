@@ -1,0 +1,156 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": 1,
+      "enum": [
+        1,
+        2
+      ],
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "calibration_version": {
+      "default": "legacy-unversioned",
+      "pattern": "^(legacy-unversioned|[a-f0-9]{64})$",
+      "title": "Calibration Version",
+      "type": "string"
+    },
+    "quality": {
+      "const": "valid",
+      "default": "valid",
+      "title": "Quality",
+      "type": "string"
+    },
+    "station_id": {
+      "pattern": "^[A-Z0-9_-]{3,50}$",
+      "title": "Station Id",
+      "type": "string"
+    },
+    "boot_id": {
+      "pattern": "^[A-Za-z0-9_-]{1,80}$",
+      "title": "Boot Id",
+      "type": "string"
+    },
+    "packet_sequence": {
+      "maximum": 9007199254740991,
+      "minimum": 1,
+      "title": "Packet Sequence",
+      "type": "integer"
+    },
+    "cumulative_tip_count": {
+      "maximum": 9007199254740991,
+      "minimum": 0,
+      "title": "Cumulative Tip Count",
+      "type": "integer"
+    },
+    "boot_start_tip_count": {
+      "maximum": 9007199254740991,
+      "minimum": 0,
+      "title": "Boot Start Tip Count",
+      "type": "integer"
+    },
+    "interval_start_tip_count": {
+      "maximum": 9007199254740991,
+      "minimum": 0,
+      "title": "Interval Start Tip Count",
+      "type": "integer"
+    },
+    "mm_per_tip": {
+      "exclusiveMinimum": 0,
+      "maximum": 100,
+      "title": "Mm Per Tip",
+      "type": "number"
+    },
+    "rainfall_increment_mm": {
+      "minimum": 0,
+      "title": "Rainfall Increment Mm",
+      "type": "number"
+    },
+    "device_uptime_ms": {
+      "maximum": 9007199254740991,
+      "minimum": 0,
+      "title": "Device Uptime Ms",
+      "type": "integer"
+    },
+    "last_tip_uptime_ms": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Tip Uptime Ms"
+    },
+    "interval_start_uptime_ms": {
+      "minimum": 0,
+      "title": "Interval Start Uptime Ms",
+      "type": "integer"
+    },
+    "counter_persisted": {
+      "const": true,
+      "title": "Counter Persisted",
+      "type": "boolean"
+    },
+    "data_source": {
+      "enum": [
+        "physical_rain_gauge",
+        "simulated_rain_gauge"
+      ],
+      "title": "Data Source",
+      "type": "string"
+    },
+    "firmware_version": {
+      "maxLength": 50,
+      "minLength": 1,
+      "title": "Firmware Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "station_id",
+    "boot_id",
+    "packet_sequence",
+    "cumulative_tip_count",
+    "boot_start_tip_count",
+    "interval_start_tip_count",
+    "mm_per_tip",
+    "rainfall_increment_mm",
+    "device_uptime_ms",
+    "interval_start_uptime_ms",
+    "counter_persisted",
+    "data_source",
+    "firmware_version"
+  ],
+  "title": "RainCounterEvent",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": 2
+          }
+        },
+        "required": [
+          "schema_version"
+        ]
+      },
+      "then": {
+        "required": [
+          "calibration_version"
+        ],
+        "properties": {
+          "calibration_version": {
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    }
+  ]
+}

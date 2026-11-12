@@ -1,0 +1,4 @@
+platformio>=6.1,<7
+ziglang>=0.13,<0.16
+jsonschema>=4.23,<5
+pydantic>=2.9,<3
