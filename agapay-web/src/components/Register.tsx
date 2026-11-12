@@ -55,7 +55,7 @@ export default function Register() {
           <span className="font-ui text-2xl font-bold tracking-[0.25em] text-sky-500">AGAPAY</span>
         </div>
         <h1 className="font-ui text-2xl font-semibold text-slate-100 mt-2">Create administrator account</h1>
-        <p className="text-xs leading-relaxed text-slate-400 max-w-sm">Set up your first account to manage users and review practice SOS requests.</p>
+        <p className="text-xs leading-relaxed text-slate-400 max-w-sm">Set up your first account to manage users and review SOS requests.</p>
       </header>
 
       {checking && <p role="status" className="text-sm text-center text-slate-400">Checking account setup…</p>}

@@ -98,6 +98,18 @@ button:not(:disabled), select { cursor: pointer; }
 /* Light is the default. The export's original colors remain the dark fallbacks. */
 :root { color-scheme: light; }
 :root[data-theme="dark"] { color-scheme: dark; }
+/* Every shared token must exist in both themes, including outside charts. */
+:root[data-theme="dark"] {
+  --adaptive-background:#000000; --adaptive-surface:#00112e;
+  --adaptive-border:#12396d; --adaptive-text:#eef5ff; --adaptive-muted:#91a6c5;
+  --adaptive-secondary:#a2b5d0; --adaptive-blue:#69a7ff;
+  --adaptive-danger:#fda4af; --adaptive-danger-surface:#390d1b;
+  --adaptive-success:#86efac; --adaptive-success-surface:#07351e;
+  --adaptive-orange:#fdba74; --adaptive-warning:#fde68a; --adaptive-warning-surface:#392b09;
+  --navigation-selected:#082b60; --navigation-hover:#071a34;
+}
+/* Charts use the same palette as controls and cards. */
+:root[data-theme="dark"] .recharts-default-tooltip { color: #e2e8f0; }
 :root:not([data-theme="dark"]) {
   --background: #f3f6fb; --foreground: #172b49;
   --card: #ffffff; --card-foreground: #172b49;
@@ -109,6 +121,7 @@ button:not(:disabled), select { cursor: pointer; }
   --adaptive-border: #cbd8e8; --adaptive-text: #172b49; --adaptive-muted: #526581;
   --adaptive-secondary: #405775; --adaptive-blue: #2462b7;
   --adaptive-action-foreground: #ffffff;
+  --navigation-selected:#e4efff; --navigation-hover:#edf2f8;
   --adaptive-danger: #b91c1c; --adaptive-danger-surface: #fff1f2;
   --adaptive-success: #15803d; --adaptive-success-surface: #effaf2;
   --adaptive-orange: #b45309; --adaptive-warning: #946000; --adaptive-warning-surface: #fff7e5;
@@ -121,11 +134,6 @@ button:not(:disabled), select { cursor: pointer; }
 :root:not([data-theme="dark"]) .design-modal { box-shadow: 0 20px 65px #172b4920; }
 :root:not([data-theme="dark"]) .design-modal .design-input,
 :root:not([data-theme="dark"]) .auth-form input { background: #fff; }
-:root:not([data-theme="dark"]) .nav-link.selected,
-:root:not([data-theme="dark"]) .nav-link:hover,
-:root:not([data-theme="dark"]) .sidebar-action.selected,
-:root:not([data-theme="dark"]) .sidebar-action:hover { background: #e4efff; color: #1856a9; }
-:root:not([data-theme="dark"]) .sidebar-action .figma-icon { filter: none; }
 :root:not([data-theme="dark"]) .design-button.outline { color: #2462b7; }
 :root:not([data-theme="dark"]) .google-map-loading { background: #edf4ff; color: #405775; }
 :root:not([data-theme="dark"]) .station-map-progress,
@@ -139,5 +147,5 @@ button:not(:disabled), select { cursor: pointer; }
 :root:not([data-theme="dark"]) .text-blue-400 { color: #2462b7; }
 
 :root:not([data-theme="dark"]) .auth-submit { background: #2462b7; color: white; }
-:root:not([data-theme="dark"]) .figma-icon { filter: brightness(.62) saturate(1.4); }
+:root:not([data-theme="dark"]) img.figma-icon { filter: brightness(.62) saturate(1.4); }
 .auth-theme { position: absolute; top: 16px; right: 16px; }

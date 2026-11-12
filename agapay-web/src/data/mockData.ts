@@ -1,3 +1,6 @@
+import type { StationChannels } from "../lib/channel-health";
+import type { Measurement } from "../lib/measurements";
+
 export type AlertTier = "EVACUATE" | "WARNING" | "ADVISORY" | "NORMAL" | "OFFLINE" | "UNKNOWN";
 
 export interface Station {
@@ -5,20 +8,47 @@ export interface Station {
   name: string;
   location: string;
   status: AlertTier;
-  waterLevel: number;
-  rainfall: number;
-  trend: "rising_rapidly" | "rising" | "stable" | "falling";
+  depth: Measurement;
+  rain: Measurement;
+  administrativeStatus?: "active"|"inactive"|"maintenance"|"unknown";
+  lifecycle?:import("../lib/monitoring").MonitoringStation["lifecycle"];
+  channelHealth?: StationChannels;
+  configuration?: import("../lib/monitoring").MonitoringStation["configuration"];
+  riseRate?: number|null;
+  riseRateLower?: number|null;
+  riseRateUpper?: number|null;
+  trendReason?: string;
+  trendCoverage?: number;
+  trend: "rising_rapidly" | "rising" | "stable" | "falling" | "unknown";
   lastPing: string;
   firmware: string;
   sensorValid: boolean;
   isOnline: boolean;
-  coordinates: { latitude: number; longitude: number; status: "planned" | "verified" } | null;
+  // "planned" exists only in the labelled demo fixtures below; operational stations use
+  // the registry's "verified" / "unverified" state, or null when missing/invalid (R1).
+  coordinates: { latitude: number; longitude: number; status: "planned" | "verified" | "unverified" } | null;
+  coordinateStatus?: "verified" | "unverified" | "planned" | "missing" | "invalid";
   thresholds: { advisory: number; warning: number; evacuate: number };
-  waterHistory: { time: string; level: number }[];
-  rainHistory?: { time: string; value: number }[];
+  waterHistory: { time: string; level: number | null; recordedAt?: string; measuredAt?:string|null; receivedAt?:string|null }[];
+  rainHistory?: { time: string; value: number | null; recordedAt?: string }[];
   barangay: string;
-  dataSource?: "simulator" | "device" | "none" | "demo";
-  connectionStatus?: "online" | "offline" | "no_data" | "inactive" | "maintenance";
+  dataSource?: "simulator" | "device" | "unverified" | "none" | "demo";
+  sourceClass?: "physical_device" | "simulator" | "unverified";
+  sourceTrusted?: boolean;
+  depthSourceTrusted?: boolean;
+  depthSourceId?: string|null;
+  depthFresh?: boolean;
+  depthStatus?: "fresh" | "retained" | "stale" | "missing";
+  depthAgeSeconds?: number|null;
+  heartbeatAgeSeconds?: number|null;
+  measurementAge?: string;
+  heartbeatAt?: string|null;
+  hazardPolicyState?: "provisional" | "station_reviewed";
+  hazardDecision?: string | null;
+  observationTier?: AlertTier | null;
+  hazardState?: "observed"|"unresolved"|"none"|"unknown";
+  activeHazardTier?: Exclude<AlertTier,"OFFLINE"|"UNKNOWN">|null;
+  connectionStatus?: "online" | "offline" | "no_data" | "inactive" | "maintenance" | "unconfirmed";
   observedAt?: string | null;
 }
 
@@ -27,7 +57,7 @@ export interface Alert {
   stationId: string;
   stationName: string;
   tier: AlertTier;
-  waterLevel: number;
+  waterLevel: number | null;
   triggeredAt: string;
   resolvedAt?: string;
   status: "ACTIVE" | "RESOLVED";
@@ -71,7 +101,7 @@ function generateHistory(base: number, count = 24): { time: string; level: numbe
   });
 }
 
-export const stations: Station[] = [
+const exerciseStations: (Omit<Station, "depth" | "rain"> & { waterLevel: number; rainfall: number })[] = [
   {
     id: "STATION_001",
     name: "UCU Irrigation Canal Station",
@@ -143,6 +173,13 @@ export const stations: Station[] = [
     waterHistory: generateHistory(38.6),
   },
 ];
+
+// Example fixtures are used only by the explicitly labeled demo workspace.
+export const stations: Station[] = exerciseStations.map(({ waterLevel, rainfall, ...station }) => ({
+  ...station,
+  depth: { value: waterLevel, measuredAt: null, ageSeconds: null, state: "exercise", quality: "valid", latestSampleQuality: "valid", reason: "Example exercise depth" },
+  rain: { value: rainfall, measuredAt: null, ageSeconds: null, state: "exercise", quality: "valid", latestSampleQuality: "valid", reason: "Example exercise rainfall" },
+}));
 
 export const alerts: Alert[] = [
   {
@@ -321,6 +358,7 @@ export const tierLabel: Record<AlertTier, string> = {
 };
 
 export const trendLabel: Record<string, string> = {
+  unknown: "— Unknown trend",
   rising_rapidly: "↑ Rising Rapidly",
   rising: "↗ Rising",
   stable: "→ Stable",

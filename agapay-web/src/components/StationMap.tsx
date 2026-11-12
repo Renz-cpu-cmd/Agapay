@@ -1,11 +1,12 @@
 "use client";
+import { measurementLabel, measurementText, measurementNote } from "@/lib/measurements";
 
 import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
 import { useTheme } from "@/context/ThemeContext";
 import { useMonitoring } from "@/context/MonitoringContext";
-import { tierTextColor } from "@/data/mockData";
-import { googleCityMapLink, stationCoordinates, type MapTileStatus } from "@/lib/station-map";
+import StationStatusFacts from "./StationStatusFacts";
+import { googleCityMapLink, locationLabel, stationCoordinates, type MapTileStatus } from "@/lib/station-map";
 
 const GoogleStationMapCanvas = dynamic(() => import("./GoogleStationMapCanvas"), {
   ssr: false,
@@ -16,19 +17,22 @@ const GooglePhotorealisticMapCanvas = dynamic(() => import("./GooglePhotorealist
   loading: () => <div className="station-map-loading google-map-loading" role="status">Loading photorealistic 3D map…</div>,
 });
 
-export default function StationMap({ onViewStation }: { onViewStation: (id: string) => void }) {
+export default function StationMap({ onViewStation, selectedStationId, onSelectStation }: {
+  onViewStation: (id: string) => void; selectedStationId: string; onSelectStation: (id: string) => void;
+}) {
   const { theme } = useTheme();
   const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const googleMapId = process.env.NEXT_PUBLIC_GOOGLE_MAP_ID ?? "DEMO_MAP_ID";
   const { stations, dataMode } = useMonitoring();
   const [googleMode, setGoogleMode] = useState<"map" | "3d">("map");
-  const [selectedId, setSelectedId] = useState("");
+  const selectedId = selectedStationId;
+  const setSelectedId = onSelectStation;
   const [tileStatus, setTileStatus] = useState<MapTileStatus>("loading");
   const [resetVersion, setResetVersion] = useState(0);
   const [mapVersion, setMapVersion] = useState(0);
   const selected = stations.find(station => station.id === selectedId);
   const mappedCount = stations.filter(station => stationCoordinates(station)).length;
-  const mapStateKey = stations.map(station => `${station.id}:${station.status}:${station.isOnline}:${station.coordinates?.latitude ?? ""}:${station.coordinates?.longitude ?? ""}`).join("|");
+  const mapStateKey = stations.map(station => `${station.id}:${station.status}:${station.isOnline}:${station.depthStatus}:${station.coordinates?.latitude ?? ""}:${station.coordinates?.longitude ?? ""}`).join("|");
   const handleFailure = useCallback(() => setTileStatus("error"), []);
 
   return <section className="station-map-panel" aria-labelledby="station-map-title">
@@ -58,7 +62,8 @@ export default function StationMap({ onViewStation }: { onViewStation: (id: stri
     </div>
     <footer className="station-map-footer">
       {selected ? <>
-        <div><strong>{selected.name}</strong><p>{stationCoordinates(selected) ? `${selected.coordinates?.status === "verified" ? "Confirmed" : "Planned"} location` : "Station coordinates have not been set."}<span style={{ color: tierTextColor[selected.status] }}> · Demo reading: {selected.waterLevel} cm</span></p></div>
+        <div><strong>{selected.name}</strong><p>{locationLabel(selected)} · {measurementLabel(selected.depth)}{selected.depth.value!==null?` · ${measurementText(selected.depth,1,"cm")} · ${selected.measurementAge??"Age unknown"}`:""}</p><StationStatusFacts station={selected} compact/><p>{selected.sourceTrusted&&selected.depthSourceTrusted?"Registry-verified physical source":"Unverified / test source"}</p></div>
+        <details className="station-evidence"><summary>Measurement evidence</summary><p>{measurementNote(selected.depth)}</p><StationStatusFacts station={selected}/></details>
         <button className="design-button small" onClick={() => onViewStation(selected.id)}>View station</button>
       </> : <>
         <div><strong>{mappedCount} of {stations.length} station locations set</strong><p>{dataMode === "simulator" ? "Pins and readings follow the virtual station feed." : mappedCount < stations.length ? "Station pins appear when their coordinates are added." : "Select a station pin to view its details."}</p></div>

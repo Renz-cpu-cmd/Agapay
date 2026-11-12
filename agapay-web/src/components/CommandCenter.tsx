@@ -11,6 +11,7 @@ import { AccountProvider } from "@/context/AccountContext";
 import { SosProvider, useSos } from "@/context/SosContext";
 import { MonitoringProvider, useMonitoring } from "@/context/MonitoringContext";
 import { type Account } from "@/lib/accounts";
+import { HybridProjectionProvider } from "@/context/HybridProjectionContext";
 
 function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -26,13 +27,14 @@ function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="command-center flex h-dvh overflow-hidden" style={{ background: "var(--adaptive-background, #000000)" }}>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <Sidebar current={current} onLogout={() => setShowLogout(true)}
         sosCount={page?.counts.ACTIVE ?? 0} />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header current={current} />
         {monitoringError && <p role="alert" className="px-4 py-2 text-xs text-amber-400">Live monitoring unavailable. The last received values may be out of date.</p>}
         {sosError && <p role="alert" className="px-4 py-2 text-xs text-amber-400">SOS connection unavailable. Displayed requests and counts may be out of date.</p>}
-        <main ref={contentRef} id="main-content" className="command-content" tabIndex={0} aria-label="Page content">{children}</main>
+        <main ref={contentRef} id="main-content" className="command-content" tabIndex={-1} aria-label="Page content">{children}</main>
         {showLogout && <LogoutDialog onClose={() => setShowLogout(false)}/> }
       </div>
     </div>
@@ -40,5 +42,5 @@ function Shell({ children }: { children: ReactNode }) {
 }
 
 export default function CommandCenter({ children, user }: { children: ReactNode; user: Account }) {
-  return <AccountProvider initialUser={user}><MonitoringProvider><DemoProvider><SosProvider><Shell>{children}</Shell></SosProvider></DemoProvider></MonitoringProvider></AccountProvider>;
+  return <AccountProvider initialUser={user}><MonitoringProvider><HybridProjectionProvider><DemoProvider><SosProvider><Shell>{children}</Shell></SosProvider></DemoProvider></HybridProjectionProvider></MonitoringProvider></AccountProvider>;
 }

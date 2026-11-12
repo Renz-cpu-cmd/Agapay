@@ -1,4 +1,5 @@
 "use client";
+import OfficialNotices from "./OfficialNotices";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDemo } from "@/context/DemoContext";
@@ -12,15 +13,15 @@ function ManualAlert({stations,onClose,onCreate}:{stations:Station[];onClose:()=
   const [confirm,setConfirm]=useState(false),[station,setStation]=useState(stations[0]?.id ?? ""),[tier,setTier]=useState<AlertTier>("WARNING");
   const [message,setMessage]=useState("Heavy rainfall and rising water detected."),[reason,setReason]=useState("Officer manual intervention");
   return <Modal title={confirm?"Confirm manual alert":"Manual Alert Override"} onClose={onClose} className={confirm?"manual-confirm":"manual-form"}>
-    <h2>{confirm?`Issue ${tier} Demo Alert?`:"Manual Alert Override · Demo"}</h2>
-    <p className="dialog-copy">Local/session-only demo. Not delivered to residents or saved in persistent sensor history.</p>
-    {confirm?<><p className="dialog-copy">This creates a demo alert in this session. Resident notification delivery is not connected.</p><dl className="dialog-summary"><div><dt>Station: </dt><dd>{station}</dd></div><div><dt>Level: </dt><dd>{tier}</dd></div><div><dt>Message: </dt><dd>{message}</dd></div><div><dt>Reason: </dt><dd>{reason}</dd></div></dl><div className="dialog-actions"><button className="design-button" onClick={()=>setConfirm(false)}>CANCEL</button><button className="design-button orange" onClick={()=>{onCreate(station,tier,message.trim(),reason.trim());onClose();}}>CONFIRM ALERT</button></div></>:
+    <h2>{confirm?`Issue ${tier} Test Alert?`:"Manual Alert Override · Test"}</h2>
+    <p className="dialog-copy">Local/session-only test. Not delivered to residents or saved in persistent sensor history.</p>
+    {confirm?<><p className="dialog-copy">This creates a test alert in this session. Resident notification delivery is not connected.</p><dl className="dialog-summary"><div><dt>Station: </dt><dd>{station}</dd></div><div><dt>Level: </dt><dd>{tier}</dd></div><div><dt>Message: </dt><dd>{message}</dd></div><div><dt>Reason: </dt><dd>{reason}</dd></div></dl><div className="dialog-actions"><button className="design-button" onClick={()=>setConfirm(false)}>CANCEL</button><button className="design-button orange" onClick={()=>{onCreate(station,tier,message.trim(),reason.trim());onClose();}}>CONFIRM ALERT</button></div></>:
     <form onSubmit={e=>{e.preventDefault();if(message.trim()&&reason.trim())setConfirm(true);}} className="flex flex-col gap-6">
       <label>Station / Area<select aria-label="Station / Area" className="design-input" value={station} onChange={e=>setStation(e.target.value)}>{stations.map(s=><option key={s.id}>{s.id}</option>)}</select></label>
       <label>Alert Level<select aria-label="Alert Level" className="design-input" value={tier} onChange={e=>setTier(e.target.value as AlertTier)}>{["ADVISORY","WARNING","EVACUATE"].map(t=><option key={t}>{t}</option>)}</select></label>
       <label>Message<textarea aria-label="Message" className="design-input" required maxLength={500} value={message} onChange={e=>setMessage(e.target.value)}/></label>
       <label>Reason<input className="design-input" required maxLength={200} value={reason} onChange={e=>setReason(e.target.value)}/></label>
-      <div className="dialog-actions"><button type="button" className="design-button" onClick={onClose}>CANCEL</button><button className="design-button orange" disabled={!station||!message.trim()||!reason.trim()}>ISSUE DEMO ALERT</button></div>
+      <div className="dialog-actions"><button type="button" className="design-button" onClick={onClose}>CANCEL</button><button className="design-button orange" disabled={!station||!message.trim()||!reason.trim()}>CREATE TEST ALERT</button></div>
     </form>}
   </Modal>;
 }
@@ -38,7 +39,7 @@ function SensorHistory({episode,onClose}:{episode:SensorAlert;onClose:()=>void})
   const current=detail.data;
   return <Modal title="Sensor alert history" onClose={onClose}>
     <h2>Sensor alert history · {episode.station_id}</h2>
-    <p className="dialog-copy">Persistent sensor episode. Device/simulator origin is not recorded for this episode; persistence does not establish physical validation.</p>
+    <p className="dialog-copy">Persistent sensor episode. Ingress origin is not recorded for this episode; persistence does not establish physical validation.</p>
     {detail.loading&&<p role="status">Loading episode…</p>}
     {detail.error&&<p role="alert">Alert detail service unavailable. Retrying automatically.</p>}
     {current&&<dl className="dialog-summary">
@@ -80,11 +81,12 @@ export default function AlertsPage() {
   const demos=alerts.filter(a=>!/^ALT-00[1-4]$/.test(a.id)&&(tab==="Active"?a.status==="ACTIVE":a.status==="RESOLVED")&&(tier==="All"||a.tier===tier)&&(station==="All"||a.stationId===station)&&matchesSearch(a.stationId,a.stationName));
   const clock=()=>alertTime(new Date().toISOString());
   return <div className="design-page alerts-screen">
-    <div className="design-toolbar"><div className="design-controls" role="group" aria-label="Alert history">{(["Active","Historical"] as const).map(t=><button key={t} className={`design-button ${tab===t?"active":""}`} aria-pressed={tab===t} onClick={()=>{setTab(t);setOffset(0);}}>{t}</button>)}</div><button className="design-button orange" onClick={()=>setManual(true)}><FigmaIcon name="warning" size={17}/>Manual Alert · Demo</button></div>
+    <OfficialNotices/>
+    <div className="design-toolbar"><div className="design-controls" role="group" aria-label="Alert history">{(["Active","Historical"] as const).map(t=><button key={t} className={`design-button ${tab===t?"active":""}`} aria-pressed={tab===t} onClick={()=>{setTab(t);setOffset(0);}}>{t}</button>)}</div><button className="design-button orange" onClick={()=>setManual(true)}><FigmaIcon name="warning" size={17}/>Manual Alert · Test</button></div>
     <div className="design-controls"><input className="design-input flex-1" aria-label="Search stations" placeholder="Search this page..." value={search} onChange={e=>setSearch(e.target.value)}/><select aria-label={tab==="Historical"?"Peak alert tier":"Alert tier"} className="design-input" value={tier} onChange={e=>{setTier(e.target.value);setOffset(0);}}>{["All","EVACUATE","WARNING","ADVISORY"].map(t=><option key={t}>{t}</option>)}</select><select aria-label="Station filter" className="design-input" value={station} onChange={e=>{setStation(e.target.value);setOffset(0);}}><option>All</option>{stationIds.map(id=><option key={id} value={id}>{names.get(id)?`${id} · ${names.get(id)}`:id}</option>)}</select></div>
     <section aria-label="Persistent sensor alerts">
       <h2>Persistent sensor alerts</h2>
-      <p className="subtle-note">Backend episodes · automatically resolved by valid telemetry · times in Asia/Manila (PHT). Device/simulator origin is not recorded per episode.</p>
+      <p className="subtle-note">Backend episodes · automatically resolved by valid telemetry · times in Asia/Manila (PHT). Ingress origin is not recorded per episode.</p>
       <p className="subtle-note">Search{tab==="Historical"?" and peak-tier filtering apply":" applies"} to this page of up to 50 episodes. Use Next to inspect older pages. Counts are before these page filters.</p>
       <div className="design-table-wrap"><table className="design-table"><thead><tr>{[tab==="Historical"?"Peak Tier":"Current Tier","Station",tab==="Historical"?"Trigger Depth":"Latest Depth","Time (PHT)","Status","Action"].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>
         {resource.loading&&<tr><td colSpan={6} className="design-empty" role="status">Loading alerts…</td></tr>}
@@ -95,13 +97,13 @@ export default function AlertsPage() {
       {resource.data&&<Pagination offset={offset} total={resource.data.total} busy={resource.loading} onChange={setOffset}/>}
       {tab==="Historical"&&<p className="subtle-note">Trigger depth is the episode’s first alert reading, not peak depth. Peak tier is the highest severity reached.</p>}
     </section>
-    <section aria-label="Manual demo alerts" className="design-panel" style={{padding:16}}>
-      <h2>Manual demo alerts · {tab}</h2><p className="dialog-copy">Local/session-only. Not delivered to residents. Not part of persistent sensor history. Resets on reload.</p>
-      {demos.map(a=><div key={a.id} className="design-toolbar"><div><Badge tier={a.tier}/> <strong>{a.stationId}</strong> · {a.stationName}<p className="subtle-note">DEMO · {a.status} · {a.triggeredAt}{a.resolvedAt&&` – ${a.resolvedAt}`}</p><p>{a.message}</p></div>{a.status==="ACTIVE"&&<button className="design-button green small" onClick={()=>setResolve(a)}>Resolve demo</button>}</div>)}
-      {!demos.length&&<p className="subtle-note">No matching manual demo alerts.</p>}
+    <section aria-label="Manual test alerts" className="design-panel" style={{padding:16}}>
+      <h2>Manual test alerts · {tab}</h2><p className="dialog-copy">Local/session-only. Not delivered to residents. Not part of persistent sensor history. Resets on reload.</p>
+      {demos.map(a=><div key={a.id} className="design-toolbar"><div><Badge tier={a.tier}/> <strong>{a.stationId}</strong> · {a.stationName}<p className="subtle-note">TEST · {a.status} · {a.triggeredAt}{a.resolvedAt&&` – ${a.resolvedAt}`}</p><p>{a.message}</p></div>{a.status==="ACTIVE"&&<button className="design-button green small" onClick={()=>setResolve(a)}>Resolve test</button>}</div>)}
+      {!demos.length&&<p className="subtle-note">No matching manual test alerts.</p>}
     </section>
     {selected&&<SensorHistory key={selected.id} episode={selected} onClose={()=>setSelected(null)}/>}
-    {manual&&<ManualAlert stations={stations} onClose={()=>setManual(false)} onCreate={(stationId,tier,message,reason)=>{const s=stations.find(s=>s.id===stationId);setAlerts(items=>[{id:"ALT-"+crypto.randomUUID(),stationId,stationName:s?.name??stationId,tier,message,reason,waterLevel:s?.waterLevel??0,triggeredAt:clock(),status:"ACTIVE",triggeredAgo:"Just now"},...items]);setTab("Active");setOffset(0);}}/>}
-    {resolve&&<Modal title="Resolve demo alert" onClose={()=>setResolve(null)}><h2>Resolve {resolve.tier} Demo Alert?</h2><p className="dialog-copy">{resolve.stationName}</p><p className="dialog-copy">Move this local demo to Historical. Persistent sensor episodes and station readings are unchanged. Nothing is delivered to residents.</p><div className="dialog-actions"><button className="design-button" onClick={()=>setResolve(null)}>CANCEL</button><button className="design-button green" onClick={()=>{setAlerts(items=>items.map(a=>a.id===resolve.id?{...a,status:"RESOLVED",resolvedAt:clock()}:a));setResolve(null);}}>RESOLVE DEMO</button></div></Modal>}
+    {manual&&<ManualAlert stations={stations} onClose={()=>setManual(false)} onCreate={(stationId,tier,message,reason)=>{const s=stations.find(s=>s.id===stationId);setAlerts(items=>[{id:"ALT-"+crypto.randomUUID(),stationId,stationName:s?.name??stationId,tier,message,reason,waterLevel:s?.depth.value??null,triggeredAt:clock(),status:"ACTIVE",triggeredAgo:"Just now"},...items]);setTab("Active");setOffset(0);}}/>}
+    {resolve&&<Modal title="Resolve test alert" onClose={()=>setResolve(null)}><h2>Resolve {resolve.tier} Test Alert?</h2><p className="dialog-copy">{resolve.stationName}</p><p className="dialog-copy">Move this local test to Historical. Persistent sensor episodes and station readings are unchanged. Nothing is delivered to residents.</p><div className="dialog-actions"><button className="design-button" onClick={()=>setResolve(null)}>CANCEL</button><button className="design-button green" onClick={()=>{setAlerts(items=>items.map(a=>a.id===resolve.id?{...a,status:"RESOLVED",resolvedAt:clock()}:a));setResolve(null);}}>RESOLVE TEST</button></div></Modal>}
   </div>;
 }

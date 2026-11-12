@@ -18,12 +18,18 @@ const episode = (id, status = 'ACTIVE', severity = 'WARNING') => ({
 });
 let active = [episode(1), episode(2, 'ACTIVE', 'EVACUATE')];
 let history = Array.from({length: 52}, (_, i) => episode(100 + i, 'RESOLVED', i === 0 ? 'EVACUATE' : 'WARNING'));
-let unavailable = false, monitoringDown = false, delay = 0, running = 0, maxRunning = 0;
-const requests = [], failures = [];
+let unavailable = false, monitoringDown = false, delay = 0;
+const requests = [], failures = [], staffHeader = [];
 const fixture = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://fixture');
   const json = (body, status = 200) => { res.writeHead(status, {'content-type': 'application/json'}); res.end(JSON.stringify(body)); };
   if (url.pathname === '/api/auth/me') return json({...account, role: req.headers.authorization === 'Bearer resident-fixture' ? 'resident' : 'officer'});
+  // Model FastAPI's current_user contract (the authoritative check): the BFF does not
+  // look up roles itself; it sends X-Agapay-Require-Staff and FastAPI refuses non-staff
+  // before reading data. Without this the fixture served alerts to any token.
+  staffHeader.push(req.headers['x-agapay-require-staff'] === '1');
+  if (!req.headers.authorization) return json({detail: 'Your session has expired. Please sign in again.'}, 401);
+  if (req.headers.authorization === 'Bearer resident-fixture' && req.headers['x-agapay-require-staff'] === '1') return json({detail: 'Staff access is required.'}, 403);
   if (url.pathname === '/api/sos') return json({items: [], total: 0, counts: {ACTIVE: 0, ACKNOWLEDGED: 0, RESOLVED: 0}});
   if (url.pathname === '/api/monitoring/stations') {
     if (monitoringDown) return json({detail: 'Fixture outage'}, 503);
@@ -37,9 +43,7 @@ const fixture = http.createServer(async (req, res) => {
   }
   if (!url.pathname.startsWith('/api/alerts')) return json({detail: 'Not found'}, 404);
   requests.push(url.pathname + url.search);
-  running++; maxRunning = Math.max(maxRunning, running);
   if (delay) await new Promise(r => setTimeout(r, delay));
-  running--;
   if (unavailable) return json({detail: 'Fixture outage'}, 503);
   const offset = Number(url.searchParams.get('offset') || 0), limit = Number(url.searchParams.get('limit') || 50);
   if (url.pathname.endsWith('/transitions')) {
@@ -123,16 +127,16 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     await dialog.getByText('Transition history unavailable.', {exact: false}).waitFor();
     await dialog.getByRole('button', {name: 'CLOSE', exact: true}).click();
     unavailable = false;
-    await page.getByRole('button', {name: 'Manual Alert · Demo', exact: true}).click();
-    await page.getByRole('button', {name: 'ISSUE DEMO ALERT', exact: true}).click();
+    await page.getByRole('button', {name: 'Manual Alert · Test', exact: true}).click();
+    await page.getByRole('button', {name: 'CREATE TEST ALERT', exact: true}).click();
     await page.getByRole('button', {name: 'CONFIRM ALERT', exact: true}).click();
-    const demos = page.getByRole('region', {name: 'Manual demo alerts'});
-    await demos.getByRole('button', {name: 'Resolve demo', exact: true}).waitFor();
+    const demos = page.getByRole('region', {name: 'Manual test alerts'});
+    await demos.getByRole('button', {name: 'Resolve test', exact: true}).waitFor();
     assert((await demos.innerText()).includes('Not delivered to residents'));
-    await demos.getByRole('button', {name: 'Resolve demo', exact: true}).click();
-    await page.getByRole('button', {name: 'RESOLVE DEMO', exact: true}).click();
+    await demos.getByRole('button', {name: 'Resolve test', exact: true}).click();
+    await page.getByRole('button', {name: 'RESOLVE TEST', exact: true}).click();
     await page.getByRole('button', {name: 'Historical', exact: true}).click();
-    await demos.getByText('DEMO · RESOLVED', {exact: false}).waitFor();
+    await demos.getByText('TEST · RESOLVED', {exact: false}).waitFor();
     unavailable = true;
     await page.getByRole('button', {name: 'Active', exact: true}).click();
     await sensors.getByRole('alert').waitFor();
@@ -153,12 +157,22 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     assert.equal(requests.length, beforeHidden);
     await page.evaluate(() => { Object.defineProperty(document, 'hidden', {configurable: true, value: false}); document.dispatchEvent(new Event('visibilitychange')); });
     await pause(500); assert(requests.length > beforeHidden);
-    // A slow list request must not overlap the next polling interval.
-    delay = 5500; maxRunning = 0;
+    // A slow list request must not overlap the next polling interval. Measured in the
+    // browser for this document: the fixture's own counter also sees a previous page's
+    // request that the BFF keeps forwarding after that page unloads (a reload race),
+    // which made the old server-side assertion intermittently report 2.
+    let inFlight = 0, overlap = 0;
+    const alertCall = r => r.url().includes('/api/account/alerts');
+    const settle = r => { if (alertCall(r)) inFlight = Math.max(0, inFlight - 1); };
+    page.on('request', r => { if (alertCall(r)) overlap = Math.max(overlap, ++inFlight); });
+    page.on('requestfinished', settle); page.on('requestfailed', settle);
+    // Reset before reloading: a request still open on the old document is removed by
+    // its requestfailed event at unload, so only the reloaded document is measured.
+    inFlight = 0; overlap = 0; delay = 5500;
     await page.reload();
     await sensors.getByText('Loading alerts…', {exact: true}).waitFor();
     await sensors.getByRole('button', {name: 'History', exact: true}).waitFor({timeout: 12000});
-    assert.equal(maxRunning, 1); delay = 0;
+    assert.equal(overlap, 1, 'one in-flight list request per page; the next poll waits for the slow one'); delay = 0;
     // Route changes cancel polling; existing navigation still works.
     await sensors.getByRole('button', {name: 'View', exact: true}).click();
     await page.waitForURL('**/stations/STATION_001');
@@ -167,12 +181,17 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     await sensors.getByRole('button', {name: 'History', exact: true}).waitFor();
     // Exercise the real BFF authorization, read-only allowlist and query forwarding.
     assert.equal((await context.request.patch(`${base}/api/account/alerts/1`, {data: {status: 'RESOLVED'}})).status(), 404);
-    assert.equal((await context.request.get(`${base}/api/account/alerts/active?limit=50&offset=0&unknown=ignored`)).status(), 200);
+    const allowed = await context.request.get(`${base}/api/account/alerts/active?limit=50&offset=0&unknown=ignored`);
+    assert.equal(allowed.status(), 200, 'authorized officer session reads alerts');
+    assert((await allowed.json()).items.length > 0, 'authorized officer receives the alert records');
     assert(!requests.at(-1).includes('unknown='));
     const guest = await browser.newContext();
     assert.equal((await guest.request.get(`${base}/api/account/alerts`)).status(), 401);
     await guest.addCookies([{name: 'agapay_session', value: 'resident-fixture', url: base, httpOnly: true}]);
-    assert.equal((await guest.request.get(`${base}/api/account/alerts`)).status(), 403);
+    const denied = await guest.request.get(`${base}/api/account/alerts`);
+    assert.equal(denied.status(), 403, 'backend refusal is propagated, never converted to success');
+    assert.doesNotMatch(await denied.text(), /STATION_00|trigger_depth|items/, 'refusal carries no alert data');
+    assert(staffHeader.length > 0 && staffHeader.every(Boolean), 'every BFF data request asks FastAPI for staff-only access');
     await guest.close();
     assert.equal(await page.evaluate(() => document.cookie.includes('agapay_session')), false);
     assert.deepEqual(failures, []);

@@ -1,4 +1,5 @@
 "use client";
+import { stationStatusDescription, stationMarkerTier } from "@/lib/station-map";
 
 import { useEffect, useRef } from "react";
 import { tierColor, type Station } from "@/data/mockData";
@@ -81,7 +82,7 @@ export default function GooglePhotorealisticMapCanvas({
       stations.forEach(station => {
         const point = stationCoordinates(station);
         if (!point || !map) return;
-        const status = station.isOnline ? station.status : "OFFLINE";
+        const status = stationMarkerTier(station);
         const pin = new PinElement({
           background: tierColor[status],
           borderColor: "#e8f2ff",
@@ -92,7 +93,7 @@ export default function GooglePhotorealisticMapCanvas({
         pin.classList.add("google-station-pin");
         const stationMarker = new Marker3DInteractiveElement({
           position: { lat: point[0], lng: point[1], altitude: 4 },
-          title: `${station.name} · ${station.status} · ${station.dataSource === "simulator" ? "Virtual station" : "Monitoring station"}`,
+          title: `${station.name} · ${stationStatusDescription(station)}`,
           label: station.name,
           extruded: true,
           sizePreserved: true,

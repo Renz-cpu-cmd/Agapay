@@ -2,12 +2,17 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { accountRequest } from "@/lib/accounts";
-import { ageLabel, type MonitoringSnapshot, type MonitoringStation } from "@/lib/monitoring";
-import { alerts as fallbackAlerts, stations as fallbackStations, type Alert, type Station } from "@/data/mockData";
+import { monitoringStationForDisplay, type MonitoringSnapshot } from "@/lib/monitoring";
+import type { Alert, Station } from "@/data/mockData";
 
-type DataMode = "simulator" | "device" | "no_data" | "demo";
+import { visiblePoll } from "@/lib/visible-poll";
+import { displayStation } from "@/lib/station-display";
+
+type DataMode = "simulator" | "device" | "unverified" | "no_data" | "demo";
 
 type MonitoringState = {
+  selectedStationId: string;
+  selectStation: (id: string) => void;
   stations: Station[];
   // Dashboard current-tier summary only; never persistent alert history.
   sensorAlerts: Alert[];
@@ -20,88 +25,53 @@ type MonitoringState = {
 
 const MonitoringContext = createContext<MonitoringState | null>(null);
 
-function displayStation(source: MonitoringStation, fallback?: Station): Station {
-  const hasCoordinates = source.latitude !== null && source.longitude !== null;
-  const history = source.history.flatMap(sample => sample.sensor_quality === "valid" && sample.water_depth_cm !== null
-    ? [{ time: new Date(sample.recorded_at).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Manila" }), level: sample.water_depth_cm }]
-    : []);
-  const rainHistory = source.history.map(sample => ({
-    time: new Date(sample.recorded_at).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Manila" }),
-    value: sample.rainfall_mm,
-  }));
-  return {
-    id: source.station_id,
-    name: source.station_name,
-    location: [source.barangay, source.municipality].filter(Boolean).join(", ") || fallback?.location || "Location unavailable",
-    barangay: source.barangay || fallback?.barangay || "Unavailable",
-    status: source.alert_tier ?? "UNKNOWN",
-    waterLevel: source.current_depth_cm ?? 0,
-    rainfall: source.latest_rainfall_mm ?? 0,
-    trend: source.trend,
-    lastPing: ageLabel(source.age_seconds, source.connection_status),
-    firmware: source.firmware_version ?? "Unavailable",
-    sensorValid: source.sensor_quality === "valid",
-    isOnline: source.is_online,
-    coordinates: hasCoordinates ? { latitude: source.latitude!, longitude: source.longitude!, status: "planned" } : fallback?.coordinates ?? null,
-    thresholds: {
-      advisory: source.threshold_advisory_cm,
-      warning: source.threshold_warning_cm,
-      evacuate: source.threshold_evacuate_cm,
-    },
-    waterHistory: history,
-    rainHistory,
-    dataSource: source.source,
-    connectionStatus: source.connection_status,
-    observedAt: source.observed_at,
-  };
-}
 
-function mergeStations(snapshot: MonitoringSnapshot | null) {
-  if (!snapshot) return fallbackStations;
-  const sourceById = new Map(snapshot.stations.map(station => [station.station_id, station]));
-  const merged = fallbackStations.flatMap(station => {
-    const source = sourceById.get(station.id);
-    if (!source) return [];
-    sourceById.delete(station.id);
-    return [displayStation(source, station)];
-  });
-  for (const source of sourceById.values()) merged.push(displayStation(source));
-  return merged;
+// R1: operational stations come only from the API registry, in its order. Bundled
+// fixtures are never merged in, so no demo coordinate or place name can leak.
+function mergeStations(snapshot: MonitoringSnapshot | null, nowMs: number, unavailable: boolean) {
+  if (!snapshot) return [];
+  return snapshot.stations.map(station => displayStation(
+    monitoringStationForDisplay(station,snapshot.checked_at,snapshot.stale_after_seconds,nowMs,unavailable)));
 }
 
 function alertsFor(stations: Station[]): Alert[] {
-  return stations.flatMap(station => station.dataSource !== "none" && !["NORMAL", "UNKNOWN"].includes(station.status)
+  return stations.flatMap(station => station.dataSource !== "none" && ["observed","unresolved"].includes(station.hazardState??"") && !["NORMAL", "UNKNOWN"].includes(station.status)
     ? [{
         id: `SENSOR-${station.id}`,
         stationId: station.id,
         stationName: station.name,
         tier: station.status,
-        waterLevel: station.waterLevel,
+        waterLevel: station.depth.value,
         triggeredAt: station.observedAt ? new Date(station.observedAt).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Manila" }) : "—",
         status: "ACTIVE" as const,
-        triggeredAgo: station.lastPing,
-        message: station.sensorValid
+        triggeredAgo: station.measurementAge ?? "Unknown",
+        message: station.hazardState === "unresolved"
+          ? `Unresolved sensor episode · observation ${station.observationTier ?? "UNKNOWN"} · ${station.hazardDecision ?? "Recovery or review pending"}.`
+          : station.depthFresh
           ? `Generated from the latest valid ${station.dataSource === "simulator" ? "virtual-station" : "device"} reading.`
-          : "Severity preserved from the last valid reading; the latest sensor sample is invalid.",
+          : `Unresolved hazard; retained valid depth measured ${station.measurementAge ?? "at an unknown time"}. Latest sample is invalid or stale.`,
       }]
     : []);
 }
 
 export function MonitoringProvider({ children }: { children: ReactNode }) {
+  const [selectedStationId, setSelectedStationId] = useState("");
   const [snapshot, setSnapshot] = useState<MonitoringSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [clock, setClock] = useState(0);
   const active = useRef(true);
   const inFlight = useRef(false);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (signal?:AbortSignal) => {
     if (inFlight.current) return;
     inFlight.current = true;
     try {
-      const next = await accountRequest<MonitoringSnapshot>("monitoring/stations?history_limit=120");
-      if (active.current) { setSnapshot(next); setError(""); }
+      const next = await accountRequest<MonitoringSnapshot>("monitoring/stations?history_limit=120", "GET", undefined, signal?AbortSignal.any([signal,AbortSignal.timeout(5000)]):AbortSignal.timeout(5000));
+      if (active.current && !signal?.aborted) { setSnapshot(next); setError(""); }
     } catch (reason) {
-      if (active.current) setError(reason instanceof Error ? reason.message : "Monitoring data is unavailable.");
+      if (active.current && !signal?.aborted) setError(reason instanceof Error ? reason.message : "Monitoring data is unavailable.");
+      throw reason;
     } finally {
       inFlight.current = false;
       if (active.current) setLoading(false);
@@ -110,17 +80,19 @@ export function MonitoringProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     active.current = true;
-    void refresh();
-    const timer = window.setInterval(() => { if (!document.hidden) void refresh(); }, 5000);
-    return () => { active.current = false; window.clearInterval(timer); };
+    setClock(Date.now());
+    const stop=visiblePoll(refresh,3000,undefined,()=>setClock(Date.now()));
+    const timer=window.setInterval(()=>{if(!document.hidden)setClock(Date.now());},1000);
+    return ()=>{active.current=false;stop();window.clearInterval(timer);};
   }, [refresh]);
 
-  const stations = useMemo(() => mergeStations(snapshot), [snapshot]);
-  const sensorAlerts = useMemo(() => snapshot ? alertsFor(stations) : fallbackAlerts.filter(alert => alert.status === "ACTIVE"), [snapshot, stations]);
-  const dataMode: DataMode = !snapshot ? "demo" : snapshot.stations.some(station => station.source === "simulator")
-    ? "simulator" : snapshot.stations.some(station => station.source === "device") ? "device" : "no_data";
+  const stations = useMemo(() => mergeStations(snapshot,clock,Boolean(error)), [snapshot,clock,error]);
+  const sensorAlerts = useMemo(() => snapshot ? alertsFor(stations) : [], [snapshot, stations]);
+  const dataMode: DataMode = !snapshot ? "no_data" : snapshot.stations.some(station => station.source === "simulator")
+    ? "simulator" : snapshot.stations.some(station => station.source === "device" && station.source_trusted) ? "device"
+      : snapshot.stations.some(station=>station.source==="unverified")?"unverified":"no_data";
 
-  return <MonitoringContext.Provider value={{ stations, sensorAlerts, snapshot, loading, error, dataMode, refresh }}>{children}</MonitoringContext.Provider>;
+  return <MonitoringContext.Provider value={{ selectedStationId, selectStation: setSelectedStationId, stations, sensorAlerts, snapshot, loading, error, dataMode, refresh:()=>refresh().catch(()=>undefined) }}>{snapshot?.service_health?.status==="degraded"&&<p role="status" className="subtle-note px-4 py-2">{snapshot.service_health.message}</p>}{children}</MonitoringContext.Provider>;
 }
 
 export function useMonitoring() {

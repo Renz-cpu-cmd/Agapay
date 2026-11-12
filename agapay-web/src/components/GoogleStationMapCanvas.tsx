@@ -1,4 +1,5 @@
 "use client";
+import { stationStatusDescription, stationMarkerTier } from "@/lib/station-map";
 
 import { useEffect, useRef } from "react";
 import { useTheme } from "@/context/ThemeContext";
@@ -98,7 +99,7 @@ export default function GoogleStationMapCanvas({
       markers = stations.flatMap(station => {
         const point = stationCoordinates(station);
         if (!point || !map) return [];
-        const status = station.isOnline ? station.status : "OFFLINE";
+        const status = stationMarkerTier(station);
         const pin = new PinElement({
           background: tierColor[status],
           borderColor: "#e8f2ff",
@@ -110,7 +111,7 @@ export default function GoogleStationMapCanvas({
         const stationMarker = new AdvancedMarkerElement({
           map,
           position: { lat: point[0], lng: point[1] },
-          title: `${station.name} · ${station.status} · ${station.dataSource === "simulator" ? "Virtual station" : "Monitoring station"}`,
+          title: `${station.name} · ${stationStatusDescription(station)}`,
           content: pin,
           gmpClickable: true,
           zIndex: 10,

@@ -1,5 +1,17 @@
 # AGAPAY Web
 
+F15/F16 add explicit rainfall products and reviewed installation hashes. Firmware fallback geometry is an unvalidated 150 cm bench profile; it is not a drop-in update for a 120 cm mounting. See [contracts, preservation migration, header export and physical acceptance](../agapay-docs/security/F15-F16/README.md).
+
+F12â€“F14 separate channel health and administration, display backend cm/min estimates, and query persisted report ranges with timestamp buckets and matching CSV scope. See [contracts and verification](../agapay-docs/security/F12-F14/README.md).
+
+F09â€“F11 add provisional hysteresis/recovery policy, distinct issuer notice lifecycles and explicit notification subscriptions. See [implementation, setup and verification](../agapay-docs/security/F09-F11/README.md).
+
+Station measurements use nullable value/time/quality/state objects. Current statistics exclude unavailable readings and report coverage; CSV preserves missing-data reasons and retained timestamps. See [F07/F08 implementation and verification](../agapay-docs/security/F07-F08/README.md).
+
+Monitoring now separates heartbeat connectivity from retained-depth freshness and
+uses registry provenance. Deploy with the matching backend and source review in
+[F05/F06 rollout](../agapay-docs/security/F05-F06/README.md).
+
 Next.js frontend rebuilt against the 14 screen and dialog frames on the [Agapay_Website Figma page](https://www.figma.com/design/YSzodsskD44OjBCaCyBHau/Agapay?node-id=112-47). The interface uses the design's black canvas, navy panels, blue borders, Inter typography, compact navigation, and locally exported logo, icons, and map artwork. Existing account, practice SOS, and prediction API integrations are preserved.
 
 ## Run locally
@@ -11,7 +23,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. Login requires an active administrator or officer account from FastAPI. With the backend running, use **Create administrator account** or `/register` for first-time local setup. The form provides password confirmation and Show/Hide controls, then signs you in automatically. Registration closes after setup; additional staff are created through **Users → Add User**. See [Accounts setup](../agapay-docs/ACCOUNTS_SETUP.md). There are no prefilled demo credentials.
+Open http://localhost:3000. Login requires an active administrator or officer account from FastAPI. With the backend running, use **Create administrator account** or `/register` for first-time local setup. The form provides password confirmation and Show/Hide controls, then signs you in automatically. Registration closes after setup; additional staff are created through **Users â†’ Add User**. See [Accounts setup](../agapay-docs/ACCOUNTS_SETUP.md). There are no prefilled demo credentials.
 
 ```sh
 npm run build
@@ -21,16 +33,16 @@ npm run typecheck
 
 ## Screens
 
-- `/login` — supplied sign-in screen
-- `/register` — one-time local administrator registration; disabled in production
-- `/dashboard` — monitoring summary, station map, alert queue, water-level chart
-- `/stations` and `/stations/STATION_001` — station cards and directly addressable details
-- `/alerts` — persistent sensor episodes and transitions; separate session-only manual demos
-- `/sos` — beacon list, details, acknowledgment and resolution
-- `/analytics` — station/period controls, charts and CSV report download
-- `/system-health` — connectivity and stale sensor data
-- `/users` — search, role filters, create/edit users and activation controls
-- `/settings` — account overview, profile/password editing, preferences, information dialogs, and logout confirmation
+- `/login` â€” supplied sign-in screen
+- `/register` â€” one-time local administrator registration; disabled in production
+- `/dashboard` â€” monitoring summary, station map, alert queue, water-level chart
+- `/stations` and `/stations/STATION_001` â€” station cards and directly addressable details
+- `/alerts` â€” persistent sensor episodes and transitions; separate session-only manual demos
+- `/sos` â€” beacon list, details, acknowledgment and resolution
+- `/analytics` â€” station/period controls, charts and CSV report download
+- `/system-health` â€” connectivity and stale sensor data
+- `/users` â€” search, role filters, create/edit users and activation controls
+- `/settings` â€” account overview, profile/password editing, preferences, information dialogs, and logout confirmation
 
 ## Frontend scope
 
@@ -87,20 +99,44 @@ Fonts load from Google Fonts as in the export. The command-center layout targets
 
 ## Structure
 
-- `src/app` — Next.js App Router layouts and route entries
-- `src/components` — Figma screens adapted to client components with shared dialogs in `DesignUI.tsx`
-- `src/index.css` and `src/figma.css` — design tokens, typography, Tailwind CSS, screen layouts, and viewport adjustments
-- `src/lib/figma-assets.ts` and `public/figma/website` — locally stored Figma assets
-- `src/components/StationMap.tsx`, `GooglePhotorealisticMapCanvas.tsx`, `GoogleStationMapCanvas.tsx`, `GoogleSosLocationMap.tsx`, `src/lib/google-maps.ts`, and `src/lib/station-map.ts` — Google photorealistic 3D, dark station and SOS maps, coordinate validation, controls, and loading state
-- `src/context` — signed-in account, backend monitoring, practice SOS, and manual demo-alert state
-- `src/lib/account-server.ts` — backend access and page authorization
-- `src/app/api/account` — session cookie, account, staff SOS and prediction API handlers
-- `src/components/ForecastPanel.tsx` — forecast availability, expiry and sample previews
-- `src/hooks/useDialog.ts` — dialog keyboard focus and Escape handling
-- `src/lib/navigation.ts` — route mapping
+- `src/app` â€” Next.js App Router layouts and route entries
+- `src/components` â€” Figma screens adapted to client components with shared dialogs in `DesignUI.tsx`
+- `src/index.css` and `src/figma.css` â€” design tokens, typography, Tailwind CSS, screen layouts, and viewport adjustments
+- `src/lib/figma-assets.ts` and `public/figma/website` â€” locally stored Figma assets
+- `src/components/StationMap.tsx`, `GooglePhotorealisticMapCanvas.tsx`, `GoogleStationMapCanvas.tsx`, `GoogleSosLocationMap.tsx`, `src/lib/google-maps.ts`, and `src/lib/station-map.ts` â€” Google photorealistic 3D, dark station and SOS maps, coordinate validation, controls, and loading state
+- `src/context` â€” signed-in account, backend monitoring, practice SOS, and manual demo-alert state
+- `src/lib/account-server.ts` â€” backend access and page authorization
+- `src/app/api/account` â€” session cookie, account, staff SOS and prediction API handlers
+- `src/components/ForecastPanel.tsx` â€” forecast availability, expiry and sample previews
+- `src/hooks/useDialog.ts` â€” dialog keyboard focus and Escape handling
+- `src/lib/navigation.ts` â€” route mapping
 
 The ZIP's Figma-specific scripts, tool configuration, and instruction documents were not imported or executed. Vite entry points were replaced with Next.js. The latest visual reference is the Agapay_Website Figma page rather than the original ZIP alone.
 
 ## Rebuild verification
 
 The production build and headless Edge browser checks passed on September 5, 2026. Checks covered all main screens, dialogs, profile saves, manual alert creation/resolution, practice SOS acknowledgement/resolution, submitted map coordinates, filtered CSV downloads, station forecasts, user creation/deactivation, logout, and officer route restrictions. Desktop layouts were checked at widths of 1440, 1366, and 1024 pixels. Account and SOS mutations used a separate temporary database; existing user records were not used for the tests. Temporary servers, database, and credentials were removed afterward. Google map dragging, zooming, reset, station selection, 3D/dark mode changes, resizing, page scrolling, and repeated map navigation were also checked successfully.
+
+Station lifecycle administration, persistent preferences, English-only language and verified geographic context: [F17-F19 contracts and rollout](../agapay-docs/security/F17-F19/README.md).
+
+Account recovery/invitations, staff MFA, session management, shared abuse controls and versioned mutation audits: [F20-F21 contracts and deployment](../agapay-docs/security/F20-F21/README.md).
+
+Atomic SOS location/lifecycle versions and configurable response drills: [F22-F23 contracts and rollout](../agapay-docs/security/F22-F23/README.md). Operational dispatch remains disabled.
+
+
+Staff Shelters & Access registry with separate verification, expiry, scoped grants and manual stale-write review: [F24-F25 contracts, rollout and remaining device acceptance](../agapay-docs/security/F24-F25/README.md). Live inventory starts empty; generic routes do not certify flood-safe access.
+
+
+Nonce CSP, theme-script protection, security headers and guarded production startup: [F26-F27 implementation, rollout and verification](../agapay-docs/security/F26-F27/README.md). Field deployment acceptance remains pending.
+
+## Workflow diagnostics and polling (F30–F31)
+
+System Health separates backend workflows from station channels and expires old diagnostic observations. Visible monitoring polls every three seconds; hybrid feeds run only for subscribed station views. Reads pause while hidden/offline, cancel suspended requests and refresh on resume. Shared backend products preserve original timestamps and each request still authenticates. See the [verification results and deployment limits](../agapay-docs/security/F30-F31/RESULTS.md).
+
+System Health also contains the authenticated delivery evidence console: jurisdiction-scoped reads, administrator-only audited reconciliation, hashed external references and manual stale-write review. Queued/provider/app/open/acknowledged evidence stays separate; no resend control exists. See [F32–F33 installation and acceptance](../agapay-docs/security/F32-F33/README.md).
+
+Operational forecast cards now read the same persisted forecast IDs as resident mobile. ML Evaluation reads backend registry/evaluation metadata, while browser basin/manual settings remain in a separate private experiment. Model review and station binding are versioned/admin-only; missing field evidence leaves forecasts unavailable. Forecast ID links open immutable historical records without extending expiry. See [F34–F35 contracts and scientific prerequisites](../agapay-docs/security/F34-F35/README.md).
+
+Shared operational state labels, visible keyboard focus, skip navigation, reduced motion, responsive navigation and timestamped chart alternatives are covered in [F38–F39 implementation/evidence](../agapay-docs/security/F38-F39/README.md). `npm run test:browser` includes both-theme axe checks for synthetic operational states plus keyboard/dialog/narrow-layout workflows. See the [accessibility matrix](../agapay-docs/security/F38-F39/ACCESSIBILITY-MATRIX.md) for the pending full manual and participant acceptance; automated checks do not certify WCAG compliance.
+
+F40 adds current-password privacy requests/owner exports and admin case, hold, erasure and access-review controls. Stale decisions require explicit refresh; application erasure remains pending external/backup review. See [privacy/recovery contracts](../agapay-docs/security/F40/README.md) and [observed verification](../agapay-docs/security/F40/RESULTS.md).

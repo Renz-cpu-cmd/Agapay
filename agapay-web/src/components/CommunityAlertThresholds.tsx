@@ -1,15 +1,15 @@
 import type { Station } from "@/data/mockData";
 
 const tiers = [
-  { key: "normal", label: "Normal", color: "var(--adaptive-success, #57ff7b)", height: 73, guidance: "Safe, routine flow" },
-  { key: "advisory", label: "Advisory", color: "var(--adaptive-warning, #ffe57b)", height: 148, guidance: "Caution, rising waters" },
-  { key: "warning", label: "Warning", color: "var(--adaptive-orange, #ffb06b)", height: 219, guidance: "Standby for evacuation" },
-  { key: "evacuate", label: "Evacuate", color: "var(--adaptive-danger, #ff5d5d)", height: 263, guidance: "Mandatory evacuation" },
+  { key: "normal", label: "Normal", color: "var(--adaptive-success, #57ff7b)", height: 73, guidance: "Below configured sensor advisory threshold; local hazards may remain" },
+  { key: "advisory", label: "Advisory", color: "var(--adaptive-warning, #ffe57b)", height: 148, guidance: "Sensor advisory; monitor official local updates" },
+  { key: "warning", label: "Warning", color: "var(--adaptive-orange, #ffb06b)", height: 219, guidance: "Sensor warning; prepare and check local authority guidance" },
+  { key: "evacuate", label: "Evacuate", color: "var(--adaptive-danger, #ff5d5d)", height: 263, guidance: "EVACUATE-level sensor alert; follow local authority instructions" },
 ] as const;
 
 export default function CommunityAlertThresholds({ station }: { station: Station }) {
   const { advisory, warning, evacuate } = station.thresholds;
-  const sourceLabel = station.dataSource === "simulator" ? "Virtual station" : station.dataSource === "device" ? "Configured station" : "Demo";
+  const sourceLabel = station.dataSource === "simulator" ? "Virtual station" : station.dataSource === "device" ? "Configured station" : "Unverified source";
   const ranges = {
     normal: `< ${advisory} cm`,
     advisory: `${advisory}–<${warning} cm`,
@@ -24,12 +24,13 @@ export default function CommunityAlertThresholds({ station }: { station: Station
       style={{ background: "var(--adaptive-surface, #00112e)", border: "1px solid #004aba", borderRadius: 10 }}
     >
       <h2 id="community-threshold-title" className="text-center text-[13px] font-medium leading-[17px]" style={{ color: "var(--adaptive-blue, #60a5fa)" }}>
-        Community Alert Threshold Tiers
+        Sensor Observation Thresholds
       </h2>
       <p className="mt-1 text-center text-[11px] leading-[14px]" style={{ color: "var(--adaptive-muted, #94a3b8)" }}>
-        {sourceLabel} thresholds · {station.id}
+        {sourceLabel} thresholds · {station.id}. Sensor tiers are not official evacuation orders. Forecasts are experimental and shown separately.
       </p>
 
+      <p className="subtle-note">Policy: {station.hazardPolicyState ?? "provisional"} · Observation: {station.observationTier ?? "UNKNOWN"} · Episode: {station.activeHazardTier ?? "None"} · {station.hazardDecision ?? "No policy decision yet"}</p>
       <div className="mt-[18px] grid h-[263px] grid-cols-[92px_minmax(0,1fr)] gap-2.5">
         <dl className="grid grid-rows-[44px_57px_68px_1fr]">
           {[...tiers].reverse().map((tier) => (

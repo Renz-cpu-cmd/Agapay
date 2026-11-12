@@ -7,7 +7,7 @@ const storageKey = "agapay-theme";
 const ThemeContext = createContext<{ theme: AppTheme; ready: boolean; setTheme: (theme: AppTheme) => void } | null>(null);
 
 // Run before first paint so a saved dark preference does not flash light.
-export const themeStartupScript = `try{document.documentElement.dataset.theme=localStorage.getItem("${storageKey}")==="dark"?"dark":"light"}catch{document.documentElement.dataset.theme="light"}`;
+export {themeStartupScript} from "@/lib/theme-startup";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, updateTheme] = useState<AppTheme>("light");
@@ -40,5 +40,5 @@ export function useTheme() {
 
 export function ThemeSelector() {
   const { theme, ready, setTheme } = useTheme();
-  return <select aria-label="Theme" className="design-input" disabled={!ready} value={theme} onChange={event => setTheme(event.target.value === "dark" ? "dark" : "light")}><option value="light">Default (Light)</option><option value="dark">Dark (Current theme)</option></select>;
+  return <select aria-label="Theme" className="design-input" disabled={!ready} value={theme} onChange={event => setTheme(event.target.value === "dark" ? "dark" : "light")}><option value="light">Default (Light)</option><option value="dark">Dark</option></select>;
 }

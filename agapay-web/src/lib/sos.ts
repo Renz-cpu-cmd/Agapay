@@ -1,6 +1,7 @@
 export type SosStatus = "ACTIVE" | "ACKNOWLEDGED" | "RESOLVED";
 export type SosRequest = {
   id: number;
+  version: number;
   request_id: string;
   resident_name: string;
   phone: string;
@@ -9,7 +10,7 @@ export type SosRequest = {
   message: string;
   latitude: number | null;
   longitude: number | null;
-  location_source: "gps" | "manual";
+  location_source: "gps" | "manual" | "redacted";
   accuracy_m: number | null;
   location_recorded_at: string | null;
   practice: boolean;

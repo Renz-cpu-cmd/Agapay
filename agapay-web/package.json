@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start:production": "node scripts/start-production.mjs",
+    "check:csp": "node scripts/check-csp.mjs",
+    "test": "node --test test/*.cjs test/*.mjs",
+    "test:browser": "node tests/forecast-smoke.cjs",
+    "test:staff-workspaces": "node tests/staff-workspaces-smoke.cjs",
+    "test:forecast-operations": "node tests/forecast-operations-smoke.cjs",
+    "test:operational-states": "node tests/operational-states-smoke.cjs"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.1.1",
@@ -16,11 +23,13 @@
     "recharts": "^3.10.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/google.maps": "^3.66.2",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "playwright": "1.64.1",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0"
   }
