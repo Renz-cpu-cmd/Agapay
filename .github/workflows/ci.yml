@@ -194,13 +194,45 @@ jobs:
       - name: Install pinned Chromium for isolated browser workflows
         run: npx playwright install --with-deps chromium
       - name: Run forecast, outage, keyboard and both-theme accessibility browser workflow
-        run: npm run test:browser
+        # On failure, surface the output tail as a public check annotation (logs need sign-in).
+        run: |
+          set +e
+          npm run test:browser 2>&1 | tee test-browser.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            echo "::error title=test:browser failed::$(tail -c 3000 test-browser.log | tr '\r\n' '  ' | sed 's/%/%25/g')"
+          fi
+          exit "$status"
       - name: Run incident ownership and station evidence browser workflow
-        run: npm run test:staff-workspaces
+        # On failure, surface the output tail as a public check annotation (logs need sign-in).
+        run: |
+          set +e
+          npm run test:staff-workspaces 2>&1 | tee test-staff-workspaces.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            echo "::error title=test:staff-workspaces failed::$(tail -c 3000 test-staff-workspaces.log | tr '\r\n' '  ' | sed 's/%/%25/g')"
+          fi
+          exit "$status"
       - name: Run published evidence and operations recovery browser workflow
-        run: npm run test:forecast-operations
+        # On failure, surface the output tail as a public check annotation (logs need sign-in).
+        run: |
+          set +e
+          npm run test:forecast-operations 2>&1 | tee test-forecast-operations.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            echo "::error title=test:forecast-operations failed::$(tail -c 3000 test-forecast-operations.log | tr '\r\n' '  ' | sed 's/%/%25/g')"
+          fi
+          exit "$status"
       - name: Review independent reading states, vocabulary and narrow large-text semantics
-        run: npm run test:operational-states
+        # On failure, surface the output tail as a public check annotation (logs need sign-in).
+        run: |
+          set +e
+          npm run test:operational-states 2>&1 | tee test-operational-states.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            echo "::error title=test:operational-states failed::$(tail -c 3000 test-operational-states.log | tr '\r\n' '  ' | sed 's/%/%25/g')"
+          fi
+          exit "$status"
 
   flutter:
     name: Flutter Analyze & Test
