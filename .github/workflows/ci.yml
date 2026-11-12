@@ -276,3 +276,55 @@ jobs:
             exit 1
           fi
           grep -q "Protected signing environment is incomplete" release-negative.log
+
+  postgres-core:
+    # R2: the complete backend core profile against real PostgreSQL 16 (synthetic data only).
+    name: Backend core tests on PostgreSQL 16
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: agapay-backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: agapay_ci
+          POSTGRES_PASSWORD: synthetic-ci-only
+          POSTGRES_DB: agapay_test_suite
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U agapay_ci -d agapay_test_suite"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      AGAPAY_MQTT_ENABLED: "false"
+      AGAPAY_TEST_SUITE_POSTGRES_URL: postgresql+psycopg://agapay_ci:synthetic-ci-only@127.0.0.1:5432/agapay_test_suite
+      AGAPAY_TEST_POSTGRES_RESTORE_URL: postgresql+psycopg://agapay_ci:synthetic-ci-only@127.0.0.1:5432/agapay_test_restore
+      AGAPAY_TEST_POSTGRES_MIGRATE_URL: postgresql+psycopg://agapay_ci:synthetic-ci-only@127.0.0.1:5432/agapay_test_migrate
+      AGAPAY_TEST_POSTGRES_ACCEPTANCE_URL: postgresql+psycopg://agapay_ci:synthetic-ci-only@127.0.0.1:5432/agapay_test_acceptance
+      AGAPAY_TEST_PG_BIN: /usr/lib/postgresql/16/bin
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: agapay-backend/requirements*.txt
+      - name: Install development requirements
+        run: python -m pip install -c requirements-lock.txt -r requirements-ci-core.txt
+      - name: Install broker test tools and PostgreSQL 16 client tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mosquitto mosquitto-clients postgresql-client-16
+          test -x /usr/lib/postgresql/16/bin/pg_dump
+      - name: Create the disposable restore, migration and acceptance databases
+        env:
+          PGPASSWORD: synthetic-ci-only
+        run: |
+          for name in agapay_test_restore agapay_test_migrate agapay_test_acceptance; do
+            psql -h 127.0.0.1 -U agapay_ci -d agapay_test_suite -v ON_ERROR_STOP=1 -c "CREATE DATABASE $name"
+          done
+      - name: Run the core profile in one process on PostgreSQL
+        run: python scripts/run_test_profile.py core
