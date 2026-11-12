@@ -1,0 +1,60 @@
+[
+  {
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "violations": []
+  },
+  {
+    "route": "/dashboard",
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "route": "/dashboard",
+    "theme": "dark",
+    "violations": []
+  },
+  {
+    "route": "/alerts",
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "route": "/alerts",
+    "theme": "dark",
+    "violations": []
+  },
+  {
+    "route": "/sos",
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "route": "/sos",
+    "theme": "dark",
+    "violations": []
+  },
+  {
+    "route": "/system-health",
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "route": "/system-health",
+    "theme": "dark",
+    "violations": []
+  },
+  {
+    "route": "/settings",
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "route": "/settings",
+    "theme": "dark",
+    "violations": []
+  }
+]

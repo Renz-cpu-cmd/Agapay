@@ -1,0 +1,30 @@
+✔ recent physical telemetry is live, with the backend stale boundary respected (7.5487ms)
+✔ an API failure cannot keep retained telemetry labeled live (0.5821ms)
+✔ offline and missing-data stations cannot be live (0.6195ms)
+✔ simulator origin is distinct from physical telemetry (0.5549ms)
+✔ malformed timestamps never establish freshness (0.6778ms)
+✔ a new snapshot arriving between display clock ticks remains fresh on every surface (0.8301ms)
+✔ station cards expire with the header while keeping the last real reading and tier (1.2464ms)
+✔ unavailable, malformed and administratively inactive sources stay unavailable (0.802ms)
+✔ Try again invokes the framework refetch callback and does not misdiagnose every page failure (3.3585ms)
+✔ refresh restores only the same account setup, with no cached forecasts (3.0282ms)
+✔ unconfirmed, corrupt, unknown-source and invalid-basin setups cannot auto-start (1.0262ms)
+✔ prototype keys are rejected and station setup remains independent (0.7946ms)
+✔ a fresh verified local device starts the physical demo without manual configuration (1.2641ms)
+✔ automatic setup respects Stop/custom settings and cannot invent fresh or remote inputs (0.7282ms)
+(node:23120) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-web/src/lib/rainfall-activity.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\Asus\OneDrive\Documents\Agapay\Agapay\agapay-web\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ missing hours remain unknown while a new tip appears as an ongoing hour (5.0491ms)
+✔ stale, wrong-station and simulated feeds cannot claim fresh physical rainfall (0.7782ms)
+✔ hour rollover clears the previous incomplete-hour amount until a new snapshot arrives (0.4599ms)
+✔ archived input can draw a demonstration chart but never supplies a current gauge total (0.4047ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1521.6712

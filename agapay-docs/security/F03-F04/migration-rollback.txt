@@ -1,0 +1,1 @@
+PASS: injected post-DROP migration failure rolls back telemetry IDs, measurements, alerts, outbox references and old schema; no temporary swap table survives

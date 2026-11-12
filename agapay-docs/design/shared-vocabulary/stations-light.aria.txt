@@ -1,0 +1,74 @@
+- main "Page content":
+  - paragraph: 6 STATIONS · 4 ONLINE · DEVICE
+  - 'button "normal-zero normal-zero Observation tier: NORMAL • ONLINE · 0 sec ago Observed · Water depth 0.0 cm Rainfall · received this UTC hour — mm Observation tier: NORMAL · Episode tier: None recorded (none) · Connectivity: online · Heartbeat age: 0 sec ago · Water depth: Observed · Latest sample validity: valid · Measured: 2026-10-23T05:25:53.117Z · Registry-verified physical source · Station datum: unconfirmed Depth: Observed · Fresh valid measurement · Value quality valid (latest sample valid) · Measured 2026-10-23T05:25:53.117Z · Rain: No valid reading · Rainfall interval/source unavailable; deprecated water telemetry rainfall excluded · Value quality unknown (latest sample unknown) · Measured — Depth measured 0 sec ago · fresh · Registry-verified physical source Rate — · Insufficient timing/coverage — Unknown trend"':
+    - heading "normal-zero" [level=2]
+    - text: "normal-zero Observation tier: NORMAL • ONLINE · 0 sec ago"
+    - term: Observed · Water depth
+    - definition: 0.0 cm
+    - term: Rainfall · received this UTC hour
+    - definition: — mm
+    - paragraph: "Observation tier: NORMAL · Episode tier: None recorded (none) · Connectivity: online · Heartbeat age: 0 sec ago · Water depth: Observed · Latest sample validity: valid · Measured: 2026-10-23T05:25:53.117Z · Registry-verified physical source · Station datum: unconfirmed"
+    - paragraph: "Depth: Observed · Fresh valid measurement · Value quality valid (latest sample valid) · Measured 2026-10-23T05:25:53.117Z · Rain: No valid reading · Rainfall interval/source unavailable; deprecated water telemetry rainfall excluded · Value quality unknown (latest sample unknown) · Measured —"
+    - paragraph: Depth measured 0 sec ago · fresh · Registry-verified physical source
+    - paragraph: Rate — · Insufficient timing/coverage
+    - paragraph: — Unknown trend
+  - 'button "critical critical Sensor episode: EVACUATE • ONLINE · 0 sec ago Observed · Water depth 105.0 cm Rainfall · received this UTC hour — mm Observation tier: EVACUATE · Episode tier: EVACUATE (observed) · Connectivity: online · Heartbeat age: 0 sec ago · Water depth: Observed · Latest sample validity: valid · Measured: 2026-10-23T05:25:53.117Z · Registry-verified physical source · Station datum: unconfirmed Depth: Observed · Fresh valid measurement · Value quality valid (latest sample valid) · Measured 2026-10-23T05:25:53.117Z · Rain: No valid reading · Rainfall interval/source unavailable; deprecated water telemetry rainfall excluded · Value quality unknown (latest sample unknown) · Measured — Depth measured 0 sec ago · fresh · Registry-verified physical source Rate — · Insufficient timing/coverage — Unknown trend"':
+    - heading "critical" [level=2]
+    - text: "critical Sensor episode: EVACUATE • ONLINE · 0 sec ago"
+    - term: Observed · Water depth
+    - definition: 105.0 cm
+    - term: Rainfall · received this UTC hour
+    - definition: — mm
+    - paragraph: "Observation tier: EVACUATE · Episode tier: EVACUATE (observed) · Connectivity: online · Heartbeat age: 0 sec ago · Water depth: Observed · Latest sample validity: valid · Measured: 2026-10-23T05:25:53.117Z · Registry-verified physical source · Station datum: unconfirmed"
+    - paragraph: "Depth: Observed · Fresh valid measurement · Value quality valid (latest sample valid) · Measured 2026-10-23T05:25:53.117Z · Rain: No valid reading · Rainfall interval/source unavailable; deprecated water telemetry rainfall excluded · Value quality unknown (latest sample unknown) · Measured —"
+    - paragraph: Depth measured 0 sec ago · fresh · Registry-verified physical source
+    - paragraph: Rate — · Insufficient timing/coverage
+    - paragraph: — Unknown trend
+  - button:
+    - heading "invalid-heartbeat" [level=2]
+    - text: "invalid-heartbeat Sensor episode: EVACUATE • ONLINE · 0 sec ago"
+    - term: Last known · Water depth
+    - definition: 105.0 cm
+    - term: Rainfall · received this UTC hour
+    - definition: — mm
+    - paragraph: "Observation tier: UNKNOWN · Episode tier: EVACUATE (unresolved) · Connectivity: online · Heartbeat age: 0 sec ago · Water depth: Last known · Latest sample validity: invalid · Measured: 2026-10-23T04:25:53.117Z · Registry-verified physical source · Station datum: unconfirmed"
+    - paragraph: "Depth: Last known · Latest sensor sample invalid; showing last valid depth · Value quality valid (latest sample invalid) · Measured 2026-10-23T04:25:53.117Z · Rain: No valid reading · Rainfall interval/source unavailable; deprecated water telemetry rainfall excluded · Value quality unknown (latest sample unknown) · Measured —"
+    - paragraph: Depth measured 1 hr ago · stale · Hazard unresolved · Registry-verified physical source
+    - paragraph: Rate — · Latest depth unavailable or stale; current trend unknown
+    - paragraph: Latest sensor sample invalid; showing last valid depth
+  - button:
+    - heading "stale-feed" [level=2]
+    - text: "stale-feed Sensor episode: EVACUATE • OFFLINE · 1 hr ago · Last known reading"
+    - term: Last known · Water depth
+    - definition: 105.0 cm
+    - term: Rainfall · received this UTC hour
+    - definition: — mm
+    - paragraph: "Observation tier: UNKNOWN · Episode tier: EVACUATE (unresolved) · Connectivity: offline · Heartbeat age: 1 hr ago · Water depth: Last known · Latest sample validity: valid · Measured: 2026-10-23T04:25:53.117Z · Registry-verified physical source · Station datum: unconfirmed"
+    - paragraph: "Depth: Last known · Measurement stale or feed unavailable; last known value · Value quality valid (latest sample valid) · Measured 2026-10-23T04:25:53.117Z · Rain: No valid reading · Rainfall interval/source unavailable; deprecated water telemetry rainfall excluded · Value quality unknown (latest sample unknown) · Measured —"
+    - paragraph: Depth measured 1 hr ago · stale · Hazard unresolved · Registry-verified physical source
+    - paragraph: Rate — · Latest depth unavailable or stale; current trend unknown
+    - paragraph: Measurement stale or feed unavailable; last known value
+  - button:
+    - heading "invalid-no-history" [level=2]
+    - text: "invalid-no-history Observation tier: UNKNOWN • ONLINE · 0 sec ago"
+    - term: No valid reading · Water depth
+    - definition: — cm
+    - term: Rainfall · received this UTC hour
+    - definition: — mm
+    - paragraph: "Observation tier: UNKNOWN · Episode tier: None recorded (unknown) · Connectivity: online · Heartbeat age: 0 sec ago · Water depth: No valid reading · Latest sample validity: invalid · Measured: unknown · Registry-verified physical source · Station datum: unconfirmed"
+    - paragraph: "Depth: No valid reading · Latest sensor sample invalid; no valid depth available · Value quality invalid (latest sample invalid) · Measured — · Rain: No valid reading · Rainfall interval/source unavailable; deprecated water telemetry rainfall excluded · Value quality unknown (latest sample unknown) · Measured —"
+    - paragraph: Depth measured Unknown · missing · Registry-verified physical source
+    - paragraph: Rate — · Latest depth unavailable or stale; current trend unknown
+    - paragraph: Latest sensor sample invalid; no valid depth available
+  - 'button "empty-account empty-account Observation tier: UNKNOWN • NO_DATA · 1 hr ago · Last known reading No valid reading · Water depth — cm Rainfall · received this UTC hour — mm Observation tier: UNKNOWN · Episode tier: None recorded (unknown) · Connectivity: no_data · Heartbeat age: 1 hr ago · Water depth: No valid reading · Latest sample validity: unknown · Measured: unknown · Registry-verified physical source · Station datum: unconfirmed Depth: No valid reading · No measurement received · Value quality unknown (latest sample unknown) · Measured — · Rain: No valid reading · Rainfall interval/source unavailable; deprecated water telemetry rainfall excluded · Value quality unknown (latest sample unknown) · Measured — Depth measured No readings yet · missing · Registry-verified physical source Rate — · Latest depth unavailable or stale; current trend unknown No measurement received"':
+    - heading "empty-account" [level=2]
+    - text: "empty-account Observation tier: UNKNOWN • NO_DATA · 1 hr ago · Last known reading"
+    - term: No valid reading · Water depth
+    - definition: — cm
+    - term: Rainfall · received this UTC hour
+    - definition: — mm
+    - paragraph: "Observation tier: UNKNOWN · Episode tier: None recorded (unknown) · Connectivity: no_data · Heartbeat age: 1 hr ago · Water depth: No valid reading · Latest sample validity: unknown · Measured: unknown · Registry-verified physical source · Station datum: unconfirmed"
+    - paragraph: "Depth: No valid reading · No measurement received · Value quality unknown (latest sample unknown) · Measured — · Rain: No valid reading · Rainfall interval/source unavailable; deprecated water telemetry rainfall excluded · Value quality unknown (latest sample unknown) · Measured —"
+    - paragraph: Depth measured No readings yet · missing · Registry-verified physical source
+    - paragraph: Rate — · Latest depth unavailable or stale; current trend unknown
+    - paragraph: No measurement received

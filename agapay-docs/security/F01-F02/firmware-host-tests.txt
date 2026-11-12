@@ -1,0 +1,9 @@
+PASS: acquisition/filtering/depth, scheduling/wrap, offline GPIO/fail-safe, ISR intervals/debounce, sequences/NVS, queue windows, actual JSON
+PASS: full then channel-11 active/passive before begin, explicit dwell, anonymous channel/RSSI, country bounds/errors, SSID/BSSID/pair matching and privacy, empty/error cleanup, once per boot, GPIO/NVS preservation
+PASS: Wi-Fi/MQTT gates, 10s/5s retries and wrap, framework event reasons/rate limits, authenticated CONNACK failures, subscription retry, bounded rain write failure and independent GPIO
+PASS: SSID bounded hex/escaping, hidden/exact/mismatch rules, known BSSID/channel with unchanged password, 30s association grace, link/DHCP outcomes and no secret logging
+PASS: real pulse red-boundary regression, opt-in bench GPIOs, unchanged depth/telemetry, 3-second test/restore/critical preemption, wrap and bounded Serial; NVS rain/sequence unchanged
+PASS: 2-second telemetry boundary retains tips before the window and reports them once at the boundary
+PASS: rain queue/task allocation failures are diagnosed and preserve local sensing
+PASS: all 6 firmware-generated valid/invalid and zero/one/two-tip JSON payloads satisfy JSON Schema and FastAPI TelemetryCreate; legacy extra fields rejected
+PASS: actual firmware rain snapshots satisfy FastAPI contract; debounce, offline retention, NVS failure/recovery, ACK and reboot baselines tested

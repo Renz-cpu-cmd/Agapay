@@ -1,0 +1,89 @@
+{
+  "vocabulary": {
+    "observed": "Observed",
+    "lastKnown": "Last known",
+    "noValidReading": "No valid reading",
+    "experimentalProjection": "Experimental projection",
+    "officialAdvisory": "Official advisory",
+    "practiceSos": "SOS"
+  },
+  "cases": [
+    {
+      "id": "normal-zero",
+      "depth": 0,
+      "current": true,
+      "quality": "valid",
+      "connectivity": "online",
+      "episodeTier": null,
+      "hazardState": "none",
+      "label": "Observed",
+      "measuredAt": "2026-10-23T00:00:00Z"
+    },
+    {
+      "id": "critical",
+      "depth": 105,
+      "current": true,
+      "quality": "valid",
+      "connectivity": "online",
+      "episodeTier": "EVACUATE",
+      "hazardState": "observed",
+      "label": "Observed",
+      "measuredAt": "2026-10-23T00:00:00Z"
+    },
+    {
+      "id": "invalid-heartbeat",
+      "depth": 105,
+      "current": false,
+      "quality": "invalid",
+      "connectivity": "online",
+      "episodeTier": "EVACUATE",
+      "hazardState": "unresolved",
+      "label": "Last known",
+      "measuredAt": "2026-10-23T00:00:00Z"
+    },
+    {
+      "id": "stale-feed",
+      "depth": 105,
+      "current": false,
+      "quality": "valid",
+      "connectivity": "offline",
+      "episodeTier": "EVACUATE",
+      "hazardState": "unresolved",
+      "label": "Last known",
+      "measuredAt": "2026-10-23T00:00:00Z"
+    },
+    {
+      "id": "invalid-no-history",
+      "depth": null,
+      "current": false,
+      "quality": "invalid",
+      "connectivity": "online",
+      "episodeTier": null,
+      "hazardState": "unknown",
+      "label": "No valid reading",
+      "measuredAt": null
+    },
+    {
+      "id": "empty-account",
+      "depth": null,
+      "current": false,
+      "quality": "unknown",
+      "connectivity": "no_data",
+      "episodeTier": null,
+      "hazardState": "unknown",
+      "label": "No valid reading",
+      "measuredAt": null
+    },
+    {
+      "id": "api-outage",
+      "depth": 105,
+      "current": false,
+      "quality": "valid",
+      "connectivity": "unconfirmed",
+      "episodeTier": "EVACUATE",
+      "hazardState": "unresolved",
+      "label": "Last known",
+      "measuredAt": "2026-10-23T00:00:00Z"
+    }
+  ]
+}

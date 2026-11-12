@@ -1,5 +1,20 @@
 # AGAPAY Virtual Monitoring Station
 
+**Source isolation update:** the HTTP simulator sends to
+`/api/exercises/telemetry` and requires a registry-designated exercise identity.
+It cannot update operational dashboards, heartbeat, alerts or notifications.
+Follow [F05/F06 source review and rollout](security/F05-F06/README.md).
+The older operational-flow examples below describe the pre-isolation workflow.
+
+**Ordering update:** the sender now requires `--device-id`, `--config-version`,
+and a durable/increasing `--boot-sequence` for each run. Add those arguments to
+the older scenario examples below. See [F03/F04](security/F03-F04/README.md).
+
+**Authentication update:** real sends now require an explicitly commissioned
+station and `AGAPAY_STATION_INGEST_TOKEN` with HTTP/both scope. Follow
+[F01/F02 provisioning and rollout](security/F01-F02/README.md) first. Staff/resident
+login tokens cannot ingest. Dry-run generation remains usable without credentials.
+
 The virtual station exercises the current telemetry path before the physical
 station is assembled:
 

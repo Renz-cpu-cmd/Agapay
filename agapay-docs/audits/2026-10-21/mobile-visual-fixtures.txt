@@ -1,0 +1,11 @@
+00:00 +0: loading C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/theme_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: new installs default to light; dark selection survives a restart
+00:00 +1: rapid switching persists the last choice
+00:00 +2: late restoration cannot overwrite a user selection
+00:00 +3: storage failure leaves the chosen theme usable and reports unsaved state
+00:00 +4: gauge surface follows theme without changing scale or water level
+00:01 +5: default gauge clamps fill while keeping measured level semantics
+00:01 +6: profile selector updates all tabs and map fallback in both themes
+00:06 +7: (tearDownAll)
+00:06 +7: All tests passed!

@@ -1,0 +1,76 @@
+{
+  "mode": "mobile",
+  "stations": 20,
+  "viewers": 40,
+  "rounds": 2,
+  "concurrency": 10,
+  "samples_per_station": 120,
+  "response_history_limit": 20,
+  "cold": {
+    "requests": 10,
+    "status_counts": {
+      "200": 10
+    },
+    "sql_statements": 548,
+    "retained_refresh_responses": 0,
+    "errors": {},
+    "cpu_seconds": 1.078125,
+    "wall_seconds": 1.1342229999936535,
+    "cpu_seconds_per_success": 0.1078125,
+    "response_bytes": 1519500,
+    "mean_success_bytes": 151950.0,
+    "p95_http_seconds": 1.125627399997029,
+    "p99_http_seconds": 1.125627399997029,
+    "p95_snapshot_age_seconds": 0.925873,
+    "p99_snapshot_age_seconds": 0.925873
+  },
+  "steady": {
+    "requests": 80,
+    "status_counts": {
+      "200": 59,
+      "503": 21
+    },
+    "sql_statements": 1484,
+    "retained_refresh_responses": 33,
+    "errors": {
+      "Read model is rebuilding; retain original timestamps and retry": 21
+    },
+    "cpu_seconds": 9.8125,
+    "wall_seconds": 9.655407300000661,
+    "cpu_seconds_per_success": 0.1663135593220339,
+    "response_bytes": 8968539,
+    "mean_success_bytes": 151982.4406779661,
+    "p95_http_seconds": 2.5442863999996916,
+    "p99_http_seconds": 2.650459200005571,
+    "p95_snapshot_age_seconds": 4.066051,
+    "p99_snapshot_age_seconds": 4.085005
+  },
+  "committed_to_first_visible_seconds": 2.367322,
+  "visibility_probe_attempts": 13,
+  "scope": "Synthetic SQLite ASGI; no TCP/BFF/render/device/battery evidence. All modes include auth and workflow instrumentation.",
+  "producer_metrics": {
+    "readmodel.build": {
+      "count": 4,
+      "failures": 0,
+      "total_seconds": 9.988622399992892,
+      "maximum_seconds": 7.818075399998634,
+      "histogram": {
+        "1": 3,
+        "10": 1
+      },
+      "p95_seconds_upper_bound": 10,
+      "p99_seconds_upper_bound": 10
+    },
+    "readmodel.hit": {
+      "count": 82,
+      "failures": 0,
+      "total_seconds": 0.0,
+      "maximum_seconds": 0.0,
+      "histogram": {
+        "0.005": 82
+      },
+      "p95_seconds_upper_bound": 0.005,
+      "p99_seconds_upper_bound": 0.005
+    }
+  }
+}

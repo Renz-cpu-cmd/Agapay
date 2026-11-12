@@ -1,0 +1,25 @@
+{
+  "organization": "PENDING responsible organization decision",
+  "issuing_authority": "PENDING responsible organization decision",
+  "operator_hours": "PENDING responsible organization decision",
+  "support_contact": "PENDING responsible organization decision",
+  "fallback_contact": "PENDING responsible organization decision",
+  "privacy_contact": "PENDING responsible organization decision",
+  "incident_owner": "PENDING responsible organization decision",
+  "backup_owner": "PENDING responsible organization decision",
+  "database_owner": "PENDING responsible organization decision",
+  "push_owner": "PENDING responsible organization decision",
+  "maps_cost_owner": "PENDING responsible organization decision",
+  "status": "unapproved",
+  "policy_sha256": "cba0e932b19a563112c7cc61050f5033442c0de834daa1acc4f73daa7804e487",
+  "review_expires_at": "REPLACE_WITH_REVIEWED_EXPIRY_UTC",
+  "rpo_seconds": 900,
+  "rto_seconds": 14400,
+  "evidence": {
+    "privacy_review": "REPLACE_WITH_SHA256_OF_REAL_PROTECTED_EVIDENCE",
+    "pia_review": "REPLACE_WITH_SHA256_OF_REAL_PROTECTED_EVIDENCE",
+    "restore_drill": "REPLACE_WITH_SHA256_OF_REAL_PROTECTED_EVIDENCE",
+    "access_review": "REPLACE_WITH_SHA256_OF_REAL_PROTECTED_EVIDENCE",
+    "retention_exercise": "REPLACE_WITH_SHA256_OF_REAL_PROTECTED_EVIDENCE"
+  }
+}

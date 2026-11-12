@@ -1,0 +1,11 @@
+{
+  "scope": "Pure presentation function; synthetic API record; no live service",
+  "station_id": "STATION_001",
+  "api_coordinates": null,
+  "display_coordinates": {
+    "latitude": 15.98165,
+    "longitude": 120.560573,
+    "status": "planned"
+  },
+  "reason": "Matching bundled station supplies a map point even though the API has no coordinates"
+}

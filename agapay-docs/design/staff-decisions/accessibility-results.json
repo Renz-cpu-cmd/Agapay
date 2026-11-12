@@ -1,0 +1,22 @@
+[
+  {
+    "surface": "command",
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "surface": "command",
+    "theme": "dark",
+    "violations": []
+  },
+  {
+    "surface": "station",
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "surface": "station",
+    "theme": "dark",
+    "violations": []
+  }
+]

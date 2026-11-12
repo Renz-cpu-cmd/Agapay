@@ -38,12 +38,100 @@
           ],
           "default": null,
           "title": "Water Depth Cm"
+        },
+        "lower_depth_cm": {
+          "anyOf": [
+            {
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lower Depth Cm"
+        },
+        "upper_depth_cm": {
+          "anyOf": [
+            {
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upper Depth Cm"
         }
       },
       "required": [
         "horizon_minutes"
       ],
       "title": "ForecastPoint",
+      "type": "object"
+    },
+    "ForecastUncertainty": {
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "const": "calibration_event_max_absolute_residual_all_horizons",
+          "title": "Method",
+          "type": "string"
+        },
+        "nominal_coverage": {
+          "maximum": 0.99,
+          "minimum": 0.8,
+          "title": "Nominal Coverage",
+          "type": "number"
+        },
+        "withheld_event_coverage": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Withheld Event Coverage",
+          "type": "number"
+        },
+        "calibration_events": {
+          "minimum": 1,
+          "title": "Calibration Events",
+          "type": "integer"
+        },
+        "test_events": {
+          "minimum": 1,
+          "title": "Test Events",
+          "type": "integer"
+        },
+        "policy_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Policy Sha256",
+          "type": "string"
+        },
+        "display_resolution_cm": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "title": "Display Resolution Cm",
+          "type": "number"
+        },
+        "notice": {
+          "const": "Event-calibrated local-depth interval; coverage can fail under drift",
+          "default": "Event-calibrated local-depth interval; coverage can fail under drift",
+          "title": "Notice",
+          "type": "string"
+        }
+      },
+      "required": [
+        "method",
+        "nominal_coverage",
+        "withheld_event_coverage",
+        "calibration_events",
+        "test_events",
+        "policy_sha256",
+        "display_resolution_cm"
+      ],
+      "title": "ForecastUncertainty",
       "type": "object"
     }
   },
@@ -62,6 +150,7 @@
     "status": {
       "enum": [
         "not_trained",
+        "unavailable",
         "insufficient_data",
         "stale_data",
         "invalid_data",
@@ -210,6 +299,127 @@
       },
       "title": "Forecasts",
       "type": "array"
+    },
+    "forecast_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Forecast Id"
+    },
+    "deployment_version": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deployment Version"
+    },
+    "configuration_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Configuration Hash"
+    },
+    "reference_datum": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reference Datum"
+    },
+    "model_card_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model Card Id"
+    },
+    "data_cutoff": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Data Cutoff"
+    },
+    "measurement_source": {
+      "anyOf": [
+        {
+          "const": "registry_verified_physical_device",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Measurement Source"
+    },
+    "ingress_identity": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ingress Identity"
+    },
+    "registry_version": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Registry Version"
+    },
+    "uncertainty": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ForecastUncertainty"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [

@@ -1,0 +1,40 @@
+{
+  "raw_events": 34561,
+  "raw_retention_days": 2,
+  "cadence_seconds": 5,
+  "summary_rows": 43849,
+  "summary_years": 5,
+  "journal_bytes": 40697856,
+  "baseline": {
+    "iterations": 10,
+    "cpu_seconds": 24.65625,
+    "p50_seconds": 2.4768068500015943,
+    "p95_seconds": 2.882335599999351,
+    "p99_seconds": 2.882335599999351,
+    "sqlite_vm_instructions_approx": 1382000
+  },
+  "optimized": {
+    "iterations": 10,
+    "cpu_seconds": 0.046875,
+    "p50_seconds": 0.004851999998209067,
+    "p95_seconds": 0.006867000003694557,
+    "p99_seconds": 0.006867000003694557,
+    "sqlite_vm_instructions_approx": 0
+  },
+  "query_plans": {
+    "hours": [
+      "SEARCH rain_hour_totals USING INDEX sqlite_autoindex_rain_hour_totals_1 (station=? AND source=? AND hour>? AND hour<?)"
+    ],
+    "latest_tips": [
+      "SEARCH events USING INDEX ix_rain_events_tips (station=? AND source=? AND id>?)"
+    ],
+    "anchor": [
+      "SEARCH events USING INDEX ix_rain_events_anchor (station=? AND source=? AND received>? AND received<?)"
+    ],
+    "gaps": [
+      "SEARCH gaps USING INDEX ix_rain_gaps_overlap (station=? AND source=? AND end>?)"
+    ]
+  },
+  "products_equal": true,
+  "scope": "One synthetic station, zero-rain heartbeat load, warm local SQLite reads. Bulk-generated benchmark data; not ingestion throughput, power, physical calibration or managed-store capacity evidence."
+}

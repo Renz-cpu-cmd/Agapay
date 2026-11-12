@@ -1,0 +1,20 @@
+{
+  "station_id": "STATION_001",
+  "revision": 1,
+  "installation": {
+    "datum": "UNVALIDATED prototype datum",
+    "installation_height_cm": 150.0,
+    "sensor_min_cm": 20.0,
+    "sensor_max_cm": 450.0,
+    "uncertainty_cm": 2.0,
+    "range_margin_cm": 5.0,
+    "advisory_cm": 60.0,
+    "warning_cm": 85.0,
+    "critical_cm": 100.0,
+    "rain_mm_per_tip": 0.7,
+    "fault_policy": "latch_hazard_signal_fault"
+  },
+  "validation_status": "prototype",
+  "evidence": "Mathematical prototype only; mounting and controlled range/volume tests pending",
+  "config_hash": "c5eed6b3f6b820c6a77342c4e30b64cbd9c46657eec086e115b5fff590d7557b"
+}

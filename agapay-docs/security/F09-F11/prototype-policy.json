@@ -1,0 +1,30 @@
+{
+  "name": "AGAPAY prototype recovery policy",
+  "version": 0,
+  "state": "provisional",
+  "basis": "App-owner requested practical defaults for the prototype; physical validation is pending",
+  "rules": {
+    "advisory_hysteresis_cm": 2,
+    "warning_hysteresis_cm": 2,
+    "evacuate_hysteresis_cm": 2,
+    "recovery_samples": 3,
+    "recovery_seconds": 10,
+    "max_sample_gap_seconds": 15,
+    "max_change_cm_per_second": 10
+  },
+  "escalation": "Immediate on increasing severity, including a suspicious critical rise; add a review flag rather than suppressing it",
+  "recovery": "All crossed exit bands must be satisfied; invalid samples, excessive gaps, reboot/session changes or policy changes restart persistence",
+  "issuer": {
+    "id": "AGAPAY_APP_OPS",
+    "name": "AGAPAY App Operations",
+    "authority_class": "app_operator",
+    "scope": "Application advisories; no public evacuation authority claimed",
+    "default_citywide_grant": false
+  },
+  "application_area": {
+    "id": "AGAPAY:APPLICATION",
+    "name": "AGAPAY application advisories",
+    "area_class": "application",
+    "geographic_exposure_claim": false
+  }
+}

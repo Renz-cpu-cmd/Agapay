@@ -1,0 +1,8 @@
+{
+  "scope": "Direct actual queue function with synthetic in-memory rows; no network calls",
+  "total": 21,
+  "first_page_count": 20,
+  "first_page_has_more": true,
+  "target_on_first_page": false,
+  "target_on_second_page": true
+}

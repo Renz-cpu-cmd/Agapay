@@ -22,10 +22,18 @@
           "title": "Water Depth Cm"
         },
         "rainfall_mm": {
-          "maximum": 1000,
-          "minimum": 0,
-          "title": "Rainfall Mm",
-          "type": "number"
+          "anyOf": [
+            {
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rainfall Mm"
         },
         "rainfall_interval_seconds": {
           "anyOf": [
@@ -53,7 +61,6 @@
       "required": [
         "recorded_at",
         "water_depth_cm",
-        "rainfall_mm",
         "sensor_quality"
       ],
       "title": "PredictionSample",

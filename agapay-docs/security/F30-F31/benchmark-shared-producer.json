@@ -1,0 +1,51 @@
+{
+  "mode": "shared",
+  "stations": 20,
+  "viewers": 40,
+  "rounds": 2,
+  "concurrency": 10,
+  "samples_per_station": 120,
+  "response_history_limit": 120,
+  "cold": {
+    "requests": 10,
+    "status_counts": {
+      "200": 10
+    },
+    "sql_statements": 546,
+    "retained_refresh_responses": 0,
+    "errors": {},
+    "cpu_seconds": 1.34375,
+    "wall_seconds": 1.2055818000008003,
+    "cpu_seconds_per_success": 0.134375,
+    "response_bytes": 4614700,
+    "mean_success_bytes": 461470.0,
+    "p95_http_seconds": 1.1978256000002148,
+    "p99_http_seconds": 1.1978256000002148,
+    "p95_snapshot_age_seconds": 1.00397,
+    "p99_snapshot_age_seconds": 1.00397
+  },
+  "steady": {
+    "requests": 80,
+    "status_counts": {
+      "200": 60,
+      "503": 20
+    },
+    "sql_statements": 1750,
+    "retained_refresh_responses": 34,
+    "errors": {
+      "Read model is rebuilding; retain original timestamps and retry": 20
+    },
+    "cpu_seconds": 9.015625,
+    "wall_seconds": 8.375433500004874,
+    "cpu_seconds_per_success": 0.15026041666666667,
+    "response_bytes": 27691868,
+    "mean_success_bytes": 461506.13333333336,
+    "p95_http_seconds": 2.4190077999955975,
+    "p99_http_seconds": 2.5413764999975683,
+    "p95_snapshot_age_seconds": 3.877466,
+    "p99_snapshot_age_seconds": 4.036476
+  },
+  "committed_to_first_visible_seconds": 1.680259,
+  "visibility_probe_attempts": 11,
+  "scope": "Synthetic SQLite ASGI; no TCP/BFF/render/device/battery evidence. All modes include auth and workflow instrumentation."
+}
