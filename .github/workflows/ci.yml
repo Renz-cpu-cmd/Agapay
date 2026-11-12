@@ -16,9 +16,13 @@ concurrency:
 
 jobs:
   backend:
-    name: Backend Tests
+    name: Backend ${{ matrix.profile }} tests
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [core, ml, hybrid]
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: agapay-backend
@@ -34,9 +38,87 @@ jobs:
           cache: pip
           cache-dependency-path: agapay-backend/requirements*.txt
       - name: Install development requirements
-        run: python -m pip install -r requirements-dev.txt
-      - name: Run complete backend suite (isolated SQLite and fakes)
-        run: python -m pytest -q
+        run: python -m pip install -c requirements-lock.txt -r requirements-ci-${{ matrix.profile }}.txt
+      - name: Install isolated broker test tools
+        if: matrix.profile == 'core'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mosquitto mosquitto-clients
+      - name: Run assigned suite (isolated SQLite and synthetic fixtures)
+        run: python scripts/run_test_profile.py ${{ matrix.profile }}
+
+  forecast-contracts:
+    name: Backend / web / mobile forecast contract drift
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -c agapay-backend/requirements-lock.txt -r agapay-backend/requirements-ci-core.txt
+      - run: python -m app.export_prediction_contracts --check
+        working-directory: agapay-backend
+
+  postgres-restore:
+    name: Disposable PostgreSQL migration / restore
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: agapay_ci
+          POSTGRES_PASSWORD: synthetic-ci-only
+          POSTGRES_DB: agapay_test_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U agapay_ci -d agapay_test_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      AGAPAY_TEST_POSTGRES_URL: postgresql+psycopg://agapay_ci:synthetic-ci-only@127.0.0.1:5432/agapay_test_ci
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -c requirements-lock.txt -r requirements-ci-core.txt
+        working-directory: agapay-backend
+      - run: python -m pytest tests/test_postgres_restore.py -q
+        working-directory: agapay-backend
+
+  dependency-security:
+    name: Dependency vulnerability checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "24"
+      - run: python -m pip install pip-audit==2.10.1
+      - run: python -m pip_audit -r requirements-audit.txt --strict
+        working-directory: agapay-backend
+      - run: npm ci
+        working-directory: agapay-web
+      - run: npm audit --audit-level=high
+        working-directory: agapay-web
+
+  container-build:
+    name: Build core production container
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - run: docker build --target core -t agapay-core:ci agapay-backend
+      - run: docker run --rm --entrypoint python agapay-core:ci -c "from app.ml.water_depth import JsonDepthPredictor; from app.ml.decision_evaluation import DecisionPolicy; print('core forecast runtime imports without pandas or sklearn')"
 
   firmware-build:
     name: ESP32 Firmware Build
@@ -103,10 +185,22 @@ jobs:
           cache-dependency-path: agapay-web/package-lock.json
       - name: Install locked dependencies
         run: npm ci
+      - name: Run web contracts and component tests
+        run: npm test
       - name: Check TypeScript
         run: npm run typecheck
       - name: Build Next.js without live services or a Maps key
-        run: npm run build
+        run: npm run build -- --webpack
+      - name: Install pinned Chromium for isolated browser workflows
+        run: npx playwright install --with-deps chromium
+      - name: Run forecast, outage, keyboard and both-theme accessibility browser workflow
+        run: npm run test:browser
+      - name: Run incident ownership and station evidence browser workflow
+        run: npm run test:staff-workspaces
+      - name: Run published evidence and operations recovery browser workflow
+        run: npm run test:forecast-operations
+      - name: Review independent reading states, vocabulary and narrow large-text semantics
+        run: npm run test:operational-states
 
   flutter:
     name: Flutter Analyze & Test
@@ -130,3 +224,23 @@ jobs:
         run: flutter analyze
       - name: Run unit and widget tests (no emulator or device)
         run: flutter test
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+      - name: Check protected mobile release policy using synthetic archives
+        run: python -m unittest discover -s tools -p test_release.py
+      - name: Select runner Java 17
+        run: echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+      - name: Compile development Android APK without production secrets
+        run: flutter build apk --debug --flavor development
+      - name: Verify unconfigured protected signing is rejected
+        working-directory: agapay-mobile/android
+        shell: bash
+        run: |
+          if env -u AGAPAY_KEYSTORE_PATH -u AGAPAY_KEYSTORE_PASSWORD -u AGAPAY_KEY_ALIAS -u AGAPAY_KEY_PASSWORD -u AGAPAY_UPLOAD_SIGNER_SHA256 ./gradlew :app:validateProductionReleasePolicy --console=plain > release-negative.log 2>&1; then
+            cat release-negative.log
+            echo "Unconfigured release unexpectedly accepted"
+            exit 1
+          fi
+          grep -q "Protected signing environment is incomplete" release-negative.log
