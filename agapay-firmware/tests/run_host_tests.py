@@ -24,6 +24,15 @@ build = firmware / ".pio" / "host-tests"
 stubs = build / "stubs"
 (stubs / "freertos").mkdir(parents=True, exist_ok=True)
 header = (firmware / "tests" / "host_stubs.h").as_posix()
+# The committed prototype header must be reproducible from its versioned configuration record.
+sys.path.insert(0, str(firmware / "tools"))
+from render_station_config import render  # noqa: E402
+_record = json.loads((firmware / "config" / "prototype_config.json").read_text(encoding="utf-8"))
+_header = (firmware / "include" / "prototype_config.h").read_text(encoding="utf-8")
+_generated = _header[_header.index("// Generated from a reviewed API configuration"):]
+if render(_record) != _generated:
+    raise SystemExit("include/prototype_config.h differs from config/prototype_config.json; re-render it")
+print("PASS: prototype_config.h reproduces from config/prototype_config.json (hash " + _record["config_hash"][:12] + ")", file=sys.stderr)
 (stubs / "transport_policy.h").write_text((firmware / "include/transport_policy.h").read_text(encoding="utf-8"),encoding="utf-8")
 (stubs / "station_config.h").write_text((firmware / "include/prototype_config.h").read_text(encoding="utf-8"),encoding="utf-8")
 (stubs / "prototype_config.h").write_text((firmware / "include" / "prototype_config.h").read_text(encoding="utf-8"),encoding="utf-8")

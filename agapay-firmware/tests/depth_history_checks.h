@@ -68,6 +68,6 @@ void testDepthHistory() {
   depthAcknowledgement(topic,reinterpret_cast<uint8_t*>(body),size);
   assert(!depthInFlightReady && xQueueReceive(depthAckQueue,&restored,0)==pdTRUE);
   assert(fresh.acknowledge(restored) && fresh.pending()==0);
-  mqttClient.online=false;setMedian(50);expectPins(LOW,LOW,HIGH,LOW);
+  mqttClient.online=false;setMedian(DIST_EVACUATE);expectPins(LOW,LOW,HIGH,LOW);
   std::cerr << "PASS: depth outage/reboot restore, immutable JSON, bounded capacity/replay, CRC/torn-write recovery, exact ACK removal, wrapped-slot protection and local GPIO responsiveness\n";
 }

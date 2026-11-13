@@ -4,6 +4,19 @@
 #include <limits>
 
 void expectNear(float actual, float expected) { assert(fabs(actual - expected) < 0.01F); }
+// Depth points inside each tier, derived from the configured geometry (150 cm bench, 65 cm rig, ...).
+constexpr float DEPTH_NORMAL = THRESHOLD_ADVISORY_CM * 0.5F;
+constexpr float DEPTH_ADVISORY = (THRESHOLD_ADVISORY_CM + THRESHOLD_WARNING_CM) * 0.5F;
+constexpr float DEPTH_WARNING = (THRESHOLD_WARNING_CM + THRESHOLD_EVACUATE_CM) * 0.5F;
+constexpr float DEPTH_EVACUATE = THRESHOLD_EVACUATE_CM + (SENSOR_HEIGHT_CM - MIN_DISTANCE_CM - THRESHOLD_EVACUATE_CM) * 0.5F;
+static_assert(SENSOR_HEIGHT_CM - DEPTH_EVACUATE > MIN_DISTANCE_CM, "Evacuate test point must stay in sensor range");
+unsigned long echoForDistance(float cm) { return static_cast<unsigned long>(lround(cm / 0.01715F)); }
+// Matching sensor distances for setMedian(); DIST_EVACUATE is exactly the critical boundary.
+constexpr float DIST_NORMAL = SENSOR_HEIGHT_CM - DEPTH_NORMAL;
+constexpr float DIST_ADVISORY = SENSOR_HEIGHT_CM - DEPTH_ADVISORY;
+constexpr float DIST_WARNING = SENSOR_HEIGHT_CM - DEPTH_WARNING;
+constexpr float DIST_EVACUATE = SENSOR_HEIGHT_CM - THRESHOLD_EVACUATE_CM;
+
 void setMedian(float distance) {
   blindZoneSeen=false;
   validSamples = 5;
@@ -124,7 +137,7 @@ void testWiFiDiscovery() {
   const int scans=WiFi.scanCalls;discoverWiFiOnce(false);
   assert(WiFi.scanCalls==scans && logged("SKIPPED: station initialization failed"));
   // Unavailable network/discovery must not affect physical thresholds/outputs.
-  setMedian(50);expectPins(LOW,LOW,HIGH,LOW);
+  setMedian(DIST_EVACUATE);expectPins(LOW,LOW,HIGH,LOW);
   assert(rainPreferences.storedLifetime==persisted && !logged("HOST_FAKE_PASSWORD"));
   WiFi.beginCalls=0;wifiAttempted=false;lastWifiStatus=-1;
   wifiPinEligible=false;wifiPinSsidMismatch=false;wifiPinnedAttempt=false;
@@ -276,7 +289,7 @@ void testNetworkDiagnostics() {
   assert(logged("FAILED (MQTT disabled; check memory)"));
   mqttClient.online=false;const int attempts=mqttClient.connectCalls;
   maintainMqttNonBlocking(fakeMs+10000);assert(mqttClient.connectCalls==attempts);
-  setMedian(50);expectPins(LOW,LOW,HIGH,LOW);
+  setMedian(DIST_EVACUATE);expectPins(LOW,LOW,HIGH,LOW);
   assert(!logged("HOST_FAKE_PASSWORD"));
   std::cerr << "PASS: Wi-Fi/MQTT gates, 10s/5s retries and wrap, framework event reasons/rate limits, authenticated CONNACK failures, subscription retry, bounded rain write failure and independent GPIO\n";
 }
@@ -285,44 +298,45 @@ void testLocalAlertDiagnostics() {
   localCommandLength=0;localCommandOverflow=false;
   const auto lifetime=rainLifetimeTips,persisted=rainPreferences.storedLifetime,sequence=sequenceNo;
   float distance,depth;
-  // The actual integer-pulse acquisition crosses critical with 30 cm near-range
-  // margin; the old 120/100/20 geometry is rejected by configuration validation.
-  echoes={2916,2915,1166};
+  // The actual integer-pulse acquisition crosses critical one echo step either side of the
+  // configured boundary; the old 120/100/20 geometry is rejected by configuration validation.
+  const unsigned long criticalEcho=static_cast<unsigned long>(floorf(DIST_EVACUATE/0.01715F));
+  echoes={criticalEcho+1,criticalEcho,1166};
   assert(readDistanceOnce(distance) && calculateWaterDepth(distance,depth) && classifyAlert(depth)==AlertTier::WARNING);
   assert(readDistanceOnce(distance) && calculateWaterDepth(distance,depth) && classifyAlert(depth)==AlertTier::EVACUATE);
   assert(!readDistanceOnce(distance) && blindZoneSeen);
   blindZoneSeen=false;
   printLocalAlertStatus();assert(SENSOR_HEIGHT_CM-THRESHOLD_EVACUATE_CM > MIN_DISTANCE_CM+RANGE_MARGIN_CM+SENSOR_UNCERTAINTY_CM);
-  setMedian(60);expectPins(LOW,HIGH,LOW,HIGH);
+  setMedian(DIST_WARNING);expectPins(LOW,HIGH,LOW,HIGH);
   handleLocalAlertCommand("ALERT DEMO ON",1000);
   assert(localBenchAlerts && currentTier==AlertTier::WARNING);
-  setMedian(25);expectPins(LOW,LOW,HIGH,LOW);expectNear(latestSample.waterDepthCm,125);
+  setMedian(25);expectPins(LOW,LOW,HIGH,LOW);expectNear(latestSample.waterDepthCm,SENSOR_HEIGHT_CM-25);
   assert(latestSample.benchProfile);
   assert(classifyBenchAlert(60)==AlertTier::ADVISORY);
   assert(classifyBenchAlert(35)==AlertTier::WARNING);
   assert(classifyBenchAlert(25.01F)==AlertTier::WARNING);
   setMedian(19); // out of sensor range never becomes a valid critical reading
   assert(!latestSample.sensorValid);expectPins(LOW,HIGH,HIGH,LOW);
-  setMedian(65);handleLocalAlertCommand("ALERT DEMO OFF",1001);
+  setMedian(DIST_WARNING);handleLocalAlertCommand("ALERT DEMO OFF",1001);
   assert(latestSample.benchProfile); // Acquired before the mode change; queue metadata is immutable.
   assert(!localBenchAlerts);expectPins(LOW,HIGH,LOW,HIGH);
 
-  setMedian(95);
+  setMedian(DIST_NORMAL);
   assert(!latestSample.benchProfile);
   handleLocalAlertCommand("ALERT TEST",2000);expectPins(HIGH,LOW,LOW,HIGH);
-  setMedian(80); // acquisition continues, but temporary GPIO test stays green
+  setMedian(DIST_ADVISORY); // acquisition continues, but temporary GPIO test stays green
   assert(currentTier==AlertTier::ADVISORY);expectPins(HIGH,LOW,LOW,HIGH);
   handleLocalAlertCommand("ALERT TEST",2100);assert(localOutputTestStartMs==2000);
   serviceLocalAlertDiagnostics(3000);expectPins(LOW,HIGH,LOW,HIGH);
   serviceLocalAlertDiagnostics(4000);expectPins(LOW,LOW,HIGH,LOW);
-  assert(latestSample.sensorValid);expectNear(latestSample.waterDepthCm,70);
+  assert(latestSample.sensorValid);expectNear(latestSample.waterDepthCm,DEPTH_ADVISORY);
   serviceLocalAlertDiagnostics(5000);expectPins(LOW,HIGH,LOW,HIGH);
   assert(!localOutputTestActive && currentTier==AlertTier::ADVISORY);
 
-  handleLocalAlertCommand("ALERT TEST",6000);setMedian(50);
+  handleLocalAlertCommand("ALERT TEST",6000);setMedian(DIST_EVACUATE);
   assert(!localOutputTestActive);expectPins(LOW,LOW,HIGH,LOW);
   handleLocalAlertCommand("ALERT TEST",6001);assert(!localOutputTestActive);
-  setMedian(95);handleLocalAlertCommand("ALERT TEST",7000);
+  setMedian(DIST_NORMAL);handleLocalAlertCommand("ALERT TEST",7000);
   handleLocalAlertCommand("ALERT STOP",7001);expectPins(HIGH,LOW,LOW,HIGH);
   handleLocalAlertCommand("ALERT TEST",UINT32_MAX-999);
   serviceLocalAlertDiagnostics(0);expectPins(LOW,HIGH,LOW,HIGH);
@@ -357,10 +371,29 @@ void testTelemetryCadence() {
   std::cerr<<"PASS: 2-second telemetry boundary retains tips before the window and reports them once at the boundary\n";
 }
 
+
+// 65 cm cardboard exercise positions (revision 2). Only meaningful for that geometry.
+void testCardboardExercisePositions() {
+  if (SENSOR_HEIGHT_CM != 65.0F || THRESHOLD_EVACUATE_CM != 35.0F) return;
+  localBenchAlerts=false;localOutputTestActive=false;
+  struct Position { float distance; AlertTier tier; } positions[] = {
+    {65.0F, AlertTier::NORMAL}, {45.0F, AlertTier::ADVISORY}, {35.0F, AlertTier::WARNING}, {30.0F, AlertTier::EVACUATE}};
+  for (const auto& p : positions) {
+    setMedian(p.distance);
+    assert(latestSample.sensorValid && currentTier==p.tier);
+    expectNear(latestSample.waterDepthCm, SENSOR_HEIGHT_CM-p.distance);
+  }
+  // The sensor read about 1.3 cm short at 65 cm; EVACUATE still holds at 30 cm with that offset.
+  setMedian(30.0F-1.3F);assert(latestSample.sensorValid && currentTier==AlertTier::EVACUATE);
+  // A closer target stays a valid EVACUATE reading (the 38 cm limit constrains the threshold, not readings).
+  setMedian(25.0F);assert(latestSample.sensorValid && currentTier==AlertTier::EVACUATE);
+  std::cerr<<"PASS: 65 cm exercise positions 65/45/35/30 cm read NORMAL/ADVISORY/WARNING/EVACUATE\n";
+}
+
 void testAcquisitionGeometryAndFaultPolicy() {
   localBenchAlerts=false;localOutputTestActive=false;sensorFaultActive=false;
   uint32_t now=400000;
-  for (float depth : {10.0F,65.0F,90.0F,105.0F}) {
+  for (float depth : {DEPTH_NORMAL,DEPTH_ADVISORY,DEPTH_WARNING,DEPTH_EVACUATE}) {
     const auto duration=static_cast<unsigned long>(lround((SENSOR_HEIGHT_CM-depth)/0.01715F));
     sampling=false;lastSensorMs=now-SENSOR_INTERVAL_MS;
     echoes={duration,duration,duration,duration,duration};
@@ -396,7 +429,7 @@ int main() {
   networkRainReady=true;networkRainSnapshot={rainLifetimeTips,0};
   publishRainSnapshot(5000);
   assert(mqttClient.publishCalls==writes);
-  localBenchAlerts=false;setMedian(80);
+  localBenchAlerts=false;setMedian(SENSOR_HEIGHT_CM-DEPTH_ADVISORY);
   assert(latestSample.sensorValid && currentTier==AlertTier::ADVISORY);
   assert(logged("network publication withheld, local sensing continues"));
   std::cerr<<"PASS: unprovisioned firmware withholds telemetry/rain publication and preserves local sensing\n";
@@ -423,7 +456,7 @@ int main() {
   assert(measureDistanceMedian(four, 4, value)); expectNear(value, 60);
   assert(measureDistanceMedian(four, 3, value)); expectNear(value, 40);
   assert(!measureDistanceMedian(four, 2, value) && isnan(value));
-  assert(calculateWaterDepth(77.3F, value)); expectNear(value, SENSOR_HEIGHT_CM-77.3F);
+  assert(calculateWaterDepth(SENSOR_HEIGHT_CM-12.7F, value)); expectNear(value, 12.7F);
   assert(calculateWaterDepth(SENSOR_HEIGHT_CM, value)); expectNear(value, 0);
   assert(!calculateWaterDepth(SENSOR_HEIGHT_CM+1, value) && isnan(value));
   assert(!calculateWaterDepth(19, value));
@@ -431,31 +464,32 @@ int main() {
   assert(!calculateWaterDepth(NAN, value));
   assert(!calculateWaterDepth(std::numeric_limits<float>::infinity(), value));
 
-  assert(classifyAlert(59.99F) == AlertTier::NORMAL);
-  assert(classifyAlert(60) == AlertTier::ADVISORY);
-  assert(classifyAlert(85) == AlertTier::WARNING);
-  assert(classifyAlert(100) == AlertTier::EVACUATE);
+  assert(classifyAlert(THRESHOLD_ADVISORY_CM-0.01F) == AlertTier::NORMAL);
+  assert(classifyAlert(THRESHOLD_ADVISORY_CM) == AlertTier::ADVISORY);
+  assert(classifyAlert(THRESHOLD_WARNING_CM) == AlertTier::WARNING);
+  assert(classifyAlert(THRESHOLD_EVACUATE_CM) == AlertTier::EVACUATE);
   // Wi-Fi and MQTT stay disconnected throughout all local GPIO checks.
   assert(!mqttClient.connected() && WiFi.status() != WL_CONNECTED);
-  setMedian(130); expectPins(HIGH, LOW, LOW, HIGH);
-  setMedian(90); expectPins(LOW, HIGH, LOW, HIGH);
-  setMedian(65); expectPins(LOW, HIGH, LOW, HIGH);
-  setMedian(50); expectPins(LOW, LOW, HIGH, LOW);
+  setMedian(SENSOR_HEIGHT_CM-DEPTH_NORMAL); expectPins(HIGH, LOW, LOW, HIGH);
+  setMedian(SENSOR_HEIGHT_CM-DEPTH_ADVISORY); expectPins(LOW, HIGH, LOW, HIGH);
+  setMedian(SENSOR_HEIGHT_CM-DEPTH_WARNING); expectPins(LOW, HIGH, LOW, HIGH);
+  setMedian(SENSOR_HEIGHT_CM-THRESHOLD_EVACUATE_CM); expectPins(LOW, LOW, HIGH, LOW);
   validSamples = 2; finishSensorSample();
   assert(!latestSample.sensorValid && isnan(latestSample.waterDepthCm));
   assert(currentTier == AlertTier::EVACUATE); expectPins(LOW, HIGH, HIGH, LOW);
-  setMedian(151); // valid raw range but impossible negative depth
+  setMedian(SENSOR_HEIGHT_CM+1); // valid raw range but impossible negative depth
   assert(!latestSample.sensorValid && currentTier == AlertTier::EVACUATE);
   expectPins(LOW, HIGH, HIGH, LOW);
 
   // Burst scheduler: five probes, including invalid outliers, once per second.
   sampling = false; lastSensorMs = 0;
-  echoes = {5831, 0, 29000, 5831, 5831};
+  const unsigned long inRange = echoForDistance(SENSOR_HEIGHT_CM-10.0F);
+  echoes = {inRange, 0, 29000, inRange, inRange};
   sampleSensors(999); assert(echoes.size() == 5);
   sampleSensors(1000); assert(echoes.size() == 4);
   sampleSensors(1001); assert(echoes.size() == 4);
   for (uint32_t t = 1060; t <= 1240; t += 60) sampleSensors(t);
-  assert(!sampling && latestSample.sensorValid); expectNear(latestSample.waterDepthCm, SENSOR_HEIGHT_CM-100);
+  assert(!sampling && latestSample.sensorValid); expectNear(latestSample.waterDepthCm, SENSOR_HEIGHT_CM-inRange*0.01715F);
   sampleSensors(1500); assert(!sampling);
   sampling = false; lastSensorMs = UINT32_MAX - 500;
   echoes = {0, 0, 0, 0, 0};
@@ -600,6 +634,7 @@ int main() {
 #endif
   testTelemetryCadence();
   testAcquisitionGeometryAndFaultPolicy();
+  testCardboardExercisePositions();
   testDepthHistory();
   vQueueDelete(reportQueue);
   vQueueDelete(rainQueue);
@@ -609,6 +644,6 @@ int main() {
   assert(logged("rain_queue=FAILED task=unavailable"));
   taskCreateResult=0;setup(); // network task allocation failure
   assert(reportQueue==nullptr && rainQueue==nullptr && taskCreateCalls==taskCalls+3);
-  setMedian(50);expectPins(LOW,LOW,HIGH,LOW);
+  setMedian(DIST_EVACUATE);expectPins(LOW,LOW,HIGH,LOW);
   std::cerr << "PASS: rain queue/task allocation failures are diagnosed and preserve local sensing\n";
 }
