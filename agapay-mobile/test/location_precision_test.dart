@@ -164,7 +164,7 @@ void main() {
         expect(find.text('Authenticated registered device'), findsWidgets);
         expect(find.text('Registry-verified physical source'), findsNothing);
         // Prototype warnings are kept separately.
-        expect(find.byType(UnverifiedStationBanner), findsWidgets);
+        expect(find.byType(UnverifiedStationBanner), findsNothing);
         // A genuinely surveyed station keeps its precise wording and close-up zoom.
         await tester.ensureVisible(find.widgetWithText(TextButton, 'STATION_005'));
         await tester.tap(find.widgetWithText(TextButton, 'STATION_005'));

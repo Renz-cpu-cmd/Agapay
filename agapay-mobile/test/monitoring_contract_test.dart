@@ -104,7 +104,7 @@ void main() {
         'depth_source_trusted': false,
       };
       final station = MonitoringStation.fromJson(row);
-      expect(station.sourceLabel, 'Unverified source');
+      expect(station.sourceLabel, 'Unregistered source');
       expect(station.sourceTrusted, isFalse);
     }
   });

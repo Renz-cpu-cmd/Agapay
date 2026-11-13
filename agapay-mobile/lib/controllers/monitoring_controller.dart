@@ -83,7 +83,7 @@ class MonitoringController extends ChangeNotifier {
         ? 'REVIEW REQUIRED'
         : (!station.sourceTrusted ||
               (station.hasValidReading && !station.depthSourceTrusted))
-        ? 'UNVERIFIED SOURCE'
+        ? 'UNREGISTERED SOURCE'
         : station.isSimulator
         ? 'VIRTUAL STATION'
         : fresh
@@ -95,7 +95,7 @@ class MonitoringController extends ChangeNotifier {
       station: station,
       asOf: instant,
       sourceLabel: station.hasValidReading && !station.depthSourceTrusted
-          ? 'Unverified depth source'
+          ? 'Unregistered depth source'
           : station.sourceLabel,
       sourceStatus: status,
       hazardState: !fresh && station.activeHazardTier != null
@@ -115,7 +115,7 @@ class MonitoringController extends ChangeNotifier {
         quality: station.sensorQuality ?? 'unknown',
         source: station.depthSourceTrusted
             ? station.sourceLabel
-            : 'Unverified depth source',
+            : 'Unregistered depth source',
         fresh: fresh,
       ),
       heartbeat: ChannelFreshness(

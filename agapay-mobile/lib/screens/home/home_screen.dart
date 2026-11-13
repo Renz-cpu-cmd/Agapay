@@ -27,12 +27,12 @@ class HomeScreen extends StatelessWidget {
         : AlertLevel.unknown;
     // R4: an unreviewed/ineligible station's tier is shown as a measurement, never
     // as an operational instruction (fail-closed on missing review fields).
-    final unverified = usingMonitoring && !station.operationallyVerified;
+    final unverified = showStationVerificationNotices && usingMonitoring && !station.operationallyVerified;
     final waterDepth = view?.depth.value;
     final sourceLabel = view == null || waterDepth == null
         ? 'NO VALID READING'
-        : view.sourceStatus.contains('UNVERIFIED')
-        ? 'UNVERIFIED SOURCE'
+        : view.sourceStatus.contains('UNREGISTERED')
+        ? 'UNREGISTERED SOURCE'
         : view.sourceStatus.contains('REVIEW')
         ? 'REVIEW REQUIRED'
         : station?.sourceClass == 'simulator'
@@ -286,8 +286,6 @@ class HomeScreen extends StatelessWidget {
                       mono: true,
                       color: const Color(0xff93c5fd),
                     ),
-                    if (rain != null && !rain.calibrated && view?.rain.value != null)
-                      tx('rainfall-equivalent', size: 10, color: context.colors.muted),
                     tx(
                       usingMonitoring
                           ? view?.rain.fresh == true

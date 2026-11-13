@@ -180,7 +180,7 @@ void main() {
       await app.forecasts.setPreview(true);
       await tester.pump();
       await tester.pump();
-      expect(find.text('SYNTHETIC PREVIEW'), findsOneWidget);
+      expect(find.text('PREVIEW'), findsOneWidget);
       expect(find.text('96.0'), findsOneWidget);
       expect(app.alert, alert);
       for (final status in forecastLabels.keys.where((s) => s != 'available')) {

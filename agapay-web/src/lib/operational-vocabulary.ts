@@ -3,7 +3,7 @@ export const operationalVocabulary = {
   observed: "Observed",
   lastKnown: "Last known",
   noValidReading: "No valid reading",
-  experimentalProjection: "Experimental projection",
+  experimentalProjection: "Projection",
   officialAdvisory: "Official advisory",
   practiceSos: "SOS",
 } as const;

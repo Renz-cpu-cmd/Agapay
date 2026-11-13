@@ -30,7 +30,7 @@ void expectUnknownHome(WidgetTester tester, AppController app) {
   expect(find.text('95.8'), findsNothing);
   expect(find.textContaining('6.4 mm'), findsNothing);
   expect(find.textContaining('+3.2 cm'), findsNothing);
-  expect(find.text('TEST WORKSPACE · SYNTHETIC DATA'), findsNothing);
+  expect(find.text('EXERCISE WORKSPACE'), findsNothing);
   expect(app.alert, isNull);
   expect(
     tester.widget<WaterLevelGauge>(find.byType(WaterLevelGauge)).level,
@@ -157,10 +157,10 @@ void main() {
       await tester.ensureVisible(button);
       await tester.tap(button);
       await tester.pumpAndSettle();
-      expect(find.text('TEST WORKSPACE · SYNTHETIC DATA'), findsOneWidget);
+      expect(find.text('EXERCISE WORKSPACE'), findsOneWidget);
       await tester.tap(find.text('WARNING'));
       await tester.pumpAndSettle();
-      expect(find.text('SYNTHETIC WARNING'), findsOneWidget);
+      expect(find.text('EXERCISE WARNING'), findsOneWidget);
       expect(find.text('95.8 cm · EXAMPLE'), findsOneWidget);
       expect(app.alert, isNull);
       expect(identical(app.monitoring.snapshot, original), isTrue);

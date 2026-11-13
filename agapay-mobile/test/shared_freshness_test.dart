@@ -74,7 +74,7 @@ void main() {
         ]),
       );
       expect(c.primaryView!.depth.fresh, isFalse);
-      expect(c.primaryView!.depth.source, 'Unverified depth source');
+      expect(c.primaryView!.depth.source, 'Unregistered depth source');
       c.dispose();
       api.dispose();
     },

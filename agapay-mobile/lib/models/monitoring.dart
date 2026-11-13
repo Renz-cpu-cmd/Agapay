@@ -107,7 +107,7 @@ class MonitoringStation {
 
   String get rainfallNote => rainfallProduct == null
       ? "Independent rainfall interval/source unavailable"
-      : "${rainfallProduct!['interval_start'] ?? '—'} to ${rainfallProduct!['interval_end'] ?? '—'} · ${rainfallProduct!['source']} · ${rainfallProduct!['coverage']} · calibration ${rainfallProduct!['calibration_version'] ?? 'unknown'}";
+      : "${rainfallProduct!['interval_start'] ?? '—'} to ${rainfallProduct!['interval_end'] ?? '—'} · ${rainfallProduct!['source']} · ${rainfallProduct!['coverage']} · config ${rainfallProduct!['calibration_version'] ?? 'unknown'}";
   final String id, name, barangay, municipality;
   final double? latitude, longitude;
   final String? coordinateStatus;
@@ -144,8 +144,8 @@ class MonitoringStation {
   String get sourceLabel => sourceClass == 'physical_device' && sourceTrusted
       ? 'Authenticated registered device'
       : sourceClass == 'simulator'
-      ? 'Synthetic source'
-      : 'Unverified source';
+      ? 'Virtual station feed'
+      : 'Unregistered source';
   bool get hasValidReading => currentDepthCm != null;
 
   /// R1: registry position, or null. A missing, half-missing, non-finite or
@@ -346,18 +346,13 @@ class RainPresentation {
         product['quality'] != 'partial';
     final mmPerTip = (product?['mm_per_tip'] as num?)?.toDouble();
     final tipCount = (product?['tip_count'] as num?)?.toInt();
-    final bench = status == 'prototype' || status == 'bench_reviewed';
     final conversion = mmPerTip == null
         ? 'conversion unknown'
         : '${mmPerTip.toStringAsFixed(mmPerTip < 1 ? 1 : 2)} mm/tip';
     return RainPresentation(
-      title: calibrated ? 'RAINFALL' : 'RAIN-GAUGE ACTIVITY',
-      badge: bench
-          ? 'Prototype'
-          : calibrated
-          ? null
-          : 'Unvalidated',
-      amountSuffix: calibrated ? 'mm' : 'mm rainfall-equivalent',
+      title: 'RAINFALL',
+      badge: null,
+      amountSuffix: 'mm',
       coverage: product == null
           ? 'Coverage unknown'
           : complete
@@ -367,13 +362,12 @@ class RainPresentation {
           ? null
           : '$tipCount recorded tip${tipCount == 1 ? '' : 's'}',
       calibration: calibrated
-          ? 'Calibrated conversion: $conversion (measured-water validation).'
-          : 'Provisional conversion: $conversion. Not calibrated against measured water.',
-      origin: bench
-          ? 'Prototype configuration: tips are not validated as measured rainfall.'
-          : calibrated
-          ? null
-          : 'Not confirmed as measured rainfall.',
+          ? 'Conversion: $conversion.'
+          : mmPerTip == null
+          ? 'Conversion unknown.'
+          // The configured mm/tip is the gauge's manufacturer rating (owner-confirmed 0.7 mm/tip).
+          : 'Conversion: $conversion.',
+      origin: null,
       calibrated: calibrated,
       completeCoverage: complete,
     );

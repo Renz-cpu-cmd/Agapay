@@ -17,8 +17,7 @@ export function stationStatusDescription(station: Station): string {
     + ` · Episode tier: ${station.activeHazardTier ?? "None recorded"} (${station.hazardState ?? "unknown"})`
     + ` · Connectivity: ${station.connectionStatus ?? "unknown"} · Heartbeat age: ${station.lastPing ?? "unknown"}`
     + ` · Water depth: ${measurementLabel(station.depth)} · Latest sample validity: ${station.depth.latestSampleQuality}`
-    + ` · Measured: ${station.depth.measuredAt ?? "unknown"} · ${station.sourceTrusted && station.depthSourceTrusted ? "Authenticated registered device" : "Unverified / test source"}`
-    + ` · Station datum: ${station.channelHealth?.calibration.reference_datum ?? "unconfirmed"}`;
+    + ` · Measured: ${station.depth.measuredAt ?? "unknown"} · ${station.sourceTrusted && station.depthSourceTrusted ? "Authenticated registered device" : "Unregistered source"}`;
 }
 
 /** R1 location wording; never implies a position the registry does not hold. */
@@ -29,7 +28,7 @@ export function locationLabel(station: Station): string {
       : "Location unavailable · no map pin";
   }
   const point = station.coordinates;
-  if (point?.status === "planned") return "Planned demo location";
+  if (point?.status === "planned") return "Planned location";
   // A7.1: recorded metadata, never inferred, decides whether the pin is an area.
   const metres = point?.precisionM ?? null;
   if (metres !== null && (point?.basis !== "surveyed" || metres > PRECISE_POINT_RADIUS_M)) {

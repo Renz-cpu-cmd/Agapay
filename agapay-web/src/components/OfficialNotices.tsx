@@ -43,7 +43,7 @@ export default function OfficialNotices() {
   }
   return <section className="design-panel p-4" aria-label="Authority notices">
     <div className="design-toolbar"><h2>App advisories and authority notices</h2><button className="design-button" onClick={()=>void refresh()}>Refresh notices</button>{caps.authorities.length>0&&<button className="design-button" onClick={()=>{setEditing(!editing);setDraft({message_type:"Alert",status:"Test",category:"advisory",urgency:"Unknown",severity:"Unknown",certainty:"Unknown",area_ids:[]});}}>Compose notice</button>}</div>
-    <p className="subtle-note">Sensor observations and experimental forecasts do not issue evacuation orders. Authority notices identify their issuer, area and validity.</p>
+    <p className="subtle-note">Sensor observations and forecasts do not issue evacuation orders. Authority notices identify their issuer, area and validity.</p>
     {error?<p role="status">{error}</p>:!items.length?<p>No notices on this page. Absence of a notice does not establish safety.</p>:items.map(notice=><OfficialNoticeCard key={notice.id} notice={notice} now={now} onRevise={caps.authorities.some(a=>a.id===notice.authority_id)?revise:undefined}/>)}
     <div className="design-toolbar"><button className="design-button" disabled={!offset} onClick={()=>setOffset(value=>Math.max(0,value-50))}>Previous notices</button><span>{items.length?`${offset+1}–${offset+items.length}`:"0 notices"}</span><button className="design-button" disabled={items.length<50} onClick={()=>setOffset(value=>value+50)}>Next notices</button></div>
     {editing&&<form onSubmit={publish} className="grid gap-3 mt-3">

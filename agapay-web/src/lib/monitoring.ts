@@ -136,7 +136,7 @@ export function monitoringSourceIsFresh(
 
 export function monitoringSourceLabel(station: Pick<MonitoringStation,"source_class"|"source_trusted">) {
   return station.source_class==="physical_device" && station.source_trusted ? "Authenticated registered device"
-    : station.source_class==="simulator" ? "Synthetic source" : "Unverified source";
+    : station.source_class==="simulator" ? "Virtual station feed" : "Unregistered source";
 }
 
 export function ageLabel(seconds: number | null, connection: MonitoringStation["connection_status"]) {

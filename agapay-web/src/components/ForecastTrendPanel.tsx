@@ -27,14 +27,14 @@ function PrivateExperiment({stationId,stationControl,showDetails=true}:{stationI
   const delta=available?data!.points[2].depth_cm-data!.adjusted!.depth_cm:0;
   const trend=delta>.001?"Rising":delta<-.001?"Falling":"Stable";
   const points=available?[{label:"Modeled now",value:data!.adjusted!.depth_cm},...data!.points.map(p=>({label:`+${p.horizon_minutes}m`,value:p.depth_cm}))]:[];
-  const source=available?(data!.mode==="historical_context"?`Historical context · manual start ${data!.initial_depth_cm!.toFixed(1)} cm`:data!.rain_snapshot?.data_source==="simulated_rain_gauge"?"Synthetic test feed":data!.rain_snapshot?.ml_ready?"Live gauge history":"Live rain · historical ML context"):"Experimental projection";
+  const source=available?(data!.mode==="historical_context"?`Historical context · manual start ${data!.initial_depth_cm!.toFixed(1)} cm`:data!.rain_snapshot?.data_source==="simulated_rain_gauge"?"Virtual gauge feed":data!.rain_snapshot?.ml_ready?"Live gauge history":"Live rain · historical ML context"):"Projection";
   const status=expired?"Forecast expired":error?"Forecast service unavailable":!active?"Forecast not configured":!available&&data?.status==="unavailable"?"Live inputs unavailable":!available?"Checking forecast…":`${trend} · ${delta>=0?"+":""}${delta.toFixed(0)} cm over 90 minutes`;
   const updated=available?new Date(data!.checked_at).toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour:"2-digit",minute:"2-digit",second:"2-digit"}):null;
 
-  return <section className="forecast-panel forecast-trend design-panel" aria-label="Experimental projection trend">
-    <header className="forecast-trend-heading"><h2>Experimental projection</h2><span>{available?trend:"Pending"}</span></header>
+  return <section className="forecast-panel forecast-trend design-panel" aria-label="Projection trend">
+    <header className="forecast-trend-heading"><h2>Projection</h2><span>{available?trend:"Pending"}</span></header>
     {stationControl}
-    <OperationalStateLabel state="exercise" detail="Private experiment · not a published forecast"/>
+    <OperationalStateLabel state="exercise" detail="Not a published forecast"/>
     <div className="forecast-trend-current"><span>{`${depth ? measurementLabel(depth) : "No valid reading"} · Water depth`}</span><strong>{depth ? measurementText(depth,1,"cm") : "—"}</strong><small>{depth ? measurementNote(depth) : "No measurement received"}{view ? ` · ${ageLabel(view.depth_age_seconds,view.connection_status)}` : ""}{view?.hazard_state==="unresolved"?" · Hazard unresolved":""}</small></div>
     {station&&<p className="forecast-trend-source">{monitoringSourceLabel(station)} · latest sample {station.sensor_quality??"unknown"}</p>}
     <p className="forecast-trend-status" role="status">{status}</p>
@@ -43,6 +43,6 @@ function PrivateExperiment({stationId,stationControl,showDetails=true}:{stationI
     <div className="forecast-trend-horizons">{[30,60,90].map((h,i)=><div key={h}><span>+{h} minutes</span><strong>{available?`${data!.points[i].depth_cm.toFixed(0)} cm`:"—"}</strong></div>)}</div>
     <p className="forecast-trend-source">{source}{available&&config.depthSource==="manual"&&data!.mode!=="historical_context"?" · manual start":""}</p>
     <footer><span>{updated?`Updated ${updated} PHT`:"Awaiting forecast"}</span>{showDetails&&<Link href="/ml-configuration">ML details →</Link>}</footer>
-    <p className="forecast-trend-note">Experimental projection · basin calibration pending; projected depths are not validated for flood warnings.</p>
+    <p className="forecast-trend-note">Projected depths do not determine flood warnings.</p>
   </section>;
 }

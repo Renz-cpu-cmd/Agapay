@@ -9,7 +9,7 @@ const tiers = [
 
 export default function CommunityAlertThresholds({ station }: { station: Station }) {
   const { advisory, warning, evacuate } = station.thresholds;
-  const sourceLabel = station.dataSource === "simulator" ? "Virtual station" : station.dataSource === "device" ? "Configured station" : "Unverified source";
+  const sourceLabel = station.dataSource === "simulator" ? "Virtual station" : station.dataSource === "device" ? "Configured station" : "Unregistered source";
   const ranges = {
     normal: `< ${advisory} cm`,
     advisory: `${advisory}–<${warning} cm`,
@@ -30,7 +30,7 @@ export default function CommunityAlertThresholds({ station }: { station: Station
         {sourceLabel} thresholds · {station.id}. Sensor tiers are not official evacuation orders. Forecasts are experimental and shown separately.
       </p>
 
-      <p className="subtle-note">Policy: {station.hazardPolicyState ?? "provisional"} · Observation: {station.observationTier ?? "UNKNOWN"} · Episode: {station.activeHazardTier ?? "None"} · {station.hazardDecision ?? "No policy decision yet"}</p>
+      <p className="subtle-note">Policy: {station.hazardPolicyState === "station_reviewed" ? "station-reviewed" : "standard"} · Observation: {station.observationTier ?? "UNKNOWN"} · Episode: {station.activeHazardTier ?? "None"} · {station.hazardDecision ?? "No policy decision yet"}</p>
       <div className="mt-[18px] grid h-[263px] grid-cols-[92px_minmax(0,1fr)] gap-2.5">
         <dl className="grid grid-rows-[44px_57px_68px_1fr]">
           {[...tiers].reverse().map((tier) => (

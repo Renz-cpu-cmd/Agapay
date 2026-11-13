@@ -487,7 +487,7 @@ class PrivateHybridForecastTrendPanel extends StatelessWidget {
                 alignment: WrapAlignment.spaceBetween,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  caption('Experimental projection'),
+                  caption('Projection'),
                   const MonitoringStatus(),
                   TextButton(
                     onPressed: feed.loading ? null : feed.refresh,
@@ -577,9 +577,9 @@ class PrivateHybridForecastTrendPanel extends StatelessWidget {
                           ? 'Historical rainfall context'
                           : (feed.data!.rain ?? {})['data_source'] ==
                                 'simulated_rain_gauge'
-                          ? 'SYNTHETIC test feed'
-                          : 'Live gauge history · experimental'
-                    : 'Experimental projection',
+                          ? 'Virtual gauge feed'
+                          : 'Live gauge history'
+                    : 'Projection',
                 size: 10,
                 color: context.colors.secondary,
               ),
@@ -590,7 +590,7 @@ class PrivateHybridForecastTrendPanel extends StatelessWidget {
                   color: context.colors.muted,
                 ),
               tx(
-                'Controlled-basin experiment. Calibration pending; measured thresholds determine alerts.',
+                'Measured thresholds determine alerts.',
                 size: 10,
                 color: context.colors.muted,
               ),
@@ -654,7 +654,7 @@ class RainfallActivityPanel extends StatelessWidget {
                 color: context.colors.muted,
               ),
               tx(
-                '${feed.data?.rain?['current_hour_product']?['interval_start'] ?? '—'} to ${feed.data?.rain?['current_hour_product']?['interval_end'] ?? '—'} · ${feed.data?.rain?['data_source'] ?? 'unknown source'} · ${feed.data?.rain?['current_hour_product']?['coverage'] ?? 'coverage unknown'} · calibration ${feed.data?.rain?['calibration_version'] ?? 'unknown'}',
+                '${feed.data?.rain?['current_hour_product']?['interval_start'] ?? '—'} to ${feed.data?.rain?['current_hour_product']?['interval_end'] ?? '—'} · ${feed.data?.rain?['data_source'] ?? 'unknown source'} · ${feed.data?.rain?['current_hour_product']?['coverage'] ?? 'coverage unknown'} · config ${feed.data?.rain?['calibration_version'] ?? 'unknown'}',
                 size: 10,
                 color: context.colors.muted,
               ),

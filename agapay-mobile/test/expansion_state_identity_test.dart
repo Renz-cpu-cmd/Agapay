@@ -136,7 +136,7 @@ void main() {
       );
       expect(
         find.descendant(of: home, matching: find.text(unverifiedStationTitle, skipOffstage: false)),
-        round.isEven ? findsNothing : findsWidgets,
+        findsNothing, // verification notices are not shown (owner decision)
       );
     }
     await _finish(tester, app);

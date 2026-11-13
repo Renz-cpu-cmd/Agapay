@@ -16,7 +16,7 @@ class CommunityEpisodeSummary extends StatelessWidget {
     final a = episode;
     // R4: an unverified incident stays visible as a diagnostic record but never
     // borrows the operational severity styling or wording.
-    final verified = a.isOperational;
+    final verified = a.isOperational || !showStationVerificationNotices;
     final tierColor = verified ? a.severity.textColor : context.colors.secondary;
     final tier = verified
         ? '${a.severity.label}${a.isResolved ? ' · Peak tier' : ''}'

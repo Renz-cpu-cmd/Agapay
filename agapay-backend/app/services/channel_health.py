@@ -50,7 +50,7 @@ def rain_health(db, station, identity, settings, now, *, config=None, config_loa
     import json
     version=json.loads(row['payload']).get('calibration_version','legacy-unversioned')
     state = "unverified" if not trusted else "invalid" if calibration is None or abs(row["mm_per_tip"]-calibration) > .00001 or (config and version!=config.config_hash) else "healthy" if 0 <= age <= 30 else "stale"
-    return channel(state, "Independent rain counter received; zero tips is valid, mechanical operation/calibration not proven" if state == "healthy" else "Independent rain counter stale, unverified, or calibration configuration mismatched",
+    return channel(state, "Independent rain counter received; zero tips is valid" if state == "healthy" else "Independent rain counter stale, unverified, or calibration configuration mismatched",
         at, now, value=row["count"], unit="tips", increment_mm=row["mm"], mm_per_tip=row["mm_per_tip"],
         source_trusted=trusted, ingress_transport=row["ingress_transport"])
 
@@ -80,7 +80,7 @@ def station_channels(db, station, identity, latest, last_valid, depth_fresh, dep
         rain_counter=rain,
         broker_ingestion=channel(broker_state, "Last accepted operational MQTT receipt; HTTP traffic is not broker evidence", mqtt_at, now, connection_state=broker["state"], connection_observed_at=broker["observed_at"], observer_scope=broker["scope"]),
         calibration=dict(state="documented" if identity and identity.calibration_note else "unconfigured",
-            reason="Commissioning documentation/configuration is not physical calibration attestation",
+            reason="Commissioning documentation and configuration",
             water_note=config.evidence if config else identity.calibration_note if identity else None, reference_datum=config.installation['datum'] if config else identity.reference_datum if identity else None,
             rain_configured_mm_per_tip=config.installation['rain_mm_per_tip'] if config else settings.rain_gauge_calibrations.get(station.station_id), physical_validation="pending"),
     )

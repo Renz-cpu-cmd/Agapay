@@ -128,7 +128,7 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('exercise-test-opt-in')), findsOneWidget);
     expect(find.text('Turn on push notifications for this device first.'), findsOneWidget);
-    expect(find.text('TEST WORKSPACE · SYNTHETIC DATA'), findsOneWidget);
+    expect(find.text('EXERCISE WORKSPACE'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     h.app.dispose();
     await h.gateway.close();

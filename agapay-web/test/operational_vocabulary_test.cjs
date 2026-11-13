@@ -18,7 +18,7 @@ for(const row of contract.cases)test(`independent presentation: ${row.id}`,()=>{
   assert.ok(description.includes(`Episode tier: ${row.episodeTier??'None recorded'} (${row.hazardState})`));
   assert.ok(description.includes(`Observation tier: ${row.current?'EVACUATE':'UNKNOWN'}`));
   assert.ok(description.includes(`Measured: ${row.measuredAt??'unknown'}`));
-  assert.ok(description.includes('Station datum: unconfirmed'));
+  assert.ok(!description.includes('Station datum'));
   assert.equal(measurementText(depth),row.depth===null?'—':row.depth.toFixed(1));
 });
 test('missing/invalid measurement times can never acquire the Observed label',()=>{

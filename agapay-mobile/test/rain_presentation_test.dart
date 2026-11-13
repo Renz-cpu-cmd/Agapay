@@ -36,75 +36,55 @@ Map<String, dynamic> config(String status, {String? configHash = hash, String ma
 };
 
 void main() {
+  // Owner decision (2026-11-13): no qualifier labels on the rain card. The gauge's
+  // manufacturer rating (0.7 mm/tip) is shown as the conversion. The internal `calibrated`
+  // flag still follows the measured-water rule but no longer changes the wording.
   group('rain presentation rules', () {
-    test('prototype: partial, provisional, not called manual readings', () {
+    test('prototype: plain rainfall card with tips, coverage and conversion', () {
       final r = RainPresentation.from(product(), config('prototype'));
-      expect(r.title, 'RAIN-GAUGE ACTIVITY');
-      expect(r.badge, 'Prototype');
-      expect(r.amountSuffix, 'mm rainfall-equivalent');
+      expect((r.title, r.badge, r.amountSuffix, r.origin), ('RAINFALL', null, 'mm', null));
       expect(r.tips, '50 recorded tips');
       expect(r.coverage, 'Partial coverage');
-      expect(r.calibration, 'Provisional conversion: 0.7 mm/tip. Not calibrated against measured water.');
-      expect(r.origin, 'Prototype configuration: tips are not validated as measured rainfall.');
-      expect(r.origin, isNot(matches(RegExp('manual|by hand|bench test', caseSensitive: false))));
+      expect(r.calibration, 'Conversion: 0.7 mm/tip.');
+      expect(r.caveat, 'Conversion: 0.7 mm/tip.');
       expect(r.calibrated, isFalse);
+      for (final text in [r.title, r.amountSuffix, r.calibration, r.caveat]) {
+        expect(text, isNot(matches(RegExp('calibrat|prototype|bench|unvalidated|equivalent|re-checked', caseSensitive: false))));
+      }
     });
 
-    test('field review alone is not physical calibration', () {
-      final r = RainPresentation.from(product(complete: true, quality: 'complete'), config('field_reviewed'));
-      expect((r.title, r.badge, r.amountSuffix, r.calibrated), ('RAIN-GAUGE ACTIVITY', 'Unvalidated', 'mm rainfall-equivalent', false));
+    test('calibrated flag still requires measured-water validation', () {
+      expect(RainPresentation.from(product(), config('field_reviewed')).calibrated, isFalse);
       expect(RainPresentation.from(product(), config('field_reviewed'), physicalValidation: 'pending').calibrated, isFalse);
-    });
-
-    test('measured-water validation with field review and same calibration: calibrated rainfall', () {
       final r = RainPresentation.from(product(complete: true, quality: 'complete'), config('field_reviewed'), physicalValidation: 'validated');
-      expect((r.title, r.badge, r.amountSuffix), ('RAINFALL', null, 'mm'));
-      expect(r.coverage, 'Complete coverage');
-      expect(r.calibration, 'Calibrated conversion: 0.7 mm/tip (measured-water validation).');
-      expect(r.origin, isNull);
       expect(r.calibrated, isTrue);
+      expect((r.title, r.badge, r.amountSuffix, r.calibration), ('RAINFALL', null, 'mm', 'Conversion: 0.7 mm/tip.'));
+      expect(r.coverage, 'Complete coverage');
       expect(RainPresentation.from(product(), config('prototype'), physicalValidation: 'validated').calibrated, isFalse);
-    });
-
-    test('field-reviewed but rain calibrated under another revision stays provisional', () {
-      final r = RainPresentation.from(product(calibration: 'other-hash'), config('field_reviewed'), physicalValidation: 'validated');
-      expect(r.calibrated, isFalse);
-      expect(r.calibration, startsWith('Provisional conversion'));
-      expect(r.badge, 'Unvalidated');
-    });
-
-    test('field-reviewed but configuration mismatch stays provisional', () {
+      expect(RainPresentation.from(product(calibration: 'other-hash'), config('field_reviewed'), physicalValidation: 'validated').calibrated, isFalse);
       expect(RainPresentation.from(product(), config('field_reviewed', match: 'mismatch'), physicalValidation: 'validated').calibrated, isFalse);
+      expect(RainPresentation.from(product(calibration: null), config('field_reviewed')).calibrated, isFalse);
+      expect(RainPresentation.from(product(), config('field_reviewed', configHash: null)).calibrated, isFalse);
     });
 
     test('complete flag with partial quality is still partial', () {
       expect(RainPresentation.from(product(complete: true), config('prototype')).coverage, 'Partial coverage');
     });
 
-    test('missing configuration is never validated', () {
+    test('missing configuration or product never invents a figure', () {
       final r = RainPresentation.from(product(), null);
-      expect(r.calibrated, isFalse);
-      expect(r.badge, 'Unvalidated');
-      expect(r.origin, 'Not confirmed as measured rainfall.');
-    });
-
-    test('missing product: coverage and conversion unknown, never validated', () {
-      final r = RainPresentation.from(null, config('field_reviewed'));
-      expect(r.coverage, 'Coverage unknown');
-      expect(r.tips, isNull);
-      expect(r.calibration, 'Provisional conversion: conversion unknown. Not calibrated against measured water.');
-      expect(r.calibrated, isFalse);
-    });
-
-    test('missing hash on either side is never validated', () {
-      expect(RainPresentation.from(product(calibration: null), config('field_reviewed')).calibrated, isFalse);
-      expect(RainPresentation.from(product(), config('field_reviewed', configHash: null)).calibrated, isFalse);
+      expect((r.calibrated, r.badge, r.origin), (false, null, null));
+      final missing = RainPresentation.from(null, config('field_reviewed'));
+      expect(missing.coverage, 'Coverage unknown');
+      expect(missing.tips, isNull);
+      expect(missing.calibration, 'Conversion unknown.');
+      expect(missing.calibrated, isFalse);
     });
   });
 
   for (final theme in [AppTheme.light, AppTheme.dark]) {
     for (final fresh in [true, false]) {
-      testWidgets('${theme.brightness.name} ${fresh ? 'fresh' : 'stale'}: bench rain card at 320px, 2x text', (tester) async {
+      testWidgets('${theme.brightness.name} ${fresh ? 'fresh' : 'stale'}: rain card at 320px, 2x text', (tester) async {
         tester.view.physicalSize = const Size(320, 9000);
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
@@ -137,16 +117,16 @@ void main() {
         ));
         await tester.pump();
         expect(tester.takeException(), isNull);
-        expect(find.text('RAIN-GAUGE ACTIVITY'), findsOneWidget);
-        expect(find.text('Prototype'), findsOneWidget);
+        expect(find.text('RAINFALL'), findsOneWidget);
+        expect(find.text('Prototype'), findsNothing);
         expect(find.text('35.0 mm'), findsOneWidget);
-        expect(find.text('rainfall-equivalent'), findsOneWidget);
+        expect(find.text('rainfall-equivalent'), findsNothing);
         expect(
           find.text(fresh ? '50 recorded tips · Partial coverage' : 'Last known / missing interval · Partial coverage'),
           findsOneWidget,
         );
         expect(
-          find.text('Provisional conversion: 0.7 mm/tip. Not calibrated against measured water. Prototype configuration: tips are not validated as measured rainfall.'),
+          find.text('Conversion: 0.7 mm/tip.'),
           findsOneWidget,
         );
         expect(find.text('Observed interval · journal'), findsNothing);

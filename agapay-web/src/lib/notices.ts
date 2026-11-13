@@ -17,7 +17,7 @@ export function noticeLifecycle(notice: OfficialNotice, nowMs: number): string {
 }
 export function noticeKind(notice: Pick<OfficialNotice, "authority_class" | "category">) {
   return notice.authority_class === "app_operator" ? "App advisory" : notice.authority_class === "public_authority"
-    ? notice.category === "action" ? "Authority-issued action" : operationalVocabulary.officialAdvisory : "Unverified notice";
+    ? notice.category === "action" ? "Authority-issued action" : operationalVocabulary.officialAdvisory : "Unconfirmed notice";
 }
 
 export function parseNoticePage(value: unknown): OfficialNotice[] {

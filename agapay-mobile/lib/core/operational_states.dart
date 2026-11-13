@@ -8,7 +8,7 @@ extension OperationalStatePresentation on OperationalState {
       'No valid reading · current measurement unavailable',
     OperationalState.stale => 'Last known · stale measurement',
     OperationalState.invalid => 'Latest sample invalid · sensor review needed',
-    OperationalState.exercise => 'Synthetic data · test only',
+    OperationalState.exercise => 'Virtual station feed',
     OperationalState.official => 'Official advisory · check issuer and expiry',
   };
   IconData get icon => switch (this) {

@@ -49,7 +49,7 @@ class ForecastPanel extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: tx(
-                      forecast.preview ? 'SYNTHETIC PREVIEW' : 'ADVISORY ONLY',
+                      forecast.preview ? 'PREVIEW' : 'ADVISORY ONLY',
                       size: 9,
                       mono: true,
                       color: forecast.preview
@@ -85,7 +85,7 @@ class ForecastPanel extends StatelessWidget {
                     '+${point.horizonMinutes} min interval: ${forecastInterval(point)}',
                   ),
                 const Text(
-                  'Event-calibrated local-depth interval. Coverage can fail under drift; not flood probability.',
+                  'Local-depth interval. Coverage can fail under drift; not flood probability.',
                 ),
               ],
               if (detailed) ...[
@@ -193,7 +193,7 @@ class ForecastPanel extends StatelessWidget {
               if (data != null) ...[
                 const SizedBox(height: 10),
                 tx(
-                  '${forecast.preview ? 'Synthetic input' : 'Latest input'}: ${predictionTime(data.latestInputAt)} · Local time',
+                  '${forecast.preview ? 'Preview input' : 'Latest input'}: ${predictionTime(data.latestInputAt)} · Local time',
                   size: 10,
                   mono: true,
                   color: context.colors.muted,

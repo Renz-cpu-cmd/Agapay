@@ -263,7 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   applicationVersion: app.buildInfo.label,
                   children: [
                     tx(
-                      'Community Flood Early-Warning System. Interactive frontend prototype for Urdaneta City, Pangasinan.',
+                      'Community Flood Early-Warning System for Urdaneta City, Pangasinan.',
                     ),
                   ],
                 ),

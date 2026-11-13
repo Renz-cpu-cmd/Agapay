@@ -96,39 +96,28 @@ Future<void> unmount(WidgetTester tester, AppController app) async {
 }
 
 void main() {
+  // Owner decision (2026-11-13): verification notices are hidden; an unreviewed station's
+  // pin and card use the same tier presentation as a reviewed one.
   for (final variant in unverifiedVariants.entries) {
-    testWidgets('${variant.key}: recorded EVACUATE is grey, labelled and not a warning', (
+    testWidgets('${variant.key}: recorded EVACUATE shows its tier colour without notices', (
       tester,
     ) async {
+      expect(showStationVerificationNotices, isFalse);
       final app = await mountMap(tester, variant.value);
-      final unverified = marker(tester, 'STATION_002');
-      expect(unverified.color, unverifiedMarkerColor);
-      expect(unverified.glyph, 'U');
-      expect(unverified.title, contains(unverifiedStationTitle));
-      expect(
-        find.byKey(const ValueKey('map-unverified-STATION_002')),
-        findsOneWidget,
-      );
-      expect(find.byType(UnverifiedStationBanner), findsOneWidget);
-      expect(
-        find.text('Recorded EVACUATE reading · unverified'),
-        findsOneWidget,
-      );
-      // The reviewed station keeps its original operational presentation.
-      final verified = marker(tester, 'STATION_001');
-      expect((verified.color, verified.glyph), (red, 'S'));
-      expect(verified.title, isNot(contains(unverifiedStationTitle)));
-      expect(
-        find.byKey(const ValueKey('map-unverified-STATION_001')),
-        findsNothing,
-      );
-      expect(find.text('EVACUATE'), findsOneWidget); // reviewed card only
+      final unreviewed = marker(tester, 'STATION_002');
+      expect((unreviewed.color, unreviewed.glyph), (red, 'S'));
+      expect(unreviewed.title, isNot(contains(unverifiedStationTitle)));
+      expect(find.byKey(const ValueKey('map-unverified-STATION_002')), findsNothing);
+      expect(find.textContaining('nverified'), findsNothing);
+      final reviewed = marker(tester, 'STATION_001');
+      expect((reviewed.color, reviewed.glyph), (red, 'S'));
+      expect(find.text('EVACUATE'), findsNWidgets(2));
       expect(tester.takeException(), isNull);
       await unmount(tester, app);
     });
   }
 
-  testWidgets('switching stations keeps each station\'s own verification state', (
+  testWidgets('switching stations keeps each station\'s tier presentation', (
     tester,
   ) async {
     final app = await mountMap(tester, unverifiedVariants['prototype']!);
@@ -142,20 +131,14 @@ void main() {
         tester.widget<AgapayGoogleMap>(find.byType(AgapayGoogleMap)).selectedMarkerId,
         id,
       );
-      expect(marker(tester, 'STATION_002').color, unverifiedMarkerColor);
+      expect(marker(tester, 'STATION_002').color, red);
       expect(marker(tester, 'STATION_001').color, red);
-      expect(find.byType(UnverifiedStationBanner), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('map-unverified-STATION_002')),
-        findsOneWidget,
-      );
+      expect(find.textContaining('nverified'), findsNothing);
     }
     await unmount(tester, app);
   });
 
-  testWidgets('stale readings never appear as a fresh verified or unverified tier', (
-    tester,
-  ) async {
+  testWidgets('stale readings never appear as a fresh tier', (tester) async {
     var clock = DateTime.now().toUtc();
     final app = await mountMap(
       tester,
@@ -169,9 +152,6 @@ void main() {
     expect(marker(tester, 'STATION_002').color, purple);
     expect(find.text('UNKNOWN · reading not current'), findsNWidgets(2));
     expect(find.text('EVACUATE'), findsNothing);
-    expect(find.text('Recorded EVACUATE reading · unverified'), findsNothing);
-    // The retained, unverified last-known reading keeps its label.
-    expect(find.byType(UnverifiedStationBanner), findsOneWidget);
     await unmount(tester, app);
   });
 
@@ -188,13 +168,9 @@ void main() {
         size: const Size(320, 6000),
       );
       expect(tester.takeException(), isNull);
-      expect(find.text('Unverified station · not a warning'), findsOneWidget);
-      expect(find.text(unverifiedStationTitle), findsOneWidget);
-      expect(
-        find.bySemanticsLabel(RegExp('UNVERIFIED STATION — NOT AN OPERATIONAL WARNING')),
-        findsOneWidget,
-      );
-      // Shared status text states the verification for every station.
+      expect(find.text('Unverified station · not a warning'), findsNothing);
+      expect(find.text(unverifiedStationTitle), findsNothing);
+      expect(find.bySemanticsLabel(RegExp('UNVERIFIED STATION')), findsNothing);
       final details = find.text('Source and measurement details');
       for (var i = 0; i < 2; i++) {
         await tester.ensureVisible(details.at(i));
@@ -205,10 +181,7 @@ void main() {
           .widgetList<Text>(find.byKey(const ValueKey('shared-monitoring-status')))
           .map((w) => w.data!)
           .toList();
-      expect(
-        statuses.where((s) => s.contains('Verification: UNVERIFIED STATION')),
-        hasLength(1),
-      );
+      expect(statuses.where((s) => s.contains('UNVERIFIED')), isEmpty);
       expect(
         statuses.where((s) => s.contains('Verification: AGAPAY field-reviewed')),
         hasLength(1),

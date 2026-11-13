@@ -33,7 +33,7 @@ class AlertDetailsScreen extends StatelessWidget {
     );
     // R4: fail closed for unreviewed or ineligible stations.
     final unverified =
-        station != null && view?.depth.value != null && !station.operationallyVerified;
+        showStationVerificationNotices && station != null && view?.depth.value != null && !station.operationallyVerified;
     final guidance = !fresh
         ? 'Current conditions are unconfirmed. Check official advisories and recorded sensor episodes.'
         : level == AlertLevel.unknown

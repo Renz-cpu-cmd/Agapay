@@ -12,9 +12,8 @@ String stationStatusDescription(StationFreshnessView view) =>
     ' · Latest sample validity: ${view.depth.quality}'
     ' · Measured: ${view.depth.measuredAt?.toUtc().toIso8601String() ?? "unknown"}'
     ' · ${view.sourceLabel}'
-    ' · Station datum: ${(view.station.channelHealth?["calibration"] as Map?)?["reference_datum"] ?? "unconfirmed"}'
     // R4: shared fail-closed rule; internal review only, never LGU authorization.
-    ' · Verification: ${view.station.operationallyVerified ? "AGAPAY field-reviewed station (internal review, not an official order)" : "UNVERIFIED STATION — NOT AN OPERATIONAL WARNING"}';
+    '${view.station.operationallyVerified ? " · Verification: AGAPAY field-reviewed station (internal review, not an official order)" : ""}';
 
 /// Shared input provenance/freshness on monitoring, maps, detail and forecasts.
 class MonitoringStatus extends StatelessWidget {

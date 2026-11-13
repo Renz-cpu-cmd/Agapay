@@ -156,9 +156,12 @@ void main() {
 
   for (final theme in [AppTheme.light, AppTheme.dark]) {
     final mode = theme.brightness.name;
-    testWidgets('unverified list is labelled, not operational ($mode, 2x text, 320px)', (
+    // Owner decision (2026-11-13): verification notices are hidden on screen; an unreviewed
+    // station is presented like a reviewed one. External alerts stay gated by the backend.
+    testWidgets('unreviewed list shows no verification notice ($mode, 2x text, 320px)', (
       tester,
     ) async {
+      expect(showStationVerificationNotices, isFalse);
       final app = communityApp(verification: 'unverified');
       await pumpScreen(
         tester,
@@ -168,26 +171,15 @@ void main() {
         textScale: 2,
         size: const Size(320, 4000),
       );
-      expect(find.text(unverifiedStationTitle), findsOneWidget);
-      expect(find.text('Recorded EVACUATE reading'), findsOneWidget);
-      expect(find.text('EVACUATE'), findsNothing);
-      expect(
-        find.textContaining('Includes unverified station records'),
-        findsOneWidget,
-      );
-      expect(
-        find.textContaining('not an operational warning · View history'),
-        findsOneWidget,
-      );
-      expect(
-        find.bySemanticsLabel(RegExp('UNVERIFIED STATION')),
-        findsOneWidget,
-      );
+      expect(find.text(unverifiedStationTitle), findsNothing);
+      expect(find.textContaining('nverified'), findsNothing);
+      expect(find.textContaining('not an operational warning'), findsNothing);
+      expect(find.textContaining('EVACUATE'), findsWidgets);
       expect(tester.takeException(), isNull);
       await unmount(tester, app);
     });
 
-    testWidgets('unverified detail never gives an evacuation instruction ($mode)', (
+    testWidgets('unreviewed detail is presented like a reviewed one ($mode)', (
       tester,
     ) async {
       final app = communityApp(verification: 'unverified')
@@ -199,20 +191,16 @@ void main() {
         theme: theme,
         textScale: 1.5,
       );
-      expect(find.text(unverifiedStationTitle), findsOneWidget);
-      expect(find.textContaining(evacuationInstruction), findsNothing);
-      expect(
-        find.textContaining('not an evacuation instruction'),
-        findsWidgets,
-      );
-      // Diagnostic history and shelter access remain available.
+      expect(find.text(unverifiedStationTitle), findsNothing);
+      expect(find.textContaining('nverified'), findsNothing);
+      expect(find.textContaining(evacuationInstruction), findsOneWidget);
       expect(find.text('NORMAL → EVACUATE'), findsOneWidget);
       expect(find.text('VIEW EVACUATION MAP'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await unmount(tester, app);
     });
 
-    testWidgets('unverified station on home is a measurement, not a warning ($mode)', (
+    testWidgets('unreviewed station on home shows its tier without notices ($mode)', (
       tester,
     ) async {
       final app = fixtureController(
@@ -220,14 +208,13 @@ void main() {
       );
       await app.login('resident@example.com', 'password123');
       await pumpScreen(tester, app, const HomeScreen(), theme: theme, textScale: 1.5);
-      expect(find.text(unverifiedStationTitle), findsOneWidget);
-      expect(find.text('Observed water depth · unverified station'), findsOneWidget);
-      expect(find.textContaining(evacuationInstruction), findsNothing);
+      expect(find.text(unverifiedStationTitle), findsNothing);
+      expect(find.textContaining('nverified'), findsNothing);
+      expect(find.textContaining('Not an operational warning'), findsNothing);
       expect(tester.takeException(), isNull);
       await pumpScreen(tester, app, const AlertDetailsScreen(), theme: theme);
-      expect(find.text(unverifiedStationTitle), findsOneWidget);
-      expect(find.textContaining(evacuationInstruction), findsNothing);
-      expect(find.textContaining('Unverified station measurement'), findsWidgets);
+      expect(find.text(unverifiedStationTitle), findsNothing);
+      expect(find.textContaining('nverified'), findsNothing);
       await unmount(tester, app);
     });
   }

@@ -3,6 +3,10 @@ import '../../core/ui.dart';
 /// R4: shown wherever an observation or recorded incident comes from a station
 /// that has not completed AGAPAY's internal field review (or whose eligibility
 /// was withdrawn). Wording is fixed so residents never read it as an order.
+/// Owner decision (2026-11-13): verification notices are not shown on screen; the owner
+/// states the station's status in person. External alerts stay gated by the backend.
+const showStationVerificationNotices = false;
+
 const unverifiedStationTitle = 'UNVERIFIED STATION — NOT AN OPERATIONAL WARNING';
 const unverifiedStationGuidance =
     'This station has not completed AGAPAY field review, or its review was '
@@ -14,7 +18,9 @@ class UnverifiedStationBanner extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) => Semantics(
+  Widget build(BuildContext context) => !showStationVerificationNotices
+      ? const SizedBox.shrink()
+      : Semantics(
     container: true,
     label: compact
         ? unverifiedStationTitle

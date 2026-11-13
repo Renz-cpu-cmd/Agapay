@@ -1,3 +1,4 @@
+import '../../widgets/common/unverified_station_banner.dart';
 import '../../core/ui.dart';
 import '../../models/community_alert.dart';
 import '../../navigation/app_routes.dart';
@@ -34,7 +35,7 @@ class CommunityAlertDetailScreen extends StatelessWidget {
           gap,
           Panel(
             child: tx(
-              !detail.episode.isOperational
+              showStationVerificationNotices && !detail.episode.isOperational
                   // R4: never phrase an unverified record as an instruction.
                   ? 'Unverified station record. This incident was recorded by a station that has not completed AGAPAY field review, or whose eligibility was withdrawn. It is not an operational warning and not an evacuation instruction. Follow official local authority advisories.'
                   : detail.episode.isResolved
@@ -47,7 +48,7 @@ class CommunityAlertDetailScreen extends StatelessWidget {
           ),
           gap,
           tx(
-            'Sensor tiers are not official LGU evacuation orders. Physical/site calibration is pending. Historical ingress origin is unknown.',
+            'Sensor tiers are not official LGU evacuation orders.',
             size: 11,
             color: context.colors.muted,
           ),

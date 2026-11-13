@@ -32,7 +32,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     }
     final scenario = scenarios[level]!;
     return Scaffold(
-      appBar: AppBar(title: const Text('TEST WORKSPACE · SYNTHETIC DATA')),
+      appBar: AppBar(title: const Text('EXERCISE WORKSPACE')),
       body: SafeArea(
         child: PageContent(
           children: [
@@ -55,7 +55,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               ],
             ),
             gap,
-            tx('SYNTHETIC ${level.label}', size: 20, color: level.textColor),
+            tx('EXERCISE ${level.label}', size: 20, color: level.textColor),
             tx(
               '${scenario.$1.toStringAsFixed(1)} cm · EXAMPLE',
               size: 28,

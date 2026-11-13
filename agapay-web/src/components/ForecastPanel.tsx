@@ -58,7 +58,7 @@ export default function ForecastPanel({ stationId, title: heading = "Flood forec
   return <section className="forecast-panel design-panel p-4 flex flex-col gap-3" aria-label={heading}>
     <div className="flex flex-wrap items-center justify-between gap-2">
       <h2 className="font-ui font-bold text-xs tracking-widest uppercase text-slate-400">{heading}</h2>
-      <span className={`font-data text-xs ${preview ? "text-amber-400" : "text-slate-500"}`}>{preview ? "SYNTHETIC PREVIEW" : "ADVISORY ONLY"}</span>
+      <span className={`font-data text-xs ${preview ? "text-amber-400" : "text-slate-500"}`}>{preview ? "PREVIEW" : "ADVISORY ONLY"}</span>
     </div>
     {stationControl}
     {sourceNote}
@@ -70,7 +70,7 @@ export default function ForecastPanel({ stationId, title: heading = "Flood forec
     {available&&!preview&&current.uncertainty&&<p className="text-xs">{Math.round(current.uncertainty.nominal_coverage*100)}% nominal event interval · withheld event coverage {Math.round(current.uncertainty.withheld_event_coverage*100)}%. Coverage can fail under drift; this is local-depth uncertainty, not flood probability.</p>}
     {reason && <p className={`text-xs leading-relaxed ${error ? "text-red-400" : "text-slate-400"}`}>{reason}</p>}
     {current && <div className="text-[10px] text-slate-500 flex flex-col gap-1">
-      <span>{preview ? "Synthetic input" : "Latest input"}: {forecastTime(current.input_last_recorded_at)} PHT</span>
+      <span>{preview ? "Preview input" : "Latest input"}: {forecastTime(current.input_last_recorded_at)} PHT</span>
       {available && <span>Generated: {forecastTime(current.generated_at)} PHT · Valid until: {forecastTime(current.valid_until)} PHT</span>}
       {current.model_version && <span>Model: {current.model_version}</span>}
       {current.forecast_id&&<><Link href={`/forecasts/${current.forecast_id}`}>Forecast ID: {current.forecast_id} · binding {current.deployment_version}</Link><span>Datum: {current.reference_datum} · cutoff {forecastTime(current.data_cutoff??null)} PHT</span><span>Configuration: {current.configuration_hash}</span></>}

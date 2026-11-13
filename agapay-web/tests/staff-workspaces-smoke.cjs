@@ -92,7 +92,7 @@ const listen=s=>new Promise(r=>s.listen(0,'127.0.0.1',()=>r(s.address().port))),
  conflict=false;await page.getByRole('button',{name:'Refresh and review',exact:true}).click();await page.getByLabel('Reason for taking review responsibility').fill('Reviewed current record');await page.getByRole('button',{name:'Take responsibility',exact:true}).click();
  await page.getByText('Responsibility recorded. Refresh and review the saved ownership.',{exact:true}).waitFor();await page.getByRole('button',{name:'Refresh and review',exact:true}).click();await page.getByRole('button',{name:'Release responsibility',exact:true}).waitFor();
  assert.equal(writes.length,2);assert.equal(writes[1].expected_telemetry_id,91);
- await page.getByRole('button',{name:'Unverified / legacy review',exact:true}).click();await page.getByText('No active episodes in this evidence scope. Missing observations and service faults still require review.',{exact:true}).waitFor();assert(queries.some(q=>q.includes('scope=unverified')),'scope forwarded by authenticated proxy');
+ await page.getByRole('button',{name:'Legacy review',exact:true}).click();await page.getByText('No active episodes in this evidence scope. Missing observations and service faults still require review.',{exact:true}).waitFor();assert(queries.some(q=>q.includes('scope=unverified')),'scope forwarded by authenticated proxy');
  await page.getByRole('button',{name:'Recorded physical sources',exact:true}).click();await page.getByRole('button',{name:'Inspect reading',exact:true}).waitFor();
  for(const theme of ['light','dark']){
   await page.evaluate(t=>{localStorage.setItem('agapay-theme',t);document.documentElement.dataset.theme=t;},theme);
@@ -104,7 +104,7 @@ const listen=s=>new Promise(r=>s.listen(0,'127.0.0.1',()=>r(s.address().port))),
  queueDown=false;await page.goto(base+'/stations/SYNTHETIC');await page.getByText('Device configuration, maintenance and evidence',{exact:true}).click();await page.getByRole('heading',{name:'Can this reading be trusted?'}).waitFor();await page.getByText('SYNTHETIC_DEVICE · identity version 3 · commissioned',{exact:true}).waitFor();
  assert.match(await page.locator('#main-content').innerText(),/Latest eligible sample measured/);assert.match(await page.locator('#main-content').innerText(),/Last valid depth received/);
  await page.getByText('Timestamped measurement data and gaps',{exact:true}).click();await page.getByText('No observations in gap',{exact:true}).waitFor();
- assert.equal(await page.getByText('Rain counter',{exact:true}).count(),1);assert.match(await page.locator('#main-content').innerText(),/physical validation pending/);
+ assert.equal(await page.getByText('Rain counter',{exact:true}).count(),1);{const main=await page.locator('#main-content').innerText();assert.doesNotMatch(main,/physical validation pending|calibrat/i);}
  for(const theme of ['light','dark']){
   await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
   await page.locator('#main-content').evaluate(el=>el.scrollTo(0,0));await page.screenshot({path:path.join(doc,`station-${theme}.png`)});

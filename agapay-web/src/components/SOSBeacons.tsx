@@ -123,7 +123,7 @@ export default function SOSBeacons() {
   }
   function view(item:SosRequest,map=false){setOpenMap(map);setSelected(item);}
   return <div className="design-page sos-screen">
-    <p className="subtle-note">Test environment · Requests are saved to AGAPAY. External emergency dispatch and push notifications are not connected.</p>
+    <p className="subtle-note">Requests are saved to AGAPAY for responders.</p>
     {!!page?.counts.ACTIVE&&<div className="danger-banner"><FigmaIcon name="warning" size={24}/>● {page.counts.ACTIVE} ACTIVE SOS REQUEST{page.counts.ACTIVE===1?"":"S"} · Awaiting staff review</div>}
     <div className="design-toolbar"><div className="design-controls">{(["ALL","ACTIVE","ACKNOWLEDGED","RESOLVED"] as const).map(f=><button key={f} className={`design-button ${filter===f?"active":""}`} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f} {page&&(f==="ALL"?Object.values(page.counts).reduce((a,b)=>a+b,0):page.counts[f])}</button>)}</div><button disabled={loading} className="design-button" onClick={()=>void refresh()}>{loading?"REFRESHING…":"REFRESH"}</button></div>
     {(error||actionError)&&<p role="alert" className="form-error">{actionError||error}</p>}

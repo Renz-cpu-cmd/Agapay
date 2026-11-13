@@ -60,7 +60,7 @@ def test_isolated_depth_outlier_has_robust_rate_and_uncertainty():
     rows[10].water_depth_cm += 30
     result=estimate_rise(rows,NOW)
     assert result["rise_rate_cm_per_minute"]==pytest.approx(1.2)
-    assert result["trend_method"].endswith("not a calibrated confidence interval")
+    assert result["trend_method"].endswith("central 80% slope range")
 
 
 @pytest.fixture

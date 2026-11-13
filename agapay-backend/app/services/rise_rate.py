@@ -17,7 +17,7 @@ def estimate_rise(rows, now, *, stale_after_seconds=30, review_ids=()):
         rise_rate_upper=None, trend_window_start=None, trend_window_end=None,
         trend_sample_count=0, trend_bin_count=0, trend_coverage=0.0,
         trend_reason="Insufficient valid measurement timing/coverage",
-        trend_method="Median pairwise slope over cadence-adaptive 10-60-second median bins; central 80% slope range, not a calibrated confidence interval")
+        trend_method="Median pairwise slope over cadence-adaptive 10-60-second median bins; central 80% slope range")
     if len(rows) > MAX_SAMPLES:
         return {**result, "trend_reason": "Trend window sample budget exceeded"}
     now = utc(now)
@@ -59,5 +59,5 @@ def estimate_rise(rows, now, *, stale_after_seconds=30, review_ids=()):
     trend = ("rising_rapidly" if low >= 4-1e-6 else "rising" if low >= .5-1e-6 else "falling" if high <= -.5+1e-6
              else "stable" if low > -.5 and high < .5 else "unknown")
     result.update(trend=trend, rise_rate_cm_per_minute=rate, rise_rate_lower=low, rise_rate_upper=high,
-        trend_reason="Covered measured-time window; provisional thresholds 0.5/4 cm per minute" if trend != "unknown" else "Slope uncertainty crosses a classification boundary")
+        trend_reason="Covered measured-time window; thresholds 0.5/4 cm per minute" if trend != "unknown" else "Slope uncertainty crosses a classification boundary")
     return result

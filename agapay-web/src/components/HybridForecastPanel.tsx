@@ -18,10 +18,10 @@ export default function HybridForecastPanel({stationId, stationControl}: {statio
       <header><span className="ml-step">01</span><div><h3>Data sources</h3><p>Choose the station and observations used to initialize the model.</p></div></header>
       <div className="hybrid-inputs">
         {stationControl}
-        <label className="hybrid-field">Rainfall mode<select className="design-input" aria-label="Hybrid rainfall mode" value={mode} onChange={e=>configure({mode:e.target.value,...(e.target.value==="historical_context"?{depthSource:"manual"}:{})})}><option value="historical_context">Historical rainfall experiment</option><option value="live">Live rain gauge · automatic updates</option></select></label>
+        <label className="hybrid-field">Rainfall mode<select className="design-input" aria-label="Hybrid rainfall mode" value={mode} onChange={e=>configure({mode:e.target.value,...(e.target.value==="historical_context"?{depthSource:"manual"}:{})})}><option value="historical_context">Historical rainfall replay</option><option value="live">Live rain gauge · automatic updates</option></select></label>
         <label className="hybrid-field">Starting depth source<select className="design-input" aria-label="Projection depth source" value={depthSource} onChange={e=>configure({depthSource:e.target.value})}><option value="manual">Manual configured depth</option>{mode==="live"&&<option value="sensor">Fresh ESP32 measurement</option>}</select></label>
         {depthSource==="manual"&&<label className="hybrid-field">Manual depth (cm)<input className="design-input" aria-label="Manual projection depth (cm)" type="number" min="0" step="any" value={initial} onChange={e=>configure({initial:e.target.value})}/></label>}
-        {mode==="live"&&<label className="hybrid-field">Rain event source<select className="design-input" aria-label="Rain event source" value={rainSource} onChange={e=>configure({rainSource:e.target.value})}><option value="physical_rain_gauge">Physical gauge · station calibration</option><option value="simulated_rain_gauge">Synthetic test feed</option></select></label>}
+        {mode==="live"&&<label className="hybrid-field">Rain event source<select className="design-input" aria-label="Rain event source" value={rainSource} onChange={e=>configure({rainSource:e.target.value})}><option value="physical_rain_gauge">Physical gauge</option><option value="simulated_rain_gauge">Virtual gauge feed</option></select></label>}
       </div>
     </section>
     <section className="ml-settings-section">
@@ -35,7 +35,7 @@ export default function HybridForecastPanel({stationId, stationControl}: {statio
     </section>
     <footer className="ml-settings-footer">
       <label className="ml-confirm"><input type="checkbox" checked={confirmed} onChange={e=>configure({confirmed:e.target.checked})}/><span>I am using a controlled test basin or proxy with the parameters above.</span></label>
-      <div className="ml-settings-actions"><p role="status" className={error?"ml-error":"ml-muted"}>{status}</p><div><button className="design-button primary" disabled={!confirmed || initial.trim()==="" || !Number.isFinite(Number(initial)) || active} onClick={start}>{active?"Projection running":mode==="live"?"Start live projection":"Start experiment"}</button>{active&&<button className="design-button danger" onClick={stop}>Stop projection</button>}</div></div>
+      <div className="ml-settings-actions"><p role="status" className={error?"ml-error":"ml-muted"}>{status}</p><div><button className="design-button primary" disabled={!confirmed || initial.trim()==="" || !Number.isFinite(Number(initial)) || active} onClick={start}>{active?"Projection running":mode==="live"?"Start live projection":"Start projection"}</button>{active&&<button className="design-button danger" onClick={stop}>Stop projection</button>}</div></div>
     </footer>
   </div>;
 }

@@ -24,12 +24,12 @@ function DeployedEvaluation({data}:{data:ForecastWorkspaceData}){
   },[model?.id,model?.version,data.station_id,head.configuration_hash,revision]);
   return <section className="design-panel p-4"><div className="design-toolbar"><h2>Deployed model evidence</h2><button className="design-button" onClick={()=>setRevision(n=>n+1)}>Refresh deployed evaluation</button></div>
     <p className="subtle-note">This section follows the current station binding. Compare its model ID and configuration with any historical product selected above; it does not retroactively approve an earlier release.</p>
-    {!model&&<p>No operational adapter is deployed. Experimental rainfall scores are not a substitute for site water-depth evidence.</p>}
+    {!model&&<p>No water-depth adapter is deployed.</p>}
     {error&&<p role="alert">{error}</p>}{model&&!evidence&&!error&&<p role="status">Checking evaluation for the exact deployed model…</p>}
     {evidence&&<><p className="hash-value">Model {evidence.id} · {evidence.state} · review {evidence.version}</p><dl className="evidence-grid">
       <div><dt>Target and datum</dt><dd>Local sensor depth, cm · {evidence.card.datum}</dd></div><div><dt>Training cutoff / source</dt><dd>{alertTime(evidence.card.training_cutoff)} · {evidence.card.source_class}</dd></div>
       <div><dt>Inference features</dt><dd>{evidence.card.features}</dd></div><div><dt>Data licence and provenance</dt><dd>{evidence.card.data_license} · {evidence.card.provenance}</dd></div>
-      <div><dt>Calibration history</dt><dd>{evidence.card.calibration_history}</dd></div><div><dt>Allowed use / fallback</dt><dd>{evidence.card.allowed_use} · {evidence.card.fallback}</dd></div></dl>
+      <div><dt>Interval history</dt><dd>{evidence.card.calibration_history}</dd></div><div><dt>Allowed use / fallback</dt><dd>{evidence.card.allowed_use} · {evidence.card.fallback}</dd></div></dl>
       <p><strong>Limits:</strong> {evidence.card.limitations}</p>
       <div className="design-table-wrap"><table className="design-table"><caption>Withheld-event depth errors in cm; candidate and reference baselines</caption><thead><tr><th>Method</th><th>Horizon min</th><th>Samples</th><th>MAE cm</th><th>RMSE cm</th><th>Bias cm</th><th>Maximum error cm</th></tr></thead><tbody>{Object.entries(evidence.evaluation).flatMap(([method,horizons])=>Object.entries(horizons).map(([h,score])=><tr key={method+h}><td>{method}</td><td>{h}</td><td>{score.count}</td><td>{score.mae_cm.toFixed(1)}</td><td>{score.rmse_cm.toFixed(1)}</td><td>{score.bias_cm.toFixed(1)}</td><td>{score.maximum_absolute_error_cm.toFixed(1)}</td></tr>))}</tbody></table></div>
       <DecisionEvaluation report={evidence.decision_evaluation}/>
@@ -51,7 +51,7 @@ function ProductEvidence({data,envelope,now}:{data:ForecastWorkspaceData;envelop
       <div><dt>Event uncertainty evidence</dt><dd>{u.calibration_events} calibration / {u.test_events} withheld events · nominal {(u.nominal_coverage*100).toFixed(0)}% · observed {(u.withheld_event_coverage*100).toFixed(0)}%</dd></div>
       <div><dt>Uncertainty policy / display resolution</dt><dd className="hash-value">{u.policy_sha256}<p>Approximate values at {u.display_resolution_cm} cm resolution</p></dd></div></dl>
     <p>{u.notice} Coverage is an event evaluation measure, not the probability that an area is safe.</p>
-    <div className="design-table-wrap"><table className="design-table"><caption>Original published horizons and event-calibrated intervals; no interpolation across missing evidence</caption><thead><tr><th>Horizon</th><th>Target (PHT)</th><th>Approximate depth cm</th><th>Calibrated interval</th></tr></thead><tbody>{product.forecasts.map(point=><tr key={point.horizon_minutes}><td>+{point.horizon_minutes} min</td><td>{alertTime(point.target_at)}</td><td>{forecastDepth(point.water_depth_cm,u.display_resolution_cm)}</td><td>{forecastInterval(point.lower_depth_cm,point.upper_depth_cm)}</td></tr>)}</tbody></table></div>
+    <div className="design-table-wrap"><table className="design-table"><caption>Original published horizons and event-based intervals; no interpolation across missing evidence</caption><thead><tr><th>Horizon</th><th>Target (PHT)</th><th>Approximate depth cm</th><th>Interval</th></tr></thead><tbody>{product.forecasts.map(point=><tr key={point.horizon_minutes}><td>+{point.horizon_minutes} min</td><td>{alertTime(point.target_at)}</td><td>{forecastDepth(point.water_depth_cm,u.display_resolution_cm)}</td><td>{forecastInterval(point.lower_depth_cm,point.upper_depth_cm)}</td></tr>)}</tbody></table></div>
     <Link className="design-button" href={`/forecasts/${product.forecast_id}`}>Open immutable forecast record</Link>
   </article>;
 }

@@ -392,7 +392,7 @@ class _SosScreenState extends State<SosScreen> with WidgetsBindingObserver {
     color: const Color(0x30eab308),
     border: const Color(0x60eab308),
     child: tx(
-      'TEST ENVIRONMENT · Requests are saved to AGAPAY. Emergency dispatch and external notifications are not connected.',
+      'Requests are saved to AGAPAY for responders.',
       size: 12,
       color: const Color(0xfffbbf24),
       height: 1.5,
@@ -915,7 +915,7 @@ class _SosScreenState extends State<SosScreen> with WidgetsBindingObserver {
           children: [
             PageHeading(
               'SOS requests',
-              'Test environment · receipt and response evidence',
+              'Receipt and response evidence',
             ),
             _notice(),
             gap,

@@ -3,7 +3,7 @@ abstract final class OperationalVocabulary {
   static const observed = 'Observed';
   static const lastKnown = 'Last known';
   static const noValidReading = 'No valid reading';
-  static const experimentalProjection = 'Experimental projection';
+  static const experimentalProjection = 'Projection';
   static const officialAdvisory = 'Official advisory';
   static const practiceSos = 'SOS';
 

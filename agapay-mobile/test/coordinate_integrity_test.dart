@@ -114,7 +114,7 @@ void main() {
       expect(find.textContaining('episode: EVACUATE'), findsWidgets);
       expect(find.text('Observed water depth'), findsNWidgets(4));
       // R4 verification is independent of location: the prototype station keeps its banner.
-      expect(find.byKey(const ValueKey('map-unverified-STATION_004')), findsOneWidget);
+      expect(find.byKey(const ValueKey('map-unverified-STATION_004')), findsNothing);
       // Station switching never borrows another station's position.
       for (final id in ['STATION_002', 'STATION_004', 'STATION_003', 'STATION_001']) {
         await tester.ensureVisible(find.widgetWithText(TextButton, id));
@@ -123,7 +123,7 @@ void main() {
         final markers = tester.widget<AgapayGoogleMap>(find.byType(AgapayGoogleMap)).markers;
         expect(markers.map((m) => m.id).toSet(), {'STATION_001', 'STATION_004'});
       }
-      expect(find.byType(UnverifiedStationBanner), findsWidgets);
+      expect(find.byType(UnverifiedStationBanner), findsNothing);
       await tester.pumpWidget(const SizedBox.shrink());
       app.dispose();
       await tester.pump();

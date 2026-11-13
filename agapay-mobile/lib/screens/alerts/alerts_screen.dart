@@ -1,3 +1,4 @@
+import '../../widgets/common/unverified_station_banner.dart';
 import 'dart:async';
 import 'delivery_evidence_screen.dart';
 import '../../core/ui.dart';
@@ -85,7 +86,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
         ),
         if (!_history && page != null)
           tx('${page.total} active sensor alerts', size: 12, weight: 600),
-        if (page != null && page.items.any((e) => !e.isOperational))
+        if (showStationVerificationNotices && page != null && page.items.any((e) => !e.isOperational))
           tx(
             'Includes unverified station records — these are not operational warnings.',
             size: 11,

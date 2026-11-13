@@ -21,7 +21,7 @@ export function stationMeasurement(source: MonitoringStation, channel: "depth" |
     const current=value!==null&&source.rainfall_fresh;
     return {value,measuredAt:source.rainfall_observed_at??null,ageSeconds:source.rainfall_age_seconds??null,
       state:value===null?"missing":current?"current":"stale",quality:value===null?"unknown":"valid",latestSampleQuality:value===null?"unknown":"valid",
-      reason:p?`Journal received tips · ${p.interval_start??"—"} to ${p.interval_end??"—"} · ${p.source} · ${p.coverage} · calibration ${p.calibration_version??"unknown"}; incomplete hour, not an hourly model input`:
+      reason:p?`Journal received tips · ${p.interval_start??"—"} to ${p.interval_end??"—"} · ${p.source} · ${p.coverage} · config ${p.calibration_version??"unknown"}; incomplete hour, not an hourly model input`:
         "Rainfall interval/source unavailable; deprecated water telemetry rainfall excluded"};
   }
   const depth = channel === "depth";
@@ -45,7 +45,7 @@ export function stationMeasurement(source: MonitoringStation, channel: "depth" |
   } else if (source.source_class === "simulator") {
     state = "exercise"; reason = "Exercise sample; excluded from operational statistics";
   } else if (source.source_class !== "physical_device" || !source.source_trusted || (depth && !source.depth_source_trusted)) {
-    state = "unverified"; reason = "Unverified source; excluded from operational statistics";
+    state = "unverified"; reason = "Unregistered source; excluded from operational statistics";
   } else if (!(depth ? source.depth_fresh : source.rainfall_fresh)) {
     state = "stale"; reason = "Measurement stale or feed unavailable; last known value";
   } else {
@@ -86,7 +86,7 @@ export function measurementReport(station: Station, stations: Station[]): string
   const summary = currentDepthSummary(stations);
   return [
     ["Station", station.id], ["Barangay", station.barangay],
-    ["Source", station.sourceTrusted ? "Authenticated registered device" : "Unverified / exercise source"],
+    ["Source", station.sourceTrusted ? "Authenticated registered device" : "Unregistered / exercise source"],
     ["Water depth", measurementText(station.depth, 1, "cm")],
     ["Depth state / reason / time", measurementNote(station.depth)],
     ["Depth age", station.measurementAge ?? "Unknown"],

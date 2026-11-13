@@ -135,7 +135,6 @@ void main() {
             'Latest sample validity: ${row['quality']}',
             'Episode tier: ${row['episodeTier'] ?? 'None recorded'}',
             'Water depth: ${row['label']}',
-            'Station datum: unconfirmed',
           ]) {
             expect(
               find.bySemanticsLabel(RegExp(RegExp.escape(fact))),

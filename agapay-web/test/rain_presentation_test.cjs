@@ -12,46 +12,38 @@ const hash = 'c5eed6b3f6b820c6a77342c4e30b64cbd9c46657eec086e115b5fff590d7557b';
 const product = (changes = {}) => ({ quality: 'partial', coverage_complete: false, tip_count: 50, mm_per_tip: 0.7, calibration_version: hash, ...changes });
 const config = (validation_status, changes = {}) => ({ status: 'matched', validation_status, config_hash: hash, ...changes });
 
-test('prototype: partial coverage, provisional conversion, not called manual readings', () => {
+// Owner decision (2026-11-13): no qualifier labels on the rain card; the configured
+// 0.7 mm/tip is the gauge's manufacturer rating. `calibrated` stays an internal flag.
+test('prototype: plain rainfall card with tips, coverage and conversion', () => {
   const r = rainPresentation(product(), config('prototype'));
-  assert.equal(r.title, 'Rain-gauge Activity');
-  assert.equal(r.badge, 'Prototype');
-  assert.equal(r.amountSuffix, 'mm rainfall-equivalent');
+  assert.deepEqual([r.title, r.badge, r.amountSuffix, r.origin], ['Rainfall Activity', null, 'mm', null]);
   assert.equal(r.tips, '50 recorded tips');
   assert.equal(r.coverage, 'Partial coverage');
-  assert.equal(r.caveat, 'Provisional conversion: 0.7 mm/tip. Not calibrated against measured water. Prototype configuration: tips are not validated as measured rainfall.');
-  assert.doesNotMatch(r.caveat, /manual|by hand|bench test reading/i);
+  assert.equal(r.caveat, 'Conversion: 0.7 mm/tip.');
   assert.equal(r.calibrated, false);
+  for (const text of [r.title, r.amountSuffix, r.calibration, r.caveat]) {
+    assert.doesNotMatch(text, /calibrat|prototype|bench|unvalidated|equivalent|re-checked/i);
+  }
 });
 
-test('field review alone is not physical calibration', () => {
-  const r = rainPresentation(product({ quality: 'complete', coverage_complete: true }), config('field_reviewed'));
-  assert.deepEqual([r.title, r.badge, r.amountSuffix, r.calibrated], ['Rain-gauge Activity', 'Unvalidated', 'mm rainfall-equivalent', false]);
-  assert.equal(r.calibration, 'Provisional conversion: 0.7 mm/tip. Not calibrated against measured water.');
-  // The current backend contract only reports physical_validation "pending".
+test('calibrated flag still requires measured-water validation', () => {
+  assert.equal(rainPresentation(product(), config('field_reviewed')).calibrated, false);
   assert.equal(rainPresentation(product(), config('field_reviewed'), 'pending').calibrated, false);
-});
-
-test('measured-water validation plus field review, match and same calibration: calibrated', () => {
   const r = rainPresentation(product({ quality: 'complete', coverage_complete: true }), config('field_reviewed'), 'validated');
-  assert.deepEqual([r.title, r.badge, r.amountSuffix, r.coverage, r.origin, r.calibrated],
-    ['Rainfall Activity', null, 'mm', 'Complete coverage', null, true]);
-  assert.equal(r.calibration, 'Calibrated conversion: 0.7 mm/tip (measured-water validation).');
-  // Physical validation never overrides a prototype or mismatched configuration.
+  assert.deepEqual([r.title, r.badge, r.amountSuffix, r.coverage, r.calibration, r.calibrated],
+    ['Rainfall Activity', null, 'mm', 'Complete coverage', 'Conversion: 0.7 mm/tip.', true]);
   assert.equal(rainPresentation(product(), config('prototype'), 'validated').calibrated, false);
-});
-
-test('every incomplete or mismatched path stays provisional', () => {
   assert.equal(rainPresentation(product({ calibration_version: 'other' }), config('field_reviewed'), 'validated').calibrated, false);
   assert.equal(rainPresentation(product(), config('field_reviewed', { status: 'mismatch' }), 'validated').calibrated, false);
   assert.equal(rainPresentation(product({ calibration_version: null }), config('field_reviewed'), 'validated').calibrated, false);
   assert.equal(rainPresentation(product(), config('field_reviewed', { config_hash: null }), 'validated').calibrated, false);
+});
+
+test('missing configuration or product never invents a figure', () => {
   const unconfigured = rainPresentation(product(), null);
-  assert.deepEqual([unconfigured.calibrated, unconfigured.badge, unconfigured.origin],
-    [false, 'Unvalidated', 'Not confirmed as measured rainfall.']);
+  assert.deepEqual([unconfigured.calibrated, unconfigured.badge, unconfigured.origin], [false, null, null]);
   const missing = rainPresentation(null, config('field_reviewed'));
-  assert.deepEqual([missing.coverage, missing.tips, missing.calibrated], ['Coverage unknown', null, false]);
-  assert.match(missing.calibration, /conversion unknown/);
+  assert.deepEqual([missing.coverage, missing.tips, missing.calibrated, missing.calibration], ['Coverage unknown', null, false, 'Conversion unknown.']);
   // A complete flag cannot override a partial quality.
   assert.equal(rainPresentation(product({ coverage_complete: true }), config('prototype')).coverage, 'Partial coverage');
 });

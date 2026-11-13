@@ -19,7 +19,7 @@ class MapScreen extends StatefulWidget {
 /// warning. Uses the shared fail-closed MonitoringStation.operationallyVerified.
 const unverifiedMarkerColor = Color(0xff94a3b8);
 bool _unverified(StationFreshnessView v) =>
-    v.depth.value != null && !v.station.operationallyVerified;
+    showStationVerificationNotices && v.depth.value != null && !v.station.operationallyVerified;
 
 class _MapScreenState extends State<MapScreen> {
   bool _showMap = true;
@@ -217,7 +217,7 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                       ],
                     ),
-                    Row(
+                    if (showStationVerificationNotices) Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Dot(
@@ -238,7 +238,7 @@ class _MapScreenState extends State<MapScreen> {
                 ),
                 const SizedBox(height: 8),
                 tx(
-                  'Colors show the observation tier of reviewed stations. Unverified stations are grey. Connection and measurement quality are listed separately.',
+                  'Colors show the observation tier. Connection and measurement quality are listed separately.',
                   size: 10,
                   color: context.colors.muted,
                 ),
