@@ -1,3 +1,4 @@
+#include <utility>
 // Compile the actual firmware against host fakes and the actual ArduinoJson library.
 #include "../src/main.cpp"
 #include <iostream>
@@ -372,22 +373,65 @@ void testTelemetryCadence() {
 }
 
 
+// Defense LED rules: NORMAL green; ADVISORY steady yellow; WARNING yellow 1 s on / 1 s off;
+// EVACUATE red + buzzer; sensor fault yellow double flash (150/150/150/1550 ms) that never
+// clears an EVACUATE red/buzzer latch and never shows green.
+void testLocalLedPatterns() {
+  localBenchAlerts=false;localOutputTestActive=false;sensorFaultActive=false;
+  fakeMs=500000;
+  setMedian(DIST_NORMAL);expectPins(HIGH,LOW,LOW,HIGH);
+  serviceWarningBlink(fakeMs+1500);expectPins(HIGH,LOW,LOW,HIGH);
+  setMedian(DIST_ADVISORY);expectPins(LOW,HIGH,LOW,HIGH);
+  serviceWarningBlink(fakeMs+1500);expectPins(LOW,HIGH,LOW,HIGH);   // steady, never blinks
+  fakeMs=510000;
+  setMedian(DIST_WARNING);assert(currentTier==AlertTier::WARNING);expectPins(LOW,HIGH,LOW,HIGH);  // starts ON
+  const uint32_t w=warningSinceMs;assert(w==510000);
+  serviceWarningBlink(w+999);expectPins(LOW,HIGH,LOW,HIGH);
+  serviceWarningBlink(w+1000);expectPins(LOW,LOW,LOW,HIGH);
+  serviceWarningBlink(w+1999);expectPins(LOW,LOW,LOW,HIGH);
+  serviceWarningBlink(w+2000);expectPins(LOW,HIGH,LOW,HIGH);
+  fakeMs=w+1500;setMedian(DIST_WARNING);assert(warningSinceMs==w);expectPins(LOW,LOW,LOW,HIGH);  // phase continues
+  serviceWarningBlink(UINT32_MAX);  // wrap-safe: unsigned elapsed time
+  fakeMs=520000;
+  setMedian(DIST_EVACUATE);expectPins(LOW,LOW,HIGH,LOW);
+  serviceWarningBlink(fakeMs+1000);expectPins(LOW,LOW,HIGH,LOW);
+  // Sensor failure during EVACUATE keeps the red LED and buzzer; yellow double-flashes.
+  fakeMs=530000;validSamples=2;finishSensorSample();
+  assert(sensorFaultActive && !latestSample.sensorValid && currentLocalTier==AlertTier::EVACUATE);
+  const uint32_t f=sensorFaultSinceMs;assert(f==530000);
+  for (const auto& step : {std::pair<uint32_t,int>{0,HIGH},{149,HIGH},{150,LOW},{299,LOW},{300,HIGH},{449,HIGH},{450,LOW},{1999,LOW},{2000,HIGH}}) {
+    serviceSensorFault(f+step.first);expectPins(LOW,step.second,HIGH,LOW);
+  }
+  serviceWarningBlink(f+1000);expectPins(LOW,HIGH,HIGH,LOW);  // warning blink never overrides a fault
+  // A second invalid sample keeps the same flash phase.
+  fakeMs=f+700;validSamples=2;finishSensorSample();assert(sensorFaultSinceMs==f);
+  // Fault outside EVACUATE: double flash only, no red, no buzzer, no green.
+  setMedian(DIST_ADVISORY);assert(!sensorFaultActive);
+  fakeMs=540000;validSamples=2;finishSensorSample();
+  assert(sensorFaultActive && currentLocalTier==AlertTier::ADVISORY);
+  serviceSensorFault(sensorFaultSinceMs);expectPins(LOW,HIGH,LOW,HIGH);
+  serviceSensorFault(sensorFaultSinceMs+FAULT_FLASH_MS);expectPins(LOW,LOW,LOW,HIGH);
+  setMedian(DIST_NORMAL);assert(!sensorFaultActive);expectPins(HIGH,LOW,LOW,HIGH);
+  std::cerr<<"PASS: LED patterns: NORMAL green, ADVISORY steady yellow, WARNING 1 s blink, EVACUATE red+buzzer, fault double flash keeps EVACUATE latch\n";
+}
+
 // 65 cm cardboard exercise positions (revision 2). Only meaningful for that geometry.
 void testCardboardExercisePositions() {
   if (SENSOR_HEIGHT_CM != 65.0F || THRESHOLD_EVACUATE_CM != 35.0F) return;
   localBenchAlerts=false;localOutputTestActive=false;
   struct Position { float distance; AlertTier tier; } positions[] = {
-    {65.0F, AlertTier::NORMAL}, {45.0F, AlertTier::ADVISORY}, {35.0F, AlertTier::WARNING}, {30.0F, AlertTier::EVACUATE}};
+    {65.0F, AlertTier::NORMAL}, {45.0F, AlertTier::ADVISORY}, {35.0F, AlertTier::WARNING}, {25.0F, AlertTier::EVACUATE}};
   for (const auto& p : positions) {
     setMedian(p.distance);
     assert(latestSample.sensorValid && currentTier==p.tier);
     expectNear(latestSample.waterDepthCm, SENSOR_HEIGHT_CM-p.distance);
   }
-  // The sensor read about 1.3 cm short at 65 cm; EVACUATE still holds at 30 cm with that offset.
-  setMedian(30.0F-1.3F);assert(latestSample.sensorValid && currentTier==AlertTier::EVACUATE);
-  // A closer target stays a valid EVACUATE reading (the 38 cm limit constrains the threshold, not readings).
-  setMedian(25.0F);assert(latestSample.sensorValid && currentTier==AlertTier::EVACUATE);
-  std::cerr<<"PASS: 65 cm exercise positions 65/45/35/30 cm read NORMAL/ADVISORY/WARNING/EVACUATE\n";
+  // The sensor read about 1.3 cm short at 65 cm; 25 cm reads about 23.7 cm (depth ~41), still a
+  // valid EVACUATE (20 cm minimum range; the 38 cm limit constrains the threshold, not readings).
+  setMedian(25.0F-1.3F);assert(latestSample.sensorValid && currentTier==AlertTier::EVACUATE);
+  // The configured boundary itself: 30 cm is exactly 35 cm depth.
+  setMedian(30.0F);assert(latestSample.sensorValid && currentTier==AlertTier::EVACUATE);
+  std::cerr<<"PASS: 65 cm exercise positions 65/45/35/25 cm read NORMAL/ADVISORY/WARNING/EVACUATE\n";
 }
 
 void testAcquisitionGeometryAndFaultPolicy() {
@@ -408,8 +452,8 @@ void testAcquisitionGeometryAndFaultPolicy() {
   for(uint32_t offset=0;offset<=240;offset+=60)sampleSensors(now+offset);
   assert(!latestSample.sensorValid && strcmp(latestSample.sensorFault,"blind_zone")==0 && sensorFaultActive);
   assert(currentTier==AlertTier::EVACUATE);
-  serviceSensorFault(0);expectPins(LOW,LOW,HIGH,LOW);
-  serviceSensorFault(250);expectPins(LOW,HIGH,HIGH,LOW);
+  serviceSensorFault(sensorFaultSinceMs+FAULT_FLASH_MS);expectPins(LOW,LOW,HIGH,LOW);
+  serviceSensorFault(sensorFaultSinceMs);expectPins(LOW,HIGH,HIGH,LOW);
   handleLocalAlertCommand("ALERT TEST",now);assert(!localOutputTestActive);
   setMedian(SENSOR_HEIGHT_CM-10);assert(!sensorFaultActive && latestSample.sensorValid);
   std::cerr<<"PASS: real five-pulse acquisition crosses all unchanged depth tiers with range margin; blind-zone mixed burst signals fault, latches critical offline, blinks and prevents self-test masking\n";
@@ -635,6 +679,7 @@ int main() {
   testTelemetryCadence();
   testAcquisitionGeometryAndFaultPolicy();
   testCardboardExercisePositions();
+  testLocalLedPatterns();
   testDepthHistory();
   vQueueDelete(reportQueue);
   vQueueDelete(rainQueue);

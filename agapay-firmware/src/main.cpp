@@ -140,6 +140,19 @@ struct TelemetrySample {
   bool benchProfile = false;
 };
 bool sensorFaultActive = false;
+// Local LED patterns (defense build): ADVISORY steady yellow; WARNING slow yellow blink;
+// sensor fault = yellow double flash so a malfunction never looks like a flood tier.
+constexpr uint32_t WARNING_BLINK_HALF_MS = 1000;          // 1 s on, 1 s off
+constexpr uint32_t FAULT_FLASH_MS = 150;                  // on 150, off 150, on 150, off 1550
+constexpr uint32_t FAULT_CYCLE_MS = 2000;
+inline bool warningYellowOn(uint32_t sinceMs) { return (sinceMs / WARNING_BLINK_HALF_MS) % 2 == 0; }
+inline bool faultYellowOn(uint32_t sinceMs) {
+  const uint32_t phase = sinceMs % FAULT_CYCLE_MS;
+  return phase < FAULT_FLASH_MS || (phase >= 2 * FAULT_FLASH_MS && phase < 3 * FAULT_FLASH_MS);
+}
+bool warningPatternActive = false;
+uint32_t warningSinceMs = 0;
+uint32_t sensorFaultSinceMs = 0;
 bool blindZoneSeen = false;
 const char* acquisitionFault = "insufficient_echoes";
 struct TelemetryReport {
@@ -483,8 +496,14 @@ AlertTier classifyBenchAlert(float distanceCm) {
 }
 
 void writeLocalAlertOutputs(AlertTier tier, const char* source) {
+  if (tier == AlertTier::WARNING) {
+    if (!warningPatternActive) { warningPatternActive = true; warningSinceMs = millis(); }  // starts ON
+  } else {
+    warningPatternActive = false;
+  }
   digitalWrite(LED_GREEN, tier == AlertTier::NORMAL ? HIGH : LOW);
-  digitalWrite(LED_YELLOW, tier == AlertTier::ADVISORY || tier == AlertTier::WARNING ? HIGH : LOW);
+  digitalWrite(LED_YELLOW, tier == AlertTier::ADVISORY ||
+      (tier == AlertTier::WARNING && warningYellowOn(static_cast<uint32_t>(millis() - warningSinceMs))) ? HIGH : LOW);
   digitalWrite(LED_RED, tier == AlertTier::EVACUATE ? HIGH : LOW);
   // MH-FMD active buzzer module: DC LOW=on, HIGH=off; no passive-buzzer tone.
   digitalWrite(BUZZER_PIN, tier == AlertTier::EVACUATE ? BUZZER_ON_LEVEL : BUZZER_OFF_LEVEL);
@@ -604,11 +623,12 @@ void finishSensorSample() {
   } else {
     latestSample.waterDepthCm = NAN;
     latestSample.sensorFault=blindZoneSeen?"blind_zone":validSamples>=3?"out_of_range":acquisitionFault;
+    if (!sensorFaultActive) sensorFaultSinceMs = millis();  // double-flash pattern starts ON
     sensorFaultActive=true;localOutputTestActive=false;
     // Fault is distinct from a measured tier. Preserve an existing critical
-    // red/buzzer latch; other states show a blinking yellow fault and no green.
+    // red/buzzer latch; other states show the yellow double flash and no green.
     digitalWrite(LED_GREEN,LOW);
-    digitalWrite(LED_YELLOW,HIGH);
+    digitalWrite(LED_YELLOW,faultYellowOn(static_cast<uint32_t>(millis()-sensorFaultSinceMs))?HIGH:LOW);
     digitalWrite(LED_RED,currentLocalTier==AlertTier::EVACUATE?HIGH:LOW);
     digitalWrite(BUZZER_PIN,currentLocalTier==AlertTier::EVACUATE?BUZZER_ON_LEVEL:BUZZER_OFF_LEVEL);
     Serial.printf("[SENSOR FAULT] %s; hazard latch retained, no inferred recovery\n",latestSample.sensorFault);
@@ -636,10 +656,15 @@ void sampleSensors(uint32_t now) {
   }
 }
 
+void serviceWarningBlink(uint32_t now) {
+  if (!warningPatternActive || sensorFaultActive || localOutputTestActive || currentLocalTier != AlertTier::WARNING) return;
+  digitalWrite(LED_YELLOW, warningYellowOn(static_cast<uint32_t>(now - warningSinceMs)) ? HIGH : LOW);
+}
+
 void serviceSensorFault(uint32_t now) {
   if (!sensorFaultActive) return;
   digitalWrite(LED_GREEN,LOW);
-  digitalWrite(LED_YELLOW,(now/250)%2?HIGH:LOW);
+  digitalWrite(LED_YELLOW,faultYellowOn(static_cast<uint32_t>(now-sensorFaultSinceMs))?HIGH:LOW);
   digitalWrite(LED_RED,currentLocalTier==AlertTier::EVACUATE?HIGH:LOW);
   digitalWrite(BUZZER_PIN,currentLocalTier==AlertTier::EVACUATE?BUZZER_ON_LEVEL:BUZZER_OFF_LEVEL);
 }
@@ -1410,6 +1435,7 @@ void loop() {
   updateRainState(now);
   serviceLocalAlertDiagnostics(now);
   serviceSensorFault(now);
+  serviceWarningBlink(now);
 #if AGAPAY_OLED
   publishOled(now);
 #endif
