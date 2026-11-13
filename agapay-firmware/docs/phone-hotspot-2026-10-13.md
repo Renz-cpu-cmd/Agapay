@@ -1,4 +1,4 @@
-# AGAPAY pangit hotspot switch — October 13, 2026
+# AGAPAY <phone-hotspot> hotspot switch — October 13, 2026
 
 The requested hotspot connection is uploaded and running. No passwords are
 included in this report. The verified cardboard-demo firmware profile is preserved.
@@ -7,9 +7,9 @@ included in this report. The verified cardboard-demo firmware profile is preserv
 
 | Component | Verified result |
 | --- | --- |
-| Laptop Wi-Fi | pangit, quality100%, DHCP<broker-lan-ip> |
-| ESP32 Wi-Fi | pangit, WPA2-PSK, channel11, approximately -48 dBm |
-| Current hotspot BSSID | 1E:2F:4C:96:D9:6D |
+| Laptop Wi-Fi | <phone-hotspot>, quality100%, DHCP<broker-lan-ip> |
+| ESP32 Wi-Fi | <phone-hotspot>, WPA2-PSK, channel11, approximately -48 dBm |
+| Current hotspot BSSID | <hotspot-bssid> |
 | ESP32 DHCP | 10.224.134.252 |
 | ESP32 MQTT | state0, connected to<broker-lan-ip>:1883 |
 | Backend MQTT | same broker at127.0.0.1:1884, authenticated existing backend-demo account |
@@ -19,7 +19,7 @@ included in this report. The verified cardboard-demo firmware profile is preserv
 | API/dashboard | responding; physical rainfall panel Connected and forecast updating |
 
 The earlier Android BSSID in the one-time diagnostic differs from the hotspot's
-current BSSID. That historical BSSID is not used to pin pangit association.
+current BSSID. That historical BSSID is not used to pin <phone-hotspot> association.
 The actual SSID match and normal configured SSID/password association succeeded.
 
 The rain journal was at132 before the network change, then loaded148 from
@@ -56,9 +56,9 @@ The read-only laptop MQTT check received CONNACK Success and Rain-ACK SUBACK QoS
 Established sockets separately confirmed the real device at10.224.134.252
 and API atloopback1884 on the same managed broker.
 
-One normal reset captured actual pangit connection, association, DHCP, MQTT
+One normal reset captured actual <phone-hotspot> connection, association, DHCP, MQTT
 acceptance and the device's real backend ACK together in
-`data/live_rain/pangit-hotspot-startup-20261013.log`. The final heartbeat reported
+`data/live_rain/<phone-hotspot>-hotspot-startup-20261013.log`. The final heartbeat reported
 Wi-Fi3, MQTT1, state0. COM9 was released after the capture.
 
 Dashboard observation at08:48 AM PHT: physical rain gauge Connected, current-hour

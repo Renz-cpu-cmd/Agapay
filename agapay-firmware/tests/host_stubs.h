@@ -176,7 +176,7 @@ struct WiFiFake {
   int begin(const char* ssid,const char* password,int channel,const uint8_t* bssid,bool connect) {
     assert(connect && bssid);++pinnedBeginCalls;lastBeginChannel=channel;memcpy(lastBeginBssid,bssid,6);return begin(ssid,password);
   }
-  static constexpr char WIFI_SSID_TEST[] = "Upstairs";
+  static constexpr char WIFI_SSID_TEST[] = "BENCH_TEST_AP";
   void onEvent(void (*callback)(WiFiEvent_t,WiFiEventInfo_t)) { eventCallback=callback; }
   struct IP { std::string toString() { return "10.0.0.2"; } };
   IP localIP() { return {}; }
@@ -257,7 +257,12 @@ inline int xTaskCreatePinnedToCore(void (*)(void*), const char*, int, void*, int
 inline void vTaskDelay(unsigned) {}
 inline void vTaskDelete(void*) {}
 inline unsigned uxTaskGetStackHighWaterMark(void*) { return 1024; }
-constexpr char WIFI_SSID[] = "Upstairs";
+// Synthetic network identity only. The optional pin uses a locally administered (02:...) address.
+constexpr char WIFI_SSID[] = "BENCH_TEST_AP";
+#ifndef AGAPAY_HOST_NO_WIFI_PIN
+#define AGAPAY_WIFI_PIN_BSSID 0x02,0x00,0x5E,0x10,0x20,0x30
+#define AGAPAY_WIFI_PIN_CHANNEL 11
+#endif
 constexpr char WIFI_PASSWORD[] = "HOST_WIFI_PASSWORD";
 constexpr char MQTT_HOST[] = "TEST_ONLY";
 #if AGAPAY_RELEASE_BUILD

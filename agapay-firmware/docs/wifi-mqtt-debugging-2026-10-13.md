@@ -5,7 +5,7 @@ the actual device connected and a physical tip is durably acknowledged.
 
 ## Findings from this debugging session
 
-- Laptop Wi-Fi is connected to `pangit`, 2.4 GHz/channel 11, WPA2-Personal;
+- Laptop Wi-Fi is connected to `<phone-hotspot>`, 2.4 GHz/channel 11, WPA2-Personal;
   IPv4 `<broker-lan-ip>/24`, gateway `10.224.134.61`, Public firewall profile.
 - Local `secrets.h` has that SSID/broker address, `<mqtt-username>`, and nonempty
   passwords. Passwords were never printed or changed. The Windows stored
@@ -135,7 +135,7 @@ Wi-Fi reasons include 201 NO_AP_FOUND, 202 AUTH_FAIL, 203 ASSOC_FAIL,
    missed, record one deliberate EN/reset separately and then watch uninterrupted.
 
 5. Verify Wi-Fi: `[NET] ... task=created`, `[NET] Network task started`,
-   `[WIFI] STA initialization: OK`, connection attempt to `pangit`, then
+   `[WIFI] STA initialization: OK`, connection attempt to `<phone-hotspot>`, then
    `[WIFI] Connected` and a nonzero IP/RSSI. The phone must list the ESP32 too.
    If no IP appears, use status/reason to fix association/security/phone settings
    before diagnosing MQTT. Do not change multiple settings at once.

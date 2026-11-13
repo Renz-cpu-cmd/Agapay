@@ -27,15 +27,26 @@ wifi_ap_record_t accessPoint(const char* ssid, int rssi=-55) {
   return ap;
 }
 
+// Synthetic identities only (host_stubs.h): SSID "BENCH_TEST_AP" (13 bytes) and, unless
+// AGAPAY_HOST_NO_WIFI_PIN, a locally administered pin BSSID 02:00:5E:10:20:30 on channel 11.
+const char* pinSeen(bool found) { return !WIFI_PIN_CONFIGURED ? "BSSID=NOT PINNED" : found ? "BSSID=FOUND" : "BSSID=NOT SEEN"; }
+std::string summary(const char* label,bool ssid,bool bssid,bool pair) {
+  return std::string("[WIFI SCAN ")+label+"] Configured network: SSID="+(ssid?"FOUND":"NOT SEEN")+" "+pinSeen(bssid)+
+      " same_AP="+(!WIFI_PIN_CONFIGURED?"n/a":pair?"FOUND":"NOT SEEN");
+}
+bool noNetworkIdentifiersLogged() {
+  return !logged("BENCH_TEST_AP") && !logged("bench_test_ap") && !logged("NEIGHBOR_PRIVATE") && !logged("RENAMED_NETWORK") &&
+      !logged("02:00:5E") && !logged("hex=[") && !logged("escaped=");
+}
+
 void testWiFiDiscovery() {
   fakeMs=90000;WiFi.state=WL_DISCONNECTED;WiFi.operations.clear();
-  auto upstairs=accessPoint("Upstairs");
-  memcpy(upstairs.bssid,WIFI_DISCOVERY_TARGETS[0].bssid,6);
-  auto hiddenHotspot=accessPoint("NEIGHBOR_PRIVATE");
-  memcpy(hiddenHotspot.bssid,WIFI_DISCOVERY_TARGETS[1].bssid,6);
+  auto pinned=accessPoint("BENCH_TEST_AP");
+  memcpy(pinned.bssid,WIFI_PIN_BSSID,6);
+  if (!WIFI_PIN_CONFIGURED) pinned.bssid[5]=0x30;  // same synthetic address; nothing is pinned in this build
   auto neighbor=accessPoint("NEIGHBOR_PRIVATE");neighbor.primary=1;
-  WiFi.scanResults={{4,{neighbor,upstairs,accessPoint("pangit"),accessPoint("")}},
-      {2,{hiddenHotspot,accessPoint("NEIGHBOR_PRIVATE")}}, {1,{upstairs}}};
+  WiFi.scanResults={{4,{neighbor,pinned,accessPoint("BENCH_TEST_AP "),accessPoint("")}},
+      {2,{accessPoint("bench_test_ap"),accessPoint("NEIGHBOR_PRIVATE")}}, {1,{pinned}}};
   const auto persisted=rainPreferences.storedLifetime;
   initializeNetwork();
   assert(WiFi.operations==std::vector<std::string>({"mode","scan","scan","scan"}));
@@ -47,12 +58,18 @@ void testWiFiDiscovery() {
   assert(logged("country=CN start_channel=1 channel_count=13 last_channel=13 policy=0 (AUTO) channel11_in_range=1"));
   assert(logged("[WIFI SCAN FULL] AP #1 channel=1 RSSI=-55 dBm"));
   assert(logged("[WIFI SCAN FULL] Channel 11 APs visible=3 missing_records=0"));
-  assert(logged("Known Upstairs: SSID_match=1 BSSID_match=1 RSSI=-55 dBm channel=11 auth=3 (WPA2_PSK) BSSID=00:16:78:A2:55:F0"));
-  assert(logged("[WIFI SCAN FULL] Upstairs: SSID=FOUND BSSID=FOUND same_AP=FOUND"));
-  assert(logged("[WIFI SCAN CH11-ACTIVE] pangit: SSID=NOT SEEN BSSID=FOUND same_AP=NOT SEEN"));
-  assert(logged("[WIFI SCAN CH11-PASSIVE] Upstairs: SSID=FOUND BSSID=FOUND same_AP=FOUND"));
+  assert(logged(WIFI_PIN_CONFIGURED
+      ? "[WIFI SCAN FULL] Configured network record: SSID_match=1 BSSID_match=1 RSSI=-55 dBm channel=11 auth=3 (WPA2_PSK)"
+      : "[WIFI SCAN FULL] Configured network record: SSID_match=1 BSSID_match=n/a RSSI=-55 dBm channel=11 auth=3 (WPA2_PSK)"));
+  assert(logged(summary("FULL",true,true,true).c_str()));
+  // Near misses are diagnosable without printing the name (the 2026-10-13 trailing-space case).
+  assert(logged("[WIFI SSID FULL] AP #3 near match: DIFFERS ONLY BY TRAILING WHITESPACE; never adopted"));
+  assert(logged("[WIFI SSID CH11-ACTIVE] AP #1 near match: DIFFERS ONLY BY LETTER CASE; never adopted"));
+  assert(logged(summary("CH11-ACTIVE",false,false,false).c_str()));
+  assert(logged(summary("CH11-PASSIVE",true,true,true).c_str()));
   assert(logged("completion_events=1 driver_status=0 (0=success; nonzero=failure)"));
-  assert(!logged("NEIGHBOR_PRIVATE"));
+  assert(logged(WIFI_PIN_CONFIGURED ? "Pinned BSSID diagnostic=eligible" : "Pinned BSSID diagnostic=not configured (normal association)"));
+  assert(noNetworkIdentifiersLogged());
   discoverWiFiOnce(true);assert(WiFi.scanCalls==3); // Never repeat this boot's sequence.
   maintainWiFiNonBlocking(fakeMs);assert(WiFi.operations.back()=="begin");
   assert(WiFi.scanCalls==3 && rainPreferences.storedLifetime==persisted);
@@ -60,7 +77,7 @@ void testWiFiDiscovery() {
   // Individual scan outcomes: empty scans differ from failure/pending.
   serialLines.clear();WiFi.scanResult=0;
   runWiFiDiscoveryScan("EMPTY",false,600,11);
-  assert(logged("result=0") && logged("Networks detected: 0") && logged("Upstairs: SSID=NOT SEEN BSSID=NOT SEEN same_AP=NOT SEEN"));
+  assert(logged("result=0") && logged("Networks detected: 0") && logged(summary("EMPTY",false,false,false).c_str()));
   assert(logged("Channel 11 APs visible=0"));
   assert(scanStopCalls==0);
   for (int16_t result : {static_cast<int16_t>(WIFI_SCAN_FAILED),static_cast<int16_t>(WIFI_SCAN_RUNNING)}) {
@@ -73,16 +90,16 @@ void testWiFiDiscovery() {
   // A target beyond index 255 must still be found (no uint8_t truncation).
   serialLines.clear();WiFi.scanResult=258;
   WiFi.accessPoints.assign(258,accessPoint("NEIGHBOR_PRIVATE"));
-  WiFi.accessPoints[257]=accessPoint("Upstairs",-65);
+  WiFi.accessPoints[257]=accessPoint("BENCH_TEST_AP",-65);
   runWiFiDiscoveryScan("LARGE",false,300,0);
-  assert(logged("Upstairs: SSID=FOUND BSSID=NOT SEEN same_AP=NOT SEEN") && !logged("NEIGHBOR_PRIVATE"));
+  assert(logged(summary("LARGE",true,false,false).c_str()) && noNetworkIdentifiersLogged());
   // SSID and BSSID found in different records must not be reported as a pair.
   serialLines.clear();WiFi.scanResult=2;
-  auto renamed=upstairs;snprintf(reinterpret_cast<char*>(renamed.ssid),sizeof(renamed.ssid),"%s","RENAMED_UPSTAIRS");
-  WiFi.accessPoints={accessPoint("Upstairs"),renamed};
+  auto renamed=pinned;snprintf(reinterpret_cast<char*>(renamed.ssid),sizeof(renamed.ssid),"%s","RENAMED_NETWORK");
+  WiFi.accessPoints={accessPoint("BENCH_TEST_AP"),renamed};
   runWiFiDiscoveryScan("SPLIT",true,1000,11);
-  assert(logged("Upstairs: SSID=FOUND BSSID=FOUND same_AP=NOT SEEN") && !logged("NEIGHBOR_PRIVATE"));
-  assert(logged("escaped=\"RENAMED_UPSTAIRS\"")); // explicitly requested known-BSSID bytes
+  assert(logged(summary("SPLIT",true,WIFI_PIN_CONFIGURED,false).c_str()) && noNetworkIdentifiersLogged());
+  if (WIFI_PIN_CONFIGURED) assert(logged("[WIFI SSID SPLIT] pinned AP: returned_len=15 configured_len=13 classification=DIFFERENT SSID BYTES"));
   // Wrapper can expose counts without exposing a failed/partial driver event.
   serialLines.clear();WiFi.scanResult=1;WiFi.accessPoints={neighbor};WiFi.driverScanStatus=1;
   runWiFiDiscoveryScan("PARTIAL",false,600,11);
@@ -91,7 +108,7 @@ void testWiFiDiscovery() {
   runWiFiDiscoveryScan("NO-EVENT",false,600,11);
   assert(logged("driver completion event not observed within 100 ms; completion status unknown"));
   WiFi.emitScanDone=true;
-  // Report existing region without broadening a range excluding channel 11.
+  // Report existing region without broadening a range excluding the discovery channel.
   serialLines.clear();wifiDiscoveryDone=false;WiFi.scanResult=0;
   fakeCountry.nchan=10;fakeCountry.policy=WIFI_COUNTRY_POLICY_MANUAL;
   const int beforeRestricted=WiFi.scanCalls;discoverWiFiOnce(true);
@@ -110,60 +127,86 @@ void testWiFiDiscovery() {
   setMedian(50);expectPins(LOW,LOW,HIGH,LOW);
   assert(rainPreferences.storedLifetime==persisted && !logged("HOST_FAKE_PASSWORD"));
   WiFi.beginCalls=0;wifiAttempted=false;lastWifiStatus=-1;
-  upstairsPinnedEligible=false;upstairsSsidMismatch=false;upstairsPinnedAttempt=false;
-  std::cerr << "PASS: full then channel-11 active/passive before begin, explicit dwell, anonymous channel/RSSI, country bounds/errors, SSID/BSSID/pair matching and privacy, empty/error cleanup, once per boot, GPIO/NVS preservation\n";
+  wifiPinEligible=false;wifiPinSsidMismatch=false;wifiPinnedAttempt=false;
+  std::cerr << "PASS (" << (WIFI_PIN_CONFIGURED?"pinned":"no pin") << "): full then channel-11 active/passive before begin, explicit dwell, anonymous channel/RSSI, country bounds/errors, SSID/BSSID/pair matching without printing names or BSSIDs, near-match classification, empty/error cleanup, once per boot, GPIO/NVS preservation\n";
 }
 
 void testSsidIdentityAndPinnedConnection() {
-  assert(isConfiguredUpstairs("Upstairs") && isConfiguredUpstairs("Upstairs "));
-  assert(!isConfiguredUpstairs("Upstairs  ") && !isConfiguredUpstairs("Unknown network"));
-  serialLines.clear();upstairsPinnedEligible=false;upstairsSsidMismatch=false;
-  auto hidden=accessPoint("");memcpy(hidden.bssid,WIFI_DISCOVERY_TARGETS[0].bssid,6);
-  inspectUpstairsSsid("HIDDEN",hidden,true);
-  assert(logged("returned SSID len=0 hex=[] escaped=\"\""));
-  assert(logged("configured WIFI_SSID len=8 hex=[55 70 73 74 61 69 72 73] escaped=\"Upstairs\""));
-  assert(logged("classification=EMPTY/HIDDEN FIELD") && upstairsPinnedEligible && !upstairsSsidMismatch);
+  // Comparison rules (names are compared, never printed).
+  const auto exact=accessPoint("BENCH_TEST_AP"),trailing=accessPoint("BENCH_TEST_AP "),lower=accessPoint("bench_test_ap"),
+      longer=accessPoint("BENCH_TEST_APX");
+  wifi_ap_record_t zero{};
+  assert(compareToConfiguredSsid(exact.ssid)==SsidComparison::Exact);
+  assert(compareToConfiguredSsid(trailing.ssid)==SsidComparison::TrailingWhitespaceOnly);
+  assert(compareToConfiguredSsid(lower.ssid)==SsidComparison::CaseOnly);
+  assert(compareToConfiguredSsid(longer.ssid)==SsidComparison::Different);
+  assert(compareToConfiguredSsid(zero.ssid)==SsidComparison::Empty);
+  auto tailOnly=zero;tailOnly.ssid[1]='X';
+  assert(compareToConfiguredSsid(tailOnly.ssid)==SsidComparison::Different);  // leading NUL with a nonzero tail is not "hidden"
+#ifndef AGAPAY_HOST_NO_WIFI_PIN
+  serialLines.clear();wifiPinEligible=false;wifiPinSsidMismatch=false;
+  auto hidden=accessPoint("");memcpy(hidden.bssid,WIFI_PIN_BSSID,6);
+  inspectPinnedSsid("HIDDEN",hidden,true);
+  assert(logged("[WIFI SSID HIDDEN] pinned AP: returned_len=0 configured_len=13 classification=EMPTY/HIDDEN FIELD"));
+  assert(wifiPinEligible && !wifiPinSsidMismatch);
   fakeMs=300000;WiFi.state=WL_DISCONNECTED;lastWifiAttemptMs=fakeMs-WIFI_RETRY_MS;
-  const int calls=WiFi.beginCalls,pinned=WiFi.pinnedBeginCalls;
+  const int calls=WiFi.beginCalls,pinnedCalls=WiFi.pinnedBeginCalls;
   maintainWiFiNonBlocking(fakeMs);
-  assert(WiFi.pinnedBeginCalls==pinned+1 && WiFi.lastBeginChannel==11);
-  assert(memcmp(WiFi.lastBeginBssid,WIFI_DISCOVERY_TARGETS[0].bssid,6)==0 && WiFi.lastBeginPassword==WIFI_PASSWORD);
+  assert(WiFi.pinnedBeginCalls==pinnedCalls+1 && WiFi.lastBeginChannel==11);
+  assert(memcmp(WiFi.lastBeginBssid,WIFI_PIN_BSSID,6)==0 && WiFi.lastBeginPassword==WIFI_PASSWORD);
+  assert(logged("Pinned attempt: configured SSID/password unchanged, channel=11, BSSID from local settings, grace_ms=30000"));
   maintainWiFiNonBlocking(fakeMs+29999);assert(WiFi.beginCalls==calls+1);
   maintainWiFiNonBlocking(fakeMs+30000);assert(WiFi.beginCalls==calls+2);
-  WiFiEventInfo_t link{};memcpy(link.wifi_sta_connected.bssid,WIFI_DISCOVERY_TARGETS[0].bssid,6);
+  WiFiEventInfo_t link{};memcpy(link.wifi_sta_connected.bssid,WIFI_PIN_BSSID,6);
   link.wifi_sta_connected.channel=11;link.wifi_sta_connected.authmode=WIFI_AUTH_WPA2_PSK;
   const auto beforeCallback=serialLines.size();
   wifiDiagnosticEvent(ARDUINO_EVENT_WIFI_STA_CONNECTED,link);
   wifiDiagnosticEvent(ARDUINO_EVENT_WIFI_STA_GOT_IP,{});
   assert(serialLines.size()==beforeCallback);
   WiFi.state=WL_CONNECTED;maintainWiFiNonBlocking(fakeMs+30001);
-  assert(logged("[WIFI ASSOC] Link established auth_mode=3 channel=11"));
+  assert(logged("[WIFI ASSOC] Link established auth_mode=3 channel=11 pinned_bssid=match"));
   assert(logged("[WIFI DHCP] GOT_IP: 10.0.0.2"));
   wifiDiagnosticEvent(ARDUINO_EVENT_WIFI_STA_LOST_IP,{});maintainWiFiNonBlocking(fakeMs+30002);
   assert(logged("[WIFI DHCP] LOST_IP"));
-  // A visible different name at the same BSSID must never be adopted/pinned.
-  serialLines.clear();auto changed=accessPoint("Upstairs ");memcpy(changed.bssid,hidden.bssid,6);
-  inspectUpstairsSsid("CHANGED",changed,true);
-  assert(logged("len=9 hex=[55 70 73 74 61 69 72 73 20]") && upstairsSsidMismatch);
+  // A visible different name at the pinned BSSID must never be adopted/pinned.
+  serialLines.clear();auto changed=accessPoint("BENCH_TEST_AP ");memcpy(changed.bssid,hidden.bssid,6);
+  inspectPinnedSsid("CHANGED",changed,true);
+  assert(logged("classification=DIFFERS ONLY BY TRAILING WHITESPACE") && wifiPinSsidMismatch);
   const int pinnedBefore=WiFi.pinnedBeginCalls;beginWiFiAssociation();
-  assert(!upstairsPinnedAttempt && WiFi.pinnedBeginCalls==pinnedBefore && WiFi.lastBeginPassword==WIFI_PASSWORD);
-  inspectUpstairsSsid("LATER-HIDDEN",hidden,true);assert(upstairsSsidMismatch); // later blank cannot override mismatch
-  // Hex and printable diagnostics escape controls, quotes, backslash, high bytes.
+  assert(!wifiPinnedAttempt && WiFi.pinnedBeginCalls==pinnedBefore && WiFi.lastBeginPassword==WIFI_PASSWORD);
+  inspectPinnedSsid("LATER-HIDDEN",hidden,true);assert(wifiPinSsidMismatch); // later blank cannot override mismatch
+  // Hostile bytes are classified, never echoed.
   serialLines.clear();auto bytes=hidden;const uint8_t hostile[]={0x22,0x5C,0x0A,0x1B,0xFF,0};
-  memcpy(bytes.ssid,hostile,sizeof(hostile));inspectUpstairsSsid("ESCAPED",bytes,true);
-  assert(logged("hex=[22 5C 0A 1B FF]") && logged("\\x0A\\x1B\\xFF"));
+  memcpy(bytes.ssid,hostile,sizeof(hostile));inspectPinnedSsid("ESCAPED",bytes,true);
+  assert(logged("returned_len=5 configured_len=13 classification=DIFFERENT SSID BYTES") && !logged("\\x0A") && !logged("hex="));
   // Maximum-length SSIDs and nonzero tail behind a leading NUL remain bounded.
   auto maximum=hidden;memset(maximum.ssid,'X',32);maximum.ssid[32]=0;
-  inspectUpstairsSsid("MAX",maximum,true);assert(boundedSsidLength(maximum.ssid)==32);
-  upstairsPinnedEligible=false;upstairsSsidMismatch=false;
-  auto tail=hidden;tail.ssid[1]='X';inspectUpstairsSsid("TAIL",tail,true);
-  assert(upstairsSsidMismatch && !upstairsPinnedEligible);
-  upstairsPinnedEligible=false;upstairsSsidMismatch=false;
-  inspectUpstairsSsid("FAILED-SCAN",hidden,false);assert(!upstairsPinnedEligible);
-  assert(!logged("HOST_WIFI_PASSWORD") && !logged("HOST_FAKE_PASSWORD"));
-  upstairsPinnedEligible=false;upstairsSsidMismatch=false;upstairsPinnedAttempt=false;
+  inspectPinnedSsid("MAX",maximum,true);assert(boundedSsidLength(maximum.ssid)==32 && logged("returned_len=32"));
+  wifiPinEligible=false;wifiPinSsidMismatch=false;
+  auto tail=hidden;tail.ssid[1]='X';inspectPinnedSsid("TAIL",tail,true);
+  assert(wifiPinSsidMismatch && !wifiPinEligible);
+  wifiPinEligible=false;wifiPinSsidMismatch=false;
+  inspectPinnedSsid("FAILED-SCAN",hidden,false);assert(!wifiPinEligible);
+  auto otherChannel=hidden;otherChannel.primary=6;
+  inspectPinnedSsid("OTHER-CHANNEL",otherChannel,true);assert(!wifiPinEligible);  // must be on the pinned channel
+  assert(!logged("HOST_WIFI_PASSWORD") && !logged("HOST_FAKE_PASSWORD") && noNetworkIdentifiersLogged());
+#else
+  // Without local pin settings nothing is ever pinned: plain association only.
+  serialLines.clear();wifiPinEligible=true;wifiPinSsidMismatch=false;
+  fakeMs=300000;WiFi.state=WL_DISCONNECTED;lastWifiAttemptMs=fakeMs-WIFI_RETRY_MS;
+  const int pinnedCalls=WiFi.pinnedBeginCalls,calls=WiFi.beginCalls;
+  maintainWiFiNonBlocking(fakeMs);
+  assert(WiFi.pinnedBeginCalls==pinnedCalls && WiFi.beginCalls==calls+1 && !wifiPinnedAttempt && WiFi.lastBeginPassword==WIFI_PASSWORD);
+  assert(!isPinnedBssid(accessPoint("BENCH_TEST_AP").bssid));
+  WiFiEventInfo_t link{};link.wifi_sta_connected.channel=11;link.wifi_sta_connected.authmode=WIFI_AUTH_WPA2_PSK;
+  wifiDiagnosticEvent(ARDUINO_EVENT_WIFI_STA_CONNECTED,link);
+  WiFi.state=WL_CONNECTED;maintainWiFiNonBlocking(fakeMs+1);
+  assert(logged("[WIFI ASSOC] Link established auth_mode=3 channel=11 pinned_bssid=not-configured"));
+  assert(!logged("HOST_WIFI_PASSWORD") && noNetworkIdentifiersLogged());
+#endif
+  wifiPinEligible=false;wifiPinSsidMismatch=false;wifiPinnedAttempt=false;
   WiFi.state=WL_DISCONNECTED;
-  std::cerr << "PASS: SSID bounded hex/escaping, hidden/exact/mismatch rules, known BSSID/channel with unchanged password, 30s association grace, link/DHCP outcomes and no secret logging\n";
+  std::cerr << "PASS (" << (WIFI_PIN_CONFIGURED?"pinned":"no pin") << "): SSID comparison classes, hidden/exact/near-match/mismatch rules, pinned BSSID/channel only from local settings with unchanged password, 30s association grace, link/DHCP outcomes, no names/BSSIDs/secrets logged\n";
 }
 
 void testNetworkDiagnostics() {
@@ -173,7 +216,7 @@ void testNetworkDiagnostics() {
   assert(WiFi.eventCallback==wifiDiagnosticEvent && mqttBufferReady);
   assert(logged("STA initialization: OK"));
   maintainWiFiNonBlocking(fakeMs);
-  assert(WiFi.beginCalls==1 && logged("Connecting to SSID: Upstairs"));
+  assert(WiFi.beginCalls==1 && logged("Connecting to configured SSID (len=13)") && !logged("BENCH_TEST_AP"));
   maintainWiFiNonBlocking(fakeMs+9999);assert(WiFi.beginCalls==1);
   maintainWiFiNonBlocking(fakeMs+10000);assert(WiFi.beginCalls==2);
   const auto beforeEvent=serialLines.size();

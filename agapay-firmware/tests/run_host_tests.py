@@ -17,6 +17,7 @@ parser.add_argument("--cxx", default=os.environ.get("CXX", "c++"), help="Compile
 parser.add_argument("--arduinojson", type=Path, help="Optional existing ArduinoJson src directory")
 parser.add_argument("--bench-profile", action="store_true", help="Compile the explicit cardboard-demo boot profile")
 parser.add_argument("--unprovisioned", action="store_true", help="Verify missing-token publication fails closed while sensing continues")
+parser.add_argument("--no-wifi-pin", action="store_true", help="Compile without local AP pin settings (plain association path)")
 parser.add_argument("--release-profile", action="store_true", help="Compile release TLS policy against synthetic host identities")
 args = parser.parse_args()
 build = firmware / ".pio" / "host-tests"
@@ -40,6 +41,7 @@ command = shlex.split(args.cxx) + ["-std=c++17", "-Wall", "-Wextra", "-Werror",
     "-DAGAPAY_LOCAL_DEVELOPMENT="+("0" if args.release_profile else "1"),
     "-DAGAPAY_LOCAL_BENCH_ALERTS=" + ("1" if args.bench_profile else "0"),
     *(["-DAGAPAY_HOST_UNPROVISIONED=1"] if args.unprovisioned else []),
+    *(["-DAGAPAY_HOST_NO_WIFI_PIN=1"] if args.no_wifi_pin else []),
     "-I" + str(stubs), "-I" + str(json_include),
     str(firmware / "tests/firmware_host_test.cpp"), "-o", str(exe)]
 with (build / "compiler.log").open("w") as log:

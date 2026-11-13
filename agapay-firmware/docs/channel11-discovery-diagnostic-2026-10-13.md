@@ -17,8 +17,8 @@ The reported target snapshots are:
 
 | Known SSID | Expected BSSID | Reported channel/security |
 | --- | --- | --- |
-| Upstairs | 00:16:78:A2:55:F0 | 11, WPA2-Personal |
-| pangit | 7A:3D:CA:C4:96:61 | 11, WPA2-Personal |
+| <router> | <router-bssid> | 11, WPA2-Personal |
+| <phone-hotspot> | <earlier-hotspot-bssid> | 11, WPA2-Personal |
 
 BSSIDs are diagnostic references, not association settings. Hotspot BSSIDs may
 change across sessions. A name match with a different BSSID is logged separately
@@ -113,8 +113,8 @@ The existing test runner and earlier reports were not edited for this task.
 [WIFI SCAN FULL] AP #1 channel=6 RSSI=-55 dBm
 ...
 [WIFI SCAN FULL] Channel 11 APs visible=0 missing_records=0
-[WIFI SCAN FULL] Upstairs: SSID=NOT SEEN BSSID=NOT SEEN same_AP=NOT SEEN
-[WIFI SCAN FULL] pangit: SSID=NOT SEEN BSSID=NOT SEEN same_AP=NOT SEEN
+[WIFI SCAN FULL] <router>: SSID=NOT SEEN BSSID=NOT SEEN same_AP=NOT SEEN
+[WIFI SCAN FULL] <phone-hotspot>: SSID=NOT SEEN BSSID=NOT SEEN same_AP=NOT SEEN
 [WIFI SCAN CH11-ACTIVE] Starting mode=active channel=11 dwell_ms=600 before association
 ...
 [WIFI SCAN CH11-PASSIVE] Starting mode=passive channel=11 dwell_ms=1000 before association

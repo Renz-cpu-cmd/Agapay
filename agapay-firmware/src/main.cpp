@@ -7,6 +7,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
+#include <ctype.h>
 #include <math.h>
 #include <stdint.h>
 #include <esp_timer.h>
@@ -204,9 +205,9 @@ uint32_t lastMqttAttemptMs = 0;
 constexpr uint32_t NETWORK_DIAGNOSTIC_MS = 10000;
 bool wifiAttempted = false;
 bool wifiDiscoveryDone = false;
-bool upstairsPinnedEligible = false;
-bool upstairsSsidMismatch = false;
-bool upstairsPinnedAttempt = false;
+bool wifiPinEligible = false;
+bool wifiPinSsidMismatch = false;
+bool wifiPinnedAttempt = false;
 constexpr uint32_t WIFI_ASSOCIATION_GRACE_MS = 30000;
 bool wifiWasConnected = false;
 int lastWifiStatus = -1;
@@ -699,6 +700,38 @@ void wifiDiagnosticEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
 
 int beginWiFiAssociation();
 
+// Optional access-point pinning comes only from ignored local settings (secrets.h):
+//   #define AGAPAY_WIFI_PIN_BSSID 0x00,0x00,0x00,0x00,0x00,0x00   // the verified AP's BSSID
+//   #define AGAPAY_WIFI_PIN_CHANNEL 11
+// Both or neither. Without them the station associates normally with WIFI_SSID/WIFI_PASSWORD.
+// No network name or hardware address is compiled into public source or printed.
+#if defined(AGAPAY_WIFI_PIN_BSSID) && defined(AGAPAY_WIFI_PIN_CHANNEL)
+constexpr bool WIFI_PIN_CONFIGURED = true;
+constexpr uint8_t WIFI_PIN_BSSID[6] = {AGAPAY_WIFI_PIN_BSSID};
+constexpr uint8_t WIFI_PIN_CHANNEL = AGAPAY_WIFI_PIN_CHANNEL;
+#elif defined(AGAPAY_WIFI_PIN_BSSID) || defined(AGAPAY_WIFI_PIN_CHANNEL)
+#error "Define both AGAPAY_WIFI_PIN_BSSID and AGAPAY_WIFI_PIN_CHANNEL in secrets.h, or neither"
+#else
+constexpr bool WIFI_PIN_CONFIGURED = false;
+constexpr uint8_t WIFI_PIN_BSSID[6] = {};
+constexpr uint8_t WIFI_PIN_CHANNEL = 0;
+#endif
+constexpr bool wifiPinBssidValid() {
+  // A unicast, non-zero address: multicast bit clear, not all zero, not broadcast.
+  return (WIFI_PIN_BSSID[0] & 0x01) == 0 &&
+      (WIFI_PIN_BSSID[0] | WIFI_PIN_BSSID[1] | WIFI_PIN_BSSID[2] | WIFI_PIN_BSSID[3] | WIFI_PIN_BSSID[4] | WIFI_PIN_BSSID[5]) != 0;
+}
+static_assert(!WIFI_PIN_CONFIGURED || (WIFI_PIN_CHANNEL >= 1 && WIFI_PIN_CHANNEL <= 14), "AGAPAY_WIFI_PIN_CHANNEL must be 1-14");
+static_assert(!WIFI_PIN_CONFIGURED || wifiPinBssidValid(), "AGAPAY_WIFI_PIN_BSSID must be a unicast, non-zero BSSID");
+
+bool isPinnedBssid(const uint8_t* bssid) {
+  return WIFI_PIN_CONFIGURED && memcmp(bssid,WIFI_PIN_BSSID,sizeof(WIFI_PIN_BSSID))==0;
+}
+
+const char* wifiPinLabel(const uint8_t* bssid) {
+  return !WIFI_PIN_CONFIGURED ? "not-configured" : isPinnedBssid(bssid) ? "match" : "different";
+}
+
 void maintainWiFiNonBlocking(uint32_t now) {
   const int status = WiFi.status();
   const bool connected = status == WL_CONNECTED;
@@ -707,8 +740,9 @@ void maintainWiFiNonBlocking(uint32_t now) {
   portEXIT_CRITICAL(&wifiDiagnosticMux);
   if (link.associations!=wifiLoggedAssociations) {
     wifiLoggedAssociations=link.associations;
-    Serial.printf("[WIFI ASSOC] Link established auth_mode=%d channel=%u BSSID=%02X:%02X:%02X:%02X:%02X:%02X; DHCP pending (link success implies authentication completed)\n",
-        link.authentication,link.channel,link.bssid[0],link.bssid[1],link.bssid[2],link.bssid[3],link.bssid[4],link.bssid[5]);
+    // The access point's hardware address is never printed; only whether it is the locally pinned one.
+    Serial.printf("[WIFI ASSOC] Link established auth_mode=%d channel=%u pinned_bssid=%s; DHCP pending (link success implies authentication completed)\n",
+        link.authentication,link.channel,wifiPinLabel(link.bssid));
   }
   if (link.ipEvents!=wifiLoggedIpEvents) {
     wifiLoggedIpEvents=link.ipEvents;
@@ -739,11 +773,11 @@ void maintainWiFiNonBlocking(uint32_t now) {
     }
   }
   if (connected || static_cast<uint32_t>(now-lastWifiAttemptMs)<WIFI_RETRY_MS) return;
-  if (upstairsPinnedAttempt && static_cast<uint32_t>(now-lastWifiAttemptMs)<WIFI_ASSOCIATION_GRACE_MS) return;
-  if (upstairsPinnedAttempt) Serial.println("[WIFI ASSOC] No IP after 30000 ms; retrying unchanged configured identity");
+  if (wifiPinnedAttempt && static_cast<uint32_t>(now-lastWifiAttemptMs)<WIFI_ASSOCIATION_GRACE_MS) return;
+  if (wifiPinnedAttempt) Serial.println("[WIFI ASSOC] No IP after 30000 ms; retrying unchanged configured identity");
   const uint32_t elapsed=static_cast<uint32_t>(now-lastWifiAttemptMs);
-  Serial.printf("[WIFI] %s to SSID: %s uptime_ms=%lu elapsed_ms=%lu retry_ms=%lu\n",
-      wifiAttempted?"Retry connecting":"Connecting",WIFI_SSID,static_cast<unsigned long>(now),
+  Serial.printf("[WIFI] %s to configured SSID (len=%u) uptime_ms=%lu elapsed_ms=%lu retry_ms=%lu\n",
+      wifiAttempted?"Retry connecting":"Connecting",static_cast<unsigned>(strlen(WIFI_SSID)),static_cast<unsigned long>(now),
       static_cast<unsigned long>(elapsed),static_cast<unsigned long>(WIFI_RETRY_MS));
   lastWifiAttemptMs=now;wifiAttempted=true;
   const int result=beginWiFiAssociation();
@@ -904,28 +938,14 @@ const char* wifiAuthenticationName(int authentication) {
   }
 }
 
-struct WiFiDiscoveryTarget {
-  const char* ssid;
-  uint8_t bssid[6];
-};
-// Operator-provided identities. Only the verified Upstairs identity may be
-// used for the controlled channel/BSSID attempt, with unchanged credentials.
-constexpr WiFiDiscoveryTarget WIFI_DISCOVERY_TARGETS[] = {
-  {"Upstairs",{0x00,0x16,0x78,0xA2,0x55,0xF0}},
-  {"pangit",{0x7A,0x3D,0xCA,0xC4,0x96,0x61}}
-};
-
-bool isConfiguredUpstairs(const char* ssid) {
-  // The verified physical router advertises a trailing ASCII space (0x20).
-  // Both spellings are recognized for diagnosis; no scan name is ever adopted.
-  return strcmp(ssid,"Upstairs")==0 || strcmp(ssid,"Upstairs ")==0;
-}
-
 int beginWiFiAssociation() {
-  upstairsPinnedAttempt=upstairsPinnedEligible && !upstairsSsidMismatch && isConfiguredUpstairs(WIFI_SSID);
-  if (upstairsPinnedAttempt) {
-    Serial.println("[WIFI ASSOC] Controlled Upstairs attempt: configured SSID/password unchanged, channel=11 BSSID=00:16:78:A2:55:F0 grace_ms=30000");
-    return WiFi.begin(WIFI_SSID,WIFI_PASSWORD,11,WIFI_DISCOVERY_TARGETS[0].bssid,true);
+  // A pinned attempt needs local pin settings plus a trustworthy scan that saw the pinned AP
+  // advertising the configured SSID (or a hidden/empty field) on the pinned channel.
+  wifiPinnedAttempt=WIFI_PIN_CONFIGURED && wifiPinEligible && !wifiPinSsidMismatch;
+  if (wifiPinnedAttempt) {
+    Serial.printf("[WIFI ASSOC] Pinned attempt: configured SSID/password unchanged, channel=%u, BSSID from local settings, grace_ms=30000\n",
+        static_cast<unsigned>(WIFI_PIN_CHANNEL));
+    return WiFi.begin(WIFI_SSID,WIFI_PASSWORD,WIFI_PIN_CHANNEL,WIFI_PIN_BSSID,true);
   }
   return WiFi.begin(WIFI_SSID,WIFI_PASSWORD);
 }
@@ -936,32 +956,50 @@ size_t boundedSsidLength(const uint8_t* bytes) {
   return length;
 }
 
-void printSsidBytes(const char* label,const char* source,const uint8_t* bytes,size_t length) {
-  char hex[97]={},escaped[129]={};
-  size_t h=0,e=0;
-  for (size_t i=0;i<length;++i) {
-    const uint8_t byte=bytes[i];
-    h+=snprintf(hex+h,sizeof(hex)-h,i?" %02X":"%02X",byte);
-    if (byte>=32 && byte<=126 && byte!='\\' && byte!='"') escaped[e++]=static_cast<char>(byte);
-    else if (byte=='\\' || byte=='"') {escaped[e++]='\\';escaped[e++]=static_cast<char>(byte);}
-    else e+=snprintf(escaped+e,sizeof(escaped)-e,"\\x%02X",byte);
-  }
-  escaped[e]=0;
-  Serial.printf("[WIFI SSID %s] %s len=%u hex=[%s] escaped=\"%s\"\n",label,source,static_cast<unsigned>(length),hex,escaped);
+// Network names are compared, never printed. Near misses are classified so that a
+// configuration typo (e.g. a missing trailing space, the 2026-10-13 root cause) stays
+// diagnosable from the log without disclosing the name itself.
+enum class SsidComparison { Exact, Empty, TrailingWhitespaceOnly, CaseOnly, Different };
+
+size_t trimmedSsidLength(const uint8_t* bytes,size_t length) {
+  while (length>0 && (bytes[length-1]==' ' || bytes[length-1]=='\t')) --length;
+  return length;
 }
 
-void inspectUpstairsSsid(const char* label,const wifi_ap_record_t& ap,bool trustworthyScan) {
-  const size_t length=boundedSsidLength(ap.ssid),configuredLength=strlen(WIFI_SSID);
-  const bool equal=length==configuredLength && memcmp(ap.ssid,WIFI_SSID,length)==0;
+SsidComparison compareToConfiguredSsid(const uint8_t* bytes) {
   bool allZero=true;
-  for (unsigned i=0;i<32;++i) if(ap.ssid[i]!=0) allZero=false;
-  printSsidBytes(label,"known-BSSID returned SSID",ap.ssid,length);
-  printSsidBytes(label,"known-BSSID raw field (32 bytes)",ap.ssid,32);
-  printSsidBytes(label,"configured WIFI_SSID",reinterpret_cast<const uint8_t*>(WIFI_SSID),configuredLength<=32?configuredLength:32);
-  Serial.printf("[WIFI SSID %s] configured_length=%u bytes_equal=%u classification=%s\n",label,static_cast<unsigned>(configuredLength),equal,
-      allZero?"EMPTY/HIDDEN FIELD":equal?"EXACT MATCH":"DIFFERENT SSID BYTES");
-  if (!allZero && !equal) upstairsSsidMismatch=true;
-  if (trustworthyScan && ap.primary==11 && isConfiguredUpstairs(WIFI_SSID) && (allZero || equal)) upstairsPinnedEligible=true;
+  for (unsigned i=0;i<32;++i) if (bytes[i]!=0) allZero=false;
+  if (allZero) return SsidComparison::Empty;
+  const auto* configured=reinterpret_cast<const uint8_t*>(WIFI_SSID);
+  const size_t length=boundedSsidLength(bytes),configuredLength=strlen(WIFI_SSID);
+  if (length==configuredLength && memcmp(bytes,configured,length)==0 && length>0) return SsidComparison::Exact;
+  const size_t a=trimmedSsidLength(bytes,length),b=trimmedSsidLength(configured,configuredLength);
+  if (a>0 && a==b && memcmp(bytes,configured,a)==0) return SsidComparison::TrailingWhitespaceOnly;
+  if (length>0 && length==configuredLength) {
+    bool caseOnly=true;
+    for (size_t i=0;i<length && caseOnly;++i) caseOnly=tolower(bytes[i])==tolower(configured[i]);
+    if (caseOnly) return SsidComparison::CaseOnly;
+  }
+  return SsidComparison::Different;
+}
+
+const char* ssidComparisonName(SsidComparison comparison) {
+  switch (comparison) {
+    case SsidComparison::Exact: return "EXACT MATCH";
+    case SsidComparison::Empty: return "EMPTY/HIDDEN FIELD";
+    case SsidComparison::TrailingWhitespaceOnly: return "DIFFERS ONLY BY TRAILING WHITESPACE";
+    case SsidComparison::CaseOnly: return "DIFFERS ONLY BY LETTER CASE";
+    default: return "DIFFERENT SSID BYTES";
+  }
+}
+
+void inspectPinnedSsid(const char* label,const wifi_ap_record_t& ap,bool trustworthyScan) {
+  const auto comparison=compareToConfiguredSsid(ap.ssid);
+  Serial.printf("[WIFI SSID %s] pinned AP: returned_len=%u configured_len=%u classification=%s\n",label,
+      static_cast<unsigned>(boundedSsidLength(ap.ssid)),static_cast<unsigned>(strlen(WIFI_SSID)),ssidComparisonName(comparison));
+  const bool acceptable=comparison==SsidComparison::Exact || comparison==SsidComparison::Empty;
+  if (!acceptable) wifiPinSsidMismatch=true;  // a different name at the pinned AP is never adopted
+  if (trustworthyScan && ap.primary==WIFI_PIN_CHANNEL && acceptable) wifiPinEligible=true;
 }
 
 WiFiScanEventEvidence snapshotWiFiScanEvent() {
@@ -970,6 +1008,8 @@ WiFiScanEventEvidence snapshotWiFiScanEvent() {
   portEXIT_CRITICAL(&wifiDiagnosticMux);
   return snapshot;
 }
+
+constexpr uint8_t WIFI_DISCOVERY_CHANNEL = WIFI_PIN_CONFIGURED ? WIFI_PIN_CHANNEL : 11;
 
 void runWiFiDiscoveryScan(const char* label, bool passive, uint32_t dwellMs, uint8_t channel) {
   // Only the network task waits. No credentials/SSID/BSSID filters are supplied.
@@ -1008,36 +1048,32 @@ void runWiFiDiscoveryScan(const char* label, bool passive, uint32_t dwellMs, uin
   }
   if (result>=0) {
     Serial.printf("[WIFI SCAN %s] Networks detected: %d (includes hidden APs)\n",label,result);
-    bool ssidFound[2]={},bssidFound[2]={},pairFound[2]={};
-    unsigned channel11Count=0,missingRecords=0;
+    bool ssidFound=false,bssidFound=false,pairFound=false;
+    unsigned channelCount=0,missingRecords=0;
+    const bool trustworthy=done.events!=beforeEvent.events && done.status==0;
     // getScanInfoByIndex accepts an int, unlike SSID()/RSSI()'s uint8_t index.
     // Inspect every result even if more than 256 AP records are returned.
     for (int i=0;i<result;++i) {
       const auto* ap=static_cast<const wifi_ap_record_t*>(WiFi.getScanInfoByIndex(i));
       if (ap==nullptr) {++missingRecords;continue;}
       Serial.printf("[WIFI SCAN %s] AP #%d channel=%u RSSI=%d dBm\n",label,i+1,ap->primary,ap->rssi);
-      if (ap->primary==11) ++channel11Count;
-      const char* ssid=reinterpret_cast<const char*>(ap->ssid);
-      for (unsigned t=0;t<2;++t) {
-        const auto& target=WIFI_DISCOVERY_TARGETS[t];
-        const char* expectedSsid=t==0 && isConfiguredUpstairs(WIFI_SSID)?WIFI_SSID:target.ssid;
-        const size_t ssidLength=boundedSsidLength(ap->ssid);
-        const bool ssidMatch=ssidLength==strlen(expectedSsid) && memcmp(ssid,expectedSsid,ssidLength)==0;
-        const bool bssidMatch=memcmp(ap->bssid,target.bssid,sizeof(target.bssid))==0;
-        if (t==0 && bssidMatch) inspectUpstairsSsid(label,*ap,done.events!=beforeEvent.events && done.status==0);
-        ssidFound[t]|=ssidMatch;bssidFound[t]|=bssidMatch;pairFound[t]|=ssidMatch && bssidMatch;
-        if (!ssidMatch && !bssidMatch) continue;
-        // Print the known target label, never a different/hidden returned SSID.
-        Serial.printf("[WIFI SCAN %s] Known %s: SSID_match=%u BSSID_match=%u RSSI=%d dBm channel=%u auth=%d (%s) BSSID=%02X:%02X:%02X:%02X:%02X:%02X\n",
-            label,target.ssid,ssidMatch,bssidMatch,ap->rssi,ap->primary,static_cast<int>(ap->authmode),wifiAuthenticationName(ap->authmode),
-            ap->bssid[0],ap->bssid[1],ap->bssid[2],ap->bssid[3],ap->bssid[4],ap->bssid[5]);
-      }
+      if (ap->primary==WIFI_DISCOVERY_CHANNEL) ++channelCount;
+      const auto comparison=compareToConfiguredSsid(ap->ssid);
+      const bool ssidMatch=comparison==SsidComparison::Exact;
+      const bool bssidMatch=isPinnedBssid(ap->bssid);
+      if (bssidMatch) inspectPinnedSsid(label,*ap,trustworthy);
+      else if (comparison==SsidComparison::TrailingWhitespaceOnly || comparison==SsidComparison::CaseOnly)
+        Serial.printf("[WIFI SSID %s] AP #%d near match: %s; never adopted\n",label,i+1,ssidComparisonName(comparison));
+      ssidFound|=ssidMatch;bssidFound|=bssidMatch;pairFound|=ssidMatch && bssidMatch;
+      if (!ssidMatch && !bssidMatch) continue;
+      // Matching records report signal and security only: no name, no hardware address.
+      Serial.printf("[WIFI SCAN %s] Configured network record: SSID_match=%u BSSID_match=%s RSSI=%d dBm channel=%u auth=%d (%s)\n",
+          label,ssidMatch,WIFI_PIN_CONFIGURED?(bssidMatch?"1":"0"):"n/a",ap->rssi,ap->primary,
+          static_cast<int>(ap->authmode),wifiAuthenticationName(ap->authmode));
     }
-    Serial.printf("[WIFI SCAN %s] Channel 11 APs visible=%u missing_records=%u\n",label,channel11Count,missingRecords);
-    for (unsigned t=0;t<2;++t) {
-      Serial.printf("[WIFI SCAN %s] %s: SSID=%s BSSID=%s same_AP=%s\n",label,WIFI_DISCOVERY_TARGETS[t].ssid,
-          ssidFound[t]?"FOUND":"NOT SEEN",bssidFound[t]?"FOUND":"NOT SEEN",pairFound[t]?"FOUND":"NOT SEEN");
-    }
+    Serial.printf("[WIFI SCAN %s] Channel %u APs visible=%u missing_records=%u\n",label,WIFI_DISCOVERY_CHANNEL,channelCount,missingRecords);
+    Serial.printf("[WIFI SCAN %s] Configured network: SSID=%s BSSID=%s same_AP=%s\n",label,ssidFound?"FOUND":"NOT SEEN",
+        WIFI_PIN_CONFIGURED?(bssidFound?"FOUND":"NOT SEEN"):"NOT PINNED",WIFI_PIN_CONFIGURED?(pairFound?"FOUND":"NOT SEEN"):"n/a");
   }
   WiFi.scanDelete(); // Release diagnostic result memory; never erase NVS.
 }
@@ -1053,25 +1089,28 @@ void discoverWiFiOnce(bool stationReady) {
   wifi_country_t country{};
   const esp_err_t countryResult=esp_wifi_get_country(&country);
   Serial.printf("[WIFI SCAN] get_country=%d (%s)\n",static_cast<int>(countryResult),esp_err_to_name(countryResult));
-  bool channel11Allowed=true; // If query fails, the driver still enforces its range.
+  bool channelAllowed=true; // If query fails, the driver still enforces its range.
   if (countryResult==ESP_OK) {
     const unsigned lastChannel=country.nchan?country.schan+country.nchan-1:0;
-    channel11Allowed=country.nchan && country.schan<=11 && lastChannel>=11;
-    Serial.printf("[WIFI SCAN] country=%.3s start_channel=%u channel_count=%u last_channel=%u policy=%d (%s) channel11_in_range=%u\n",
+    channelAllowed=country.nchan && country.schan<=WIFI_DISCOVERY_CHANNEL && lastChannel>=WIFI_DISCOVERY_CHANNEL;
+    Serial.printf("[WIFI SCAN] country=%.3s start_channel=%u channel_count=%u last_channel=%u policy=%d (%s) channel%u_in_range=%u\n",
         country.cc,country.schan,country.nchan,lastChannel,static_cast<int>(country.policy),
-        country.policy==WIFI_COUNTRY_POLICY_AUTO?"AUTO":"MANUAL",channel11Allowed);
+        country.policy==WIFI_COUNTRY_POLICY_AUTO?"AUTO":"MANUAL",WIFI_DISCOVERY_CHANNEL,channelAllowed);
   }
   // All scans complete before the retry loop and its first WiFi.begin/MQTT call.
   // Sensor work stays on the Arduino task; country/settings are never changed.
+  char activeLabel[16],passiveLabel[17];
+  snprintf(activeLabel,sizeof(activeLabel),"CH%u-ACTIVE",WIFI_DISCOVERY_CHANNEL);
+  snprintf(passiveLabel,sizeof(passiveLabel),"CH%u-PASSIVE",WIFI_DISCOVERY_CHANNEL);
   runWiFiDiscoveryScan("FULL",false,300,0);
-  if (channel11Allowed) {
-    runWiFiDiscoveryScan("CH11-ACTIVE",false,600,11);
-    runWiFiDiscoveryScan("CH11-PASSIVE",true,1000,11);
+  if (channelAllowed) {
+    runWiFiDiscoveryScan(activeLabel,false,600,WIFI_DISCOVERY_CHANNEL);
+    runWiFiDiscoveryScan(passiveLabel,true,1000,WIFI_DISCOVERY_CHANNEL);
   } else {
-    Serial.println("[WIFI SCAN] Channel 11 scans SKIPPED: outside configured country range; settings unchanged");
+    Serial.printf("[WIFI SCAN] Channel %u scans SKIPPED: outside configured country range; settings unchanged\n",WIFI_DISCOVERY_CHANNEL);
   }
-  Serial.printf("[WIFI ASSOC] Upstairs BSSID diagnostic=%s; nonempty mismatching SSID is never adopted\n",
-      upstairsPinnedEligible && !upstairsSsidMismatch?"eligible":"withheld");
+  Serial.printf("[WIFI ASSOC] Pinned BSSID diagnostic=%s; nonempty mismatching SSID is never adopted\n",
+      !WIFI_PIN_CONFIGURED?"not configured (normal association)":wifiPinEligible && !wifiPinSsidMismatch?"eligible":"withheld");
   Serial.println("[WIFI SCAN] Discovery finished; proceeding to normal connection attempts (no rescan)");
 }
 

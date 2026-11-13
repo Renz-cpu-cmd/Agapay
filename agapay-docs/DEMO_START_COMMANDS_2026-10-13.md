@@ -1,7 +1,7 @@
 # AGAPAY demo restart commands
 
 Use Windows PowerShell under the same Asus Windows account on this laptop.
-Connect the laptop to the phone's2.4 GHz pangit hotspot first. Keep the hotspot
+Connect the laptop to the phone's2.4 GHz <phone-hotspot> hotspot first. Keep the hotspot
 and laptop awake throughout the demo. Keep the ESP32 on its USB power bank.
 
 Closing Codex/browser does not necessarily stop the existing background services.
@@ -108,7 +108,7 @@ and real-world flood forecast validation remain pending.
 
 ## Only if the laptop's DHCP IPv4 changed
 
-Connect to pangit first. If the preflight still reports a different Wi-Fi address,
+Connect to <phone-hotspot> first. If the preflight still reports a different Wi-Fi address,
 stop the demo broker in its own terminal withCtrl+C. Do not stop unrelated brokers.
 Connect the ESP32 to the laptop's USB port; verify it appears asCOM9. Then run:
 

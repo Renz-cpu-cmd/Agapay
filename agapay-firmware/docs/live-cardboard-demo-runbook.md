@@ -131,7 +131,7 @@ home will select it: the controller prefers STATION_001. If scaling thresholds,
 review fixed gauge marks/chart axes and alert-detail text as well; some current
 presentation labels assume the old 60/85/100 cm defaults.
 
-Confirmed laptop Wi-Fi address at preflight: **192.168.0.16/24**, 2.4 GHz,
+Confirmed laptop Wi-Fi address at preflight: **<laptop-lan-ip>/24**, 2.4 GHz,
 channel 11, Windows profile **Public**. Recheck before the demo; DHCP can change it.
 ESP32 and phone need the same reachable private demonstration LAN without client
 isolation. MQTT_HOST on ESP32 must be this reachable laptop address, not localhost.
@@ -182,7 +182,7 @@ password_file C:\Users\Asus\OneDrive\Documents\Agapay\Agapay\agapay-web\.rebuild
 acl_file C:\Users\Asus\OneDrive\Documents\Agapay\Agapay\agapay-web\.rebuild-qa\hardware-preflight-20261012\demo-local\mqtt-acl.conf
 persistence false
 listener 1883 127.0.0.1
-listener 1883 192.168.0.16
+listener 1883 <laptop-lan-ip>
 ```
 
 If the installed broker version changes authentication syntax, follow its official
@@ -201,8 +201,8 @@ commands are later physical-network setup steps, NOT preflight actions:
 
 ```powershell
 Set-NetConnectionProfile -InterfaceAlias Wi-Fi -NetworkCategory Private
-New-NetFirewallRule -DisplayName 'AGAPAY demo MQTT' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 1883 -LocalAddress 192.168.0.16 -RemoteAddress 192.168.0.0/24 -Profile Private
-New-NetFirewallRule -DisplayName 'AGAPAY demo API' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8000 -LocalAddress 192.168.0.16 -RemoteAddress 192.168.0.0/24 -Profile Private
+New-NetFirewallRule -DisplayName 'AGAPAY demo MQTT' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 1883 -LocalAddress <laptop-lan-ip> -RemoteAddress <lan-subnet> -Profile Private
+New-NetFirewallRule -DisplayName 'AGAPAY demo API' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8000 -LocalAddress <laptop-lan-ip> -RemoteAddress <lan-subnet> -Profile Private
 ```
 
 Do not change profile or open ports on an untrusted/shared network. Do not expose
@@ -269,12 +269,12 @@ adb devices -l
 Set-Location (Join-Path $repo 'agapay-mobile')
 flutter devices
 $androidTarget = Read-Host 'Exact authorized Android device ID from the list'
-flutter run --debug -d $androidTarget --dart-define=AGAPAY_API_URL=http://192.168.0.16:8000 --dart-define=AGAPAY_FIREBASE_ENABLED=false
+flutter run --debug -d $androidTarget --dart-define=AGAPAY_API_URL=http://<laptop-lan-ip>:8000 --dart-define=AGAPAY_FIREBASE_ENABLED=false
 ```
 
 The default Android API URL is the emulator address 10.0.2.2, so the LAN override
 is required for a physical phone. Debug Android allows this controlled-LAN HTTP
-test; release AuthApi rejects HTTP. Verify `http://192.168.0.16:8000/health` from
+test; release AuthApi rejects HTTP. Verify `http://<laptop-lan-ip>:8000/health` from
 the phone first. Do not disable release HTTPS enforcement. Sign into a designated
 resident account in the isolated database; mobile registration uses the backend's
 resident audience. Web staff credentials are not a substitute for that flow.
@@ -284,7 +284,7 @@ resident audience. Web staff credentials are not a substitute for that flow.
 PlatformIO Core 6.2.0 is installed as a Python module; its standalone `pio` command
 was not on PATH. Use `src/main.cpp`, not old example/sketch firmware.
 `include/secrets.h` already exists but contains network placeholders. Edit locally
-after checking the private LAN: Wi-Fi name/password, MQTT_HOST=192.168.0.16,
+after checking the private LAN: Wi-Fi name/password, MQTT_HOST=<laptop-lan-ip>,
 MQTT_PORT=1883, MQTT_USERNAME=<mqtt-username> and the prompted broker password.
 Do not overwrite an existing secret header by blindly copying the example.
 

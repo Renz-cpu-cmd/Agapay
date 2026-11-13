@@ -1,12 +1,21 @@
 # One-time ESP32 Wi-Fi discovery diagnostic — October 13, 2026
 
+> **Update 2026-11-13.** Network names, access-point hardware addresses and LAN
+> addresses in this record are replaced with role placeholders such as `<router>`.
+> The firmware no longer compiles in any network identity, and no longer prints names,
+> raw name bytes or BSSIDs. It now logs match results, lengths and near-match classes,
+> for example "DIFFERS ONLY BY TRAILING WHITESPACE", which still diagnoses the root
+> cause below. Optional access-point pinning moved to two settings in the ignored
+> `secrets.h` (see `include/secrets.example.h`). The log lines quoted below show the
+> October format.
+
 Status: firmware build and host checks passed; the physical scan has not yet
 been run by this agent. No upload, reset, flash/NVS erase or credential change
 was performed. FastAPI, Mosquitto, ML and dashboard code were not changed.
 
 ## Findings
 
-The local configured SSID is `Upstairs` and MQTT host is `192.168.0.16`.
+The local configured SSID is `<router>` and MQTT host is `<laptop-lan-ip>`.
 The supplied physical log shows successful STA initialization followed by
 reason 201 and `WL_NO_SSID_AVAIL`. It does not establish a password failure,
 radio defect or firmware initialization defect.
@@ -40,9 +49,9 @@ the sensor task, rain ISR and durable counter updates continue independently.
 
 The scan prints STA MAC, numeric scan result, elapsed time, total AP count,
 every exact configured-SSID match's RSSI/channel/authentication/BSSID, and
-presence of the previous SSID `pangit`. Other SSIDs are never printed. Hidden
+presence of the previous SSID `<phone-hotspot>`. Other SSIDs are never printed. Hidden
 records count toward the total; a record without a reported SSID cannot be
-identified as Upstairs/pangit merely from its blank name.
+identified as <router>/<phone-hotspot> merely from its blank name.
 
 Scan result memory is deleted afterward. A negative scan result also requests
 driver scan stop and logs that return code before normal association resumes.
@@ -58,16 +67,16 @@ schema/ACK contract, credential or retry setting was changed.
 ```text
 [WIFI] STA initialization: OK
 [WIFI SCAN] ESP32 STA MAC: AA:BB:CC:DD:EE:FF
-[WIFI SCAN] Starting one-time 2.4 GHz scan before association; target=Upstairs
+[WIFI SCAN] Starting one-time 2.4 GHz scan before association; target=<router>
 [WIFI SCAN] result=8 elapsed_ms=4200
 [WIFI SCAN] Networks detected: 8 (includes hidden APs)
-[WIFI SCAN] Target Upstairs: RSSI=-48 dBm channel=11 auth=3 (WPA2_PSK) BSSID=11:22:33:44:55:66
-[WIFI SCAN] Target Upstairs: FOUND; pangit: NOT SEEN
+[WIFI SCAN] Target <router>: RSSI=-48 dBm channel=11 auth=3 (WPA2_PSK) BSSID=11:22:33:44:55:66
+[WIFI SCAN] Target <router>: FOUND; <phone-hotspot>: NOT SEEN
 [WIFI SCAN] Discovery finished; proceeding to normal connection attempts (no rescan)
-[WIFI] Connecting to SSID: Upstairs ...
+[WIFI] Connecting to SSID: <router> ...
 ```
 
-Multiple Upstairs APs produce multiple metadata lines, so an SSID shared by
+Multiple <router> APs produce multiple metadata lines, so an SSID shared by
 several access points can be distinguished by BSSID. No detected AP is pinned
 as the connection target; normal association still chooses the AP.
 
@@ -75,10 +84,10 @@ as the connection target; normal association still chooses the AP.
 
 | Observation | What it establishes / next investigation |
 | --- | --- |
-| `result > 0`, Upstairs FOUND | ESP32 receives a target AP in this scan. Compare auth/channel/BSSID/RSSI; subsequent failure concerns association/security/AP admission, intermittent reception or connection logic. Scan visibility does not authenticate or prove DHCP/MQTT. |
-| `result > 0`, Upstairs NOT SEEN | ESP32 discovered other APs, but no exact target SSID was reported. Check SSID spelling/case, hidden SSID, AP availability, band/channel and reception at the ESP32. A password does not determine whether its advertised SSID appears. |
-| pangit FOUND, Upstairs NOT SEEN | ESP32 can discover the hotspot at that moment; investigate Upstairs advertising/visibility/reception. This does not prove hotspot authentication. |
-| Upstairs FOUND, pangit NOT SEEN | Expected if the old hotspot is off or out of range; pangit absence does not block Upstairs. |
+| `result > 0`, <router> FOUND | ESP32 receives a target AP in this scan. Compare auth/channel/BSSID/RSSI; subsequent failure concerns association/security/AP admission, intermittent reception or connection logic. Scan visibility does not authenticate or prove DHCP/MQTT. |
+| `result > 0`, <router> NOT SEEN | ESP32 discovered other APs, but no exact target SSID was reported. Check SSID spelling/case, hidden SSID, AP availability, band/channel and reception at the ESP32. A password does not determine whether its advertised SSID appears. |
+| <phone-hotspot> FOUND, <router> NOT SEEN | ESP32 can discover the hotspot at that moment; investigate <router> advertising/visibility/reception. This does not prove hotspot authentication. |
+| <router> FOUND, <phone-hotspot> NOT SEEN | Expected if the old hotspot is off or out of range; <phone-hotspot> absence does not block <router>. |
 | `result=0` | Scan returned zero APs. Check ESP32 proximity/antenna/RF, power stability and known nearby enabled 2.4 GHz APs. It does not by itself prove damaged hardware. |
 | `result=-2` | Arduino scan failed or timed out. Discovery is unknown, not zero networks. The wrapper does not expose the underlying scan-start error; `scan_stop` is a separate cleanup result. |
 | `result=-1` | Framework reported a scan already running. Unexpected in this fresh one-time startup path; investigate another scan/driver state. Discovery is unknown; cleanup is requested. |

@@ -1,18 +1,18 @@
-# ESP32 Upstairs connection fixed — October 13, 2026
+# ESP32 <router> connection fixed — October 13, 2026
 
 ## Established root cause
 
-The known router **00:16:78:A2:55:F0** advertises `"Upstairs "`, including a
+The known router **<router-bssid>** advertises `"<router> "`, including a
 trailing ASCII space. Its actual SSID is **9 bytes**:
 
 ```text
-55 70 73 74 61 69 72 73 20
+<8 name bytes> 20
 ```
 
-The original local firmware configuration used `"Upstairs"`, **8 bytes**:
+The original local firmware configuration used `"<router>"`, **8 bytes**:
 
 ```text
-55 70 73 74 61 69 72 73
+<8 name bytes>
 ```
 
 All three real scans returned the same nine-byte name at the verified BSSID on
@@ -26,7 +26,7 @@ The smallest root-cause correction was adding that one space in ignored local
 `agapay-firmware/include/secrets.h`:
 
 ```cpp
-constexpr char WIFI_SSID[] = "Upstairs "; // Trailing space is required.
+constexpr char WIFI_SSID[] = "<router> "; // Trailing space is required.
 ```
 
 Wi-Fi and MQTT passwords were not printed or changed. The SSID was corrected
@@ -43,11 +43,11 @@ Only the identified COM9 monitor processes were closed. Deliberate normal EN
 resets were used to capture startup; no full-flash erase, NVS erase or partition
 change occurred. The normal upload rewrote application/boot image sectors.
 
-The laptop had reverted to `pangit` at <broker-lan-ip>, while the ESP32 and broker
-were configured for the Upstairs LAN. Its existing saved Windows profile was
+The laptop had reverted to `<phone-hotspot>` at <broker-lan-ip>, while the ESP32 and broker
+were configured for the <router> LAN. Its existing saved Windows profile was
 verified to contain SSID hex `557073746169727320`. A documented Windows Wi-Fi
 API connection restored that same saved profile and verified the known BSSID;
-the laptop received **192.168.0.16**. Credentials/profile configuration were
+the laptop received **<laptop-lan-ip>**. Credentials/profile configuration were
 not changed. The CLI availability check had rejected that profile, while the
 native saved-profile connection succeeded.
 
@@ -67,7 +67,7 @@ was required.
 
 ## Firmware diagnostics and controlled connection
 
-For the known Upstairs BSSID only, logs now report:
+For the known <router> BSSID only, logs now report:
 
 - Bounded SSID length, hex bytes and escaped printable representation.
 - The raw 32-byte SSID field, including NUL padding, to distinguish a genuinely
@@ -77,7 +77,7 @@ For the known Upstairs BSSID only, logs now report:
 
 Control characters, quotes, backslashes and non-ASCII bytes are escaped. No
 password is included. Names of unrelated APs remain undisclosed; the exception
-for actual SSID bytes is limited to the explicitly known Upstairs BSSID.
+for actual SSID bytes is limited to the explicitly known <router> BSSID.
 
 The installed [Arduino-ESP32 2.0.17 implementation](https://github.com/espressif/arduino-esp32/blob/2.0.17/libraries/WiFi/src/WiFiSTA.cpp)
 supports `WiFi.begin(ssid,password,channel,bssid,true)` and sets the BSSID filter.
@@ -109,8 +109,8 @@ Times are Manila time, October 13:
 06:15:27 [WIFI SSID FULL] configured_length=9 bytes_equal=1 classification=EXACT MATCH
 06:15:28 [WIFI SSID CH11-ACTIVE] ... classification=EXACT MATCH
 06:15:29 [WIFI SSID CH11-PASSIVE] ... classification=EXACT MATCH
-06:15:29 [WIFI ASSOC] Link established auth_mode=4 channel=11 BSSID=00:16:78:A2:55:F0
-06:15:31 [WIFI DHCP] GOT_IP: 192.168.0.14
+06:15:29 [WIFI ASSOC] Link established auth_mode=4 channel=11 BSSID=<router-bssid>
+06:15:31 [WIFI DHCP] GOT_IP: <esp32-lan-ip>
 06:15:31 [WIFI] Connected
 06:15:32 [MQTT] Connected state=0 (broker accepted CONNACK)
 06:15:32 [RAIN ACK] backend acknowledged count=54 boot=B8F6D10D5020-8DBF61AB-EE51B68A
@@ -137,7 +137,7 @@ Evidence files (ignored local data, no passwords):
 
 COM9 is released. ESP32, original broker/API and dashboard remain running.
 Dashboard: **http://127.0.0.1:3011/dashboard**. Laptop Wi-Fi must remain on the
-existing `Upstairs ` profile with its trailing space for this LAN setup.
+existing `<router> ` profile with its trailing space for this LAN setup.
 
 ## Files changed and software verification
 
