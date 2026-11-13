@@ -1,11 +1,14 @@
 "use client";
 import { stationStatusDescription, stationMarkerTier } from "@/lib/station-map";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { isLive, liveLabel } from "@/lib/live-position";
 import { useTheme } from "@/context/ThemeContext";
 import { tierColor, type Station } from "@/data/mockData";
 import { loadGoogleMapLibraries } from "@/lib/google-maps";
 import { cityMapCenter, cityMapZoom, stationCoordinates, type MapTileStatus } from "@/lib/station-map";
+
+type LiveOverlay = { marker: google.maps.marker.AdvancedMarkerElement; circle: google.maps.Circle; dot: HTMLDivElement };
 
 type Props = {
   apiKey: string;
@@ -13,6 +16,8 @@ type Props = {
   stations: Station[];
   selectedStationId: string;
   resetVersion: number;
+  /** Station whose live phone GPS the camera keeps centred on; "" = no follow. */
+  followStationId?: string;
   onSelectStation: (id: string) => void;
   onStatusChange: (status: MapTileStatus) => void;
   onFailure: () => void;
@@ -32,6 +37,7 @@ export default function GoogleStationMapCanvas({
   stations,
   selectedStationId,
   resetVersion,
+  followStationId = "",
   onSelectStation,
   onStatusChange,
   onFailure,
@@ -43,6 +49,58 @@ export default function GoogleStationMapCanvas({
   const selectedStationRef = useRef(selectedStationId);
 
   useEffect(() => { selectedStationRef.current = selectedStationId; }, [selectedStationId]);
+
+  // Migration 0010: live phone-GPS overlays are updated in place on each poll, never by
+  // rebuilding the map. They are drawn apart from (and never move) the registry pin.
+  const librariesRef = useRef<{ maps: google.maps.MapsLibrary; marker: google.maps.MarkerLibrary } | null>(null);
+  const liveRef = useRef(new globalThis.Map<string, LiveOverlay>());
+  const stationsRef = useRef(stations);
+  const followRef = useRef(followStationId);
+  const pannedRef = useRef("");
+  const syncLive = useCallback(() => {
+    const map = mapRef.current, libraries = librariesRef.current;
+    if (!map || !libraries) return;
+    const seen = new Set<string>();
+    for (const station of stationsRef.current) {
+      const live = station.livePosition;
+      if (!live) continue;
+      seen.add(station.id);
+      const position = { lat: live.latitude, lng: live.longitude };
+      const current = isLive(live);
+      let overlay = liveRef.current.get(station.id);
+      if (!overlay) {
+        const dot = document.createElement("div");
+        dot.className = "live-station-dot";
+        const marker = new libraries.marker.AdvancedMarkerElement({ map, position, content: dot, gmpClickable: true, zIndex: 20 });
+        marker.addEventListener("gmp-click", () => onSelectStation(station.id));
+        const circle = new libraries.maps.Circle({ map, center: position, radius: live.accuracyM, clickable: false, strokeWeight: 1, zIndex: 5 });
+        overlay = { marker, circle, dot };
+        liveRef.current.set(station.id, overlay);
+      }
+      overlay.marker.position = position;
+      overlay.marker.title = `${station.name} · ${liveLabel(live)}`;
+      overlay.dot.dataset.state = current ? "live" : "stale";
+      const colour = current ? "#22d3ee" : "#94a3b8";
+      overlay.circle.setOptions({ center: position, radius: live.accuracyM, strokeColor: colour, strokeOpacity: 0.9, fillColor: colour, fillOpacity: current ? 0.18 : 0.08 });
+    }
+    for (const [id, overlay] of liveRef.current) {
+      if (seen.has(id)) continue;
+      overlay.marker.map = null;
+      overlay.circle.setMap(null);
+      liveRef.current.delete(id);
+    }
+    const followed = followRef.current ? stationsRef.current.find(station => station.id === followRef.current)?.livePosition : null;
+    // Pan once per accepted fix (or when follow starts), not on every render.
+    const panKey = followed ? `${followRef.current}:${followed.capturedAt}:${followed.latitude}:${followed.longitude}` : "";
+    if (followed && panKey !== pannedRef.current) map.panTo({ lat: followed.latitude, lng: followed.longitude });
+    pannedRef.current = panKey;
+  }, [onSelectStation]);
+
+  useEffect(() => {
+    stationsRef.current = stations;
+    followRef.current = followStationId;
+    syncLive();
+  }, [stations, followStationId, syncLive]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -95,6 +153,7 @@ export default function GoogleStationMapCanvas({
         ...(cameraRef.current ?? {}),
       });
       mapRef.current = map;
+      librariesRef.current = { maps, marker };
 
       markers = stations.flatMap(station => {
         const point = stationCoordinates(station);
@@ -127,6 +186,7 @@ export default function GoogleStationMapCanvas({
         if (!disposed) onStatusChange("ready");
       }, 8000);
       if (!cameraRef.current) focusStation(map, stations, selectedStationRef.current);
+      syncLive();
     }).catch(fail);
 
     return () => {
@@ -134,6 +194,10 @@ export default function GoogleStationMapCanvas({
       clearTimeout(readyTimer);
       if (authWindow.gm_authFailure === fail) authWindow.gm_authFailure = previousAuthFailure;
       markers.forEach(marker => { marker.map = null; });
+      liveRef.current.forEach(overlay => { overlay.marker.map = null; overlay.circle.setMap(null); });
+      liveRef.current.clear();
+      librariesRef.current = null;
+      pannedRef.current = "";
       if (map && window.google?.maps) {
         cameraRef.current = { center: map.getCenter(), zoom: map.getZoom(), tilt: map.getTilt(), heading: map.getHeading(), mapTypeId: map.getMapTypeId() };
         window.google.maps.event.clearInstanceListeners(map);
@@ -141,7 +205,7 @@ export default function GoogleStationMapCanvas({
       mapRef.current = null;
       container.replaceChildren();
     };
-  }, [ready, theme, apiKey, mapId, onFailure, onSelectStation, onStatusChange]);
+  }, [ready, theme, apiKey, mapId, onFailure, onSelectStation, onStatusChange, syncLive]);
 
   useEffect(() => {
     const map = mapRef.current;

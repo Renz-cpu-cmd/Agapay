@@ -63,6 +63,18 @@ class MonitoringSample(BaseModel):
         return value.astimezone(timezone.utc)
 
 
+class LivePosition(BaseModel):
+    """Operator-phone GPS position of a portable station (staff only; personal location data)."""
+    latitude: float
+    longitude: float
+    accuracy_m: float
+    captured_at: datetime
+    age_seconds: int
+    fresh: bool = Field(description="Session active and fix newer than the live window; otherwise last known.")
+    tracking_active: bool
+    source: Literal["operator_phone_gps"] = "operator_phone_gps"
+
+
 class MonitoringStation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -83,6 +95,10 @@ class MonitoringStation(BaseModel):
         description="Recorded radius (metres) within which the true installation point lies. Null when the "
                     "precision was never recorded, or when there is no mappable pair. A confirmed pair is not "
                     "an exact point unless this is small and coordinate_basis is 'surveyed'.")
+    live_position: LivePosition | None = Field(
+        default=None,
+        description="Latest operator-phone GPS fix for a portable station. Staff only; never replaces the "
+                    "registry coordinates, commissioning, configuration or eligibility.")
     coordinate_basis: Literal["surveyed", "owner_confirmed", "estimated"] | None = Field(
         default=None,
         description="How the position was obtained. Null when not recorded or when there is no mappable pair. "

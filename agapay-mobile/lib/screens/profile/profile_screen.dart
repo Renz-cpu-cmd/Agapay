@@ -6,6 +6,7 @@ import '../../widgets/common/auth_field.dart';
 import 'edit_profile_screen.dart';
 import 'account_security_screen.dart';
 import '../../widgets/common/product_capability_settings.dart';
+import '../../widgets/common/station_tracking_panel.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,6 +16,20 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _leaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pick up a tracking assignment made after sign-in.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final app = AppScope.of(context);
+      if (app.user?.role == 'resident' && !app.auth.offlineReader && !app.tracking.tracking) {
+        app.tracking.refresh();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
@@ -23,6 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return PageContent(
       children: [
         const PageHeading('Profile', 'Account & Settings'),
+        const StationTrackingPanel(),
         Panel(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

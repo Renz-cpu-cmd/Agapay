@@ -20,6 +20,7 @@ import 'product_preferences_controller.dart';
 import 'device_capabilities_controller.dart';
 import 'build_information_controller.dart';
 import 'response_resource_controller.dart';
+import 'station_tracking_controller.dart';
 
 enum AppTab { home, map, sos, alerts, profile }
 
@@ -31,6 +32,7 @@ class AppController extends ChangeNotifier {
     SosDraftStore? sosStorage,
     PushTokenProvider? pushTokenProvider,
     PushMessages? pushMessages,
+    StationPositionSource? trackingSource,
     ReceiptStorage? receiptStorage,
     ThemePreferenceStore? themeStorage,
     ProductPreferenceStore? preferenceStorage,
@@ -66,6 +68,7 @@ class AppController extends ChangeNotifier {
       ..addListener(_communityChanged);
     deliveries = DeliveryController(auth, storage: receiptStorage)
       ..addListener(_communityChanged);
+    tracking = StationTrackingController(auth, source: trackingSource);
     if (pushMessages != null) {
       _pushSubscriptions.add(
         pushMessages.foreground.listen((data) {
@@ -104,6 +107,7 @@ class AppController extends ChangeNotifier {
       notices.setScope(null, null);
       resources.setOwner(null);
       deliveries.setOwner(null);
+      tracking.reset();
       notificationRegistration.setOwner(null);
       details = false;
       notifyListeners();
@@ -219,6 +223,7 @@ class AppController extends ChangeNotifier {
   late final CommunityAlertController communityAlerts;
   late final OfficialNoticeController notices;
   late final ResponseResourceController resources;
+  late final StationTrackingController tracking;
   Account? user;
   String? authError;
   Future<void>? _restoring;
@@ -258,6 +263,10 @@ class AppController extends ChangeNotifier {
     resources.setOwner(account.id);
     deliveries.setOwner(account.id);
     notificationRegistration.setOwner(auth.offlineReader ? null : account.id);
+    tracking.reset();
+    if (account.role == 'resident' && !auth.offlineReader) {
+      unawaited(tracking.refresh());
+    }
     barangay = account.barangay;
     authError = null;
     notifyListeners();
@@ -319,6 +328,7 @@ class AppController extends ChangeNotifier {
       notices.setScope(null, null);
       resources.setOwner(null);
       deliveries.setOwner(null);
+      tracking.reset();
       notificationRegistration.setOwner(null);
       details = false;
       notifyListeners();
@@ -349,6 +359,7 @@ class AppController extends ChangeNotifier {
     notices.setScope(null, null);
     resources.setOwner(null);
     deliveries.setOwner(null);
+    tracking.reset();
     notificationRegistration.setOwner(null);
     details = false;
     tab = AppTab.home;
@@ -364,6 +375,10 @@ class AppController extends ChangeNotifier {
     communityAlerts.setForeground(value);
     notices.setForeground(value);
     resources.setForeground(value);
+    // Pick up a tracking assignment granted while the app was in the background.
+    if (value && user?.role == 'resident' && !auth.offlineReader && !tracking.tracking) {
+      unawaited(tracking.refresh());
+    }
   }
 
   @override
@@ -395,6 +410,7 @@ class AppController extends ChangeNotifier {
     resources.removeListener(_communityChanged);
     deliveries.removeListener(_communityChanged);
     deliveries.dispose();
+    tracking.dispose();
     resources.dispose();
     notificationRegistration.removeListener(_capabilitiesChanged);
     notificationRegistration.dispose();

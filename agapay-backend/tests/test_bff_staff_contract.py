@@ -109,6 +109,7 @@ RESIDENT_READS = {
     '/api/notification-deliveries', '/api/notification-deliveries/consent',
     '/api/notification-deliveries/{identity}',
     '/api/privacy/cases', '/api/sos', '/api/sos/{sos_id}', '/api/sos-response/{sos_id}',  # caller-owned
+    '/api/station-tracking/active',  # migration 0010: only the caller's own tracking assignments
 }
 ADMIN_ONLY_READS = {
     '/api/users', '/api/auth/audit', '/api/alert-governance/audit', '/api/stations/{station_id}/audit',
@@ -116,6 +117,7 @@ ADMIN_ONLY_READS = {
     '/api/stations/{station_id}/provisioning', '/api/privacy/admin/cases', '/api/privacy/admin/evidence',
     '/api/privacy/admin/access-review', '/api/privacy/admin/holds/{user_id}',
     '/api/delivery-recovery', '/api/delivery-recovery/holds',  # R2 P0 restored-delivery reconciliation
+    '/api/stations/{station_id}/tracking-sessions',  # migration 0010: names tracker accounts
 }
 # Device-scoped exercise consent: refused to every web role by design.
 DEVICE_ONLY_READS = {'/api/exercise-notifications/consent/{device_id}',

@@ -130,6 +130,12 @@ html:has(.command-center),body:has(.command-center) { overflow:hidden; overscrol
 .google-map-canvas .gm-style-mtc ul { border:1px solid var(--adaptive-blue, #355a89) !important; background:var(--adaptive-surface, #071b38) !important; }
 .google-map-canvas .gm-style-mtc li span { color:var(--adaptive-text, #dbeaff) !important; }
 .google-station-pin { filter:drop-shadow(0 0 7px var(--adaptive-blue, #5da9ff)); }
+.live-station-dot { width:16px; height:16px; border-radius:50%; border:3px solid #fff; background:#94a3b8; box-shadow:0 0 0 2px rgba(15,23,42,.35); transform:translateY(50%); }
+.live-station-dot[data-state=live] { background:#22d3ee; animation:live-station-pulse 2s ease-out infinite; }
+@keyframes live-station-pulse { 0% { box-shadow:0 0 0 0 rgba(34,211,238,.6); } 100% { box-shadow:0 0 0 14px rgba(34,211,238,0); } }
+@media (prefers-reduced-motion: reduce) { .live-station-dot[data-state=live] { animation:none; } }
+.live-position-label { font-weight:600; color:var(--adaptive-muted, #64748b); }
+.live-position-label.live { color:#0891b2; }
 .google-photorealistic-map { display:block; width:100%; height:100%; background:var(--adaptive-surface, #00112e); }
 .station-map-loading { display:flex; align-items:center; justify-content:center; height:100%; color:var(--adaptive-border, #345068); font-size:12px; }
 .station-map-progress { position:absolute; z-index:500; top:12px; left:50%; transform:translateX(-50%); border-radius:4px; padding:6px 10px; color:var(--adaptive-text, #bcd5fa); background:#00112ee8; font-size:11px; pointer-events:none; }

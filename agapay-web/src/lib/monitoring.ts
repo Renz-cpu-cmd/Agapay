@@ -58,6 +58,8 @@ export type MonitoringStation = {
   rise_rate_cm_per_minute?: number|null;
   rise_rate_lower?: number|null;
   rise_rate_upper?: number|null;
+  /** Migration 0010: staff-only operator-phone GPS fix for a portable station; never the registry position. */
+  live_position?: {latitude:number;longitude:number;accuracy_m:number;captured_at:string;age_seconds:number;fresh:boolean;tracking_active:boolean;source:"operator_phone_gps"}|null;
   trend_window_start?: string|null;
   trend_window_end?: string|null;
   trend_sample_count?: number;

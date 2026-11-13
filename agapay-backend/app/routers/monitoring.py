@@ -25,7 +25,13 @@ def station_snapshot(
     station_id: list[str] | None = Query(None,max_length=20),
 ) -> MonitoringSnapshot:
     from app.services.read_models import snapshot
-    return snapshot(db,settings,history_limit=history_limit,station_ids=station_id)
+    result = snapshot(db,settings,history_limit=history_limit,station_ids=station_id)
+    # Migration 0010: an operator-phone position is the carrier's personal location. Staff only.
+    # The cached snapshot is shared, so redact a copy and never mutate it.
+    if _user.role not in ("admin", "officer") and any(s.live_position is not None for s in result.stations):
+        result = result.model_copy(update={"stations": [
+            s.model_copy(update={"live_position": None}) if s.live_position is not None else s for s in result.stations]})
+    return result
 
 
 @router.get("/history")

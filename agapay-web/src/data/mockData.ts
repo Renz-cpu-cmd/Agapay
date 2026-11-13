@@ -29,6 +29,8 @@ export interface Station {
   coordinates: { latitude: number; longitude: number; status: "planned" | "verified" | "unverified";
     precisionM?: number | null; basis?: "surveyed" | "owner_confirmed" | "estimated" | null } | null;
   coordinateStatus?: "verified" | "unverified" | "planned" | "missing" | "invalid";
+  /** Migration 0010: staff-only phone GPS while a portable station is carried; separate from `coordinates`. */
+  livePosition?: import("@/lib/live-position").LivePositionView | null;
   thresholds: { advisory: number; warning: number; evacuate: number };
   waterHistory: { time: string; level: number | null; recordedAt?: string; measuredAt?:string|null; receivedAt?:string|null }[];
   rainHistory?: { time: string; value: number | null; recordedAt?: string }[];

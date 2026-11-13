@@ -8,7 +8,7 @@ from app.services.rise_rate import estimate_rise, MAX_SAMPLES, WINDOW_SECONDS
 from app.governance_models import HazardDecision, HazardPolicy
 from app.models import Alert, Station, StationIdentity, Telemetry, TelemetryProvenance
 from app.operations_models import StationOperation
-from app.monitoring_schemas import MonitoringSample, MonitoringSnapshot, MonitoringStation
+from app.monitoring_schemas import LivePosition, MonitoringSample, MonitoringSnapshot, MonitoringStation
 from app.services.alert_classifier import classify_depth
 from app.services.ingress_provenance import provenance_fields
 
@@ -71,6 +71,13 @@ class _Prefetch:
         self.identities = self._by_key(db, StationIdentity, StationIdentity.station_id, self.ids)
         from app.location_models import StationLocationPrecision
         self.location_precision = self._by_key(db, StationLocationPrecision, StationLocationPrecision.station_id, self.ids)
+        # Migration 0010: latest operator-phone fix per station and which stations are being tracked now.
+        from app.tracking_models import StationTrackedPosition, StationTrackingSession
+        self.positions = self._top(db, StationTrackedPosition, (),
+                                   (StationTrackedPosition.captured_at.desc(), StationTrackedPosition.id.desc()), 1)
+        self.tracking_active = {row.station_id for row in db.scalars(select(StationTrackingSession).where(
+            StationTrackingSession.station_id.in_(self.ids), StationTrackingSession.ended_at.is_(None)))
+            if _utc(row.expires_at) > checked_at} if self.ids else set()
         self.policies = self._by_key(db, HazardPolicy, HazardPolicy.station_id, self.ids)
         self.operations = self._by_key(db, StationOperation, StationOperation.station_id, self.ids)
         self.episodes = {row.station_id: row for row in db.scalars(select(Alert).where(
@@ -170,12 +177,22 @@ def monitoring_snapshot(db: Session, *, stale_after_seconds: int, history_limit:
         latitude, longitude, coordinate_status = registry_location(station, identity)
         # Precision is reported only for a mappable pair; it never creates or moves a pin (R1).
         precision = bulk.location_precision.get(sid) if latitude is not None else None
+        live = None
+        fixes = bulk.positions.get(sid)
+        if fixes:
+            from app.tracking_models import LIVE_FRESH_SECONDS
+            fix, active = fixes[0], sid in bulk.tracking_active
+            age = max(0, int((checked_at - _utc(fix.captured_at)).total_seconds()))
+            live = LivePosition(latitude=fix.latitude, longitude=fix.longitude, accuracy_m=fix.accuracy_m,
+                                captured_at=_utc(fix.captured_at), age_seconds=age, tracking_active=active,
+                                fresh=active and age <= LIVE_FRESH_SECONDS)
         result.append(MonitoringStation(
             station_id=station.station_id, station_name=station.station_name, barangay=station.barangay,
             municipality=station.municipality, latitude=latitude, longitude=longitude,
             coordinate_status=coordinate_status,
             coordinate_precision_m=precision.precision_m if precision else None,
             coordinate_basis=precision.basis if precision else None,
+            live_position=live,
             administrative_status=station.status, connection_status=connection, is_online=connection == "online",
             is_stale=depth_status in ("stale", "retained"),
             # Compatibility aliases now date the retained value, not the heartbeat.

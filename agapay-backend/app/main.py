@@ -78,6 +78,9 @@ from app.routers import exercise_notifications  # noqa: E402  (isolated EXERCISE
 app.include_router(exercise_notifications.router)
 from app.routers import delivery_recovery  # noqa: E402  (R2 P0 restored-delivery reconciliation)
 app.include_router(delivery_recovery.router)
+from app.routers import station_tracking  # noqa: E402
+app.include_router(station_tracking.admin_router)
+app.include_router(station_tracking.tracker_router)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"], allow_headers=["Authorization", "Content-Type"])
 app.add_middleware(IngressBodyLimitMiddleware)
 

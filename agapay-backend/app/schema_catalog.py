@@ -6,6 +6,7 @@ from app import forecast_models, privacy_models
 from app import exercise_models
 from app import recovery_models
 from app import location_models
+from app import tracking_models
 from app.database import Base
 
 metadata = Base.metadata

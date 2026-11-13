@@ -27,10 +27,11 @@ LEDGER = Table('schema_migrations', MetaData(),
                Column('applied_at', DateTime(timezone=True), nullable=False))
 REVISIONS = ('0001_preserved_baseline', '0002_workflow_runtime', '0003_delivery_evidence', '0004_forecast_registry', '0005_privacy_recovery',
              '0006_exercise_notifications', '0007_exercise_sensor_triggers', '0008_delivery_recovery',
-             '0009_location_precision')
+             '0009_location_precision', '0010_station_tracking')
 SNAPSHOTS = (SNAPSHOT, ROOT / 'migrations/0002_runtime.json', ROOT / 'migrations/0003_delivery.json', ROOT / 'migrations/0004_forecasts.json', ROOT / 'migrations/0005_privacy.json',
              ROOT / 'migrations/0006_exercise_notifications.json', ROOT / 'migrations/0007_exercise_sensor_triggers.json',
-             ROOT / 'migrations/0008_delivery_recovery.json', ROOT / 'migrations/0009_location_precision.json')
+             ROOT / 'migrations/0008_delivery_recovery.json', ROOT / 'migrations/0009_location_precision.json',
+             ROOT / 'migrations/0010_station_tracking.json')
 
 
 def checksum(revision=None):

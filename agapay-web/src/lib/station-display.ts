@@ -1,6 +1,7 @@
 import { ageLabel, type MonitoringStation } from "./monitoring";
 import type { Station } from "../data/mockData";
 import { stationMeasurement } from "./measurements";
+import { livePosition } from "./live-position";
 
 /**
  * R1: the registry is the only source of an operational station position. A missing,
@@ -61,6 +62,7 @@ export function displayStation(source: MonitoringStation): Station {
     isOnline: source.is_online,
     coordinates: location.coordinates,
     coordinateStatus: location.status,
+    livePosition: livePosition(source.live_position),
     thresholds: {
       advisory: source.threshold_advisory_cm,
       warning: source.threshold_warning_cm,

@@ -1,0 +1,274 @@
+{
+  "sqlite": [
+    {
+      "name": "station_tracking_sessions",
+      "sql": "\nCREATE TABLE station_tracking_sessions (\n\tid VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\ttracker_user_id INTEGER NOT NULL, \n\tcreated_by INTEGER NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\texpires_at DATETIME NOT NULL, \n\tended_at DATETIME, \n\tended_by INTEGER, \n\tend_reason VARCHAR(500), \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_station_tracking_session_window CHECK (expires_at > created_at), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(tracker_user_id) REFERENCES users (id), \n\tFOREIGN KEY(created_by) REFERENCES users (id), \n\tFOREIGN KEY(ended_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "tracker_user_id",
+        "created_by",
+        "reason",
+        "created_at",
+        "expires_at",
+        "ended_at",
+        "ended_by",
+        "end_reason"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "tracker_user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "ended_at": {
+          "type": "DATETIME",
+          "nullable": true
+        },
+        "ended_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "end_reason": {
+          "type": "VARCHAR(500)",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_station_tracking_sessions_station",
+          "sql": "CREATE INDEX ix_station_tracking_sessions_station ON station_tracking_sessions (station_id, created_at)"
+        },
+        {
+          "name": "ix_station_tracking_sessions_tracker_user_id",
+          "sql": "CREATE INDEX ix_station_tracking_sessions_tracker_user_id ON station_tracking_sessions (tracker_user_id)"
+        }
+      ]
+    },
+    {
+      "name": "station_tracked_positions",
+      "sql": "\nCREATE TABLE station_tracked_positions (\n\tid INTEGER NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tlatitude FLOAT NOT NULL, \n\tlongitude FLOAT NOT NULL, \n\taccuracy_m FLOAT NOT NULL, \n\tcaptured_at DATETIME NOT NULL, \n\treceived_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_station_tracked_latitude CHECK (latitude >= -90 AND latitude <= 90), \n\tCONSTRAINT ck_station_tracked_longitude CHECK (longitude >= -180 AND longitude <= 180), \n\tCONSTRAINT ck_station_tracked_accuracy CHECK (accuracy_m > 0 AND accuracy_m <= 50), \n\tFOREIGN KEY(session_id) REFERENCES station_tracking_sessions (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "id",
+        "session_id",
+        "station_id",
+        "latitude",
+        "longitude",
+        "accuracy_m",
+        "captured_at",
+        "received_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "latitude": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "longitude": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "accuracy_m": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "captured_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "received_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_station_tracked_positions_session",
+          "sql": "CREATE INDEX ix_station_tracked_positions_session ON station_tracked_positions (session_id, captured_at)"
+        },
+        {
+          "name": "ix_station_tracked_positions_station",
+          "sql": "CREATE INDEX ix_station_tracked_positions_station ON station_tracked_positions (station_id, captured_at)"
+        }
+      ]
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "station_tracking_sessions",
+      "sql": "\nCREATE TABLE station_tracking_sessions (\n\tid VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\ttracker_user_id INTEGER NOT NULL, \n\tcreated_by INTEGER NOT NULL, \n\treason VARCHAR(500) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tended_at TIMESTAMP WITH TIME ZONE, \n\tended_by INTEGER, \n\tend_reason VARCHAR(500), \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_station_tracking_session_window CHECK (expires_at > created_at), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(tracker_user_id) REFERENCES users (id), \n\tFOREIGN KEY(created_by) REFERENCES users (id), \n\tFOREIGN KEY(ended_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "station_id",
+        "tracker_user_id",
+        "created_by",
+        "reason",
+        "created_at",
+        "expires_at",
+        "ended_at",
+        "ended_by",
+        "end_reason"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "tracker_user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "created_by": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "reason": {
+          "type": "VARCHAR(500)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "ended_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": true
+        },
+        "ended_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "end_reason": {
+          "type": "VARCHAR(500)",
+          "nullable": true
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_station_tracking_sessions_station",
+          "sql": "CREATE INDEX ix_station_tracking_sessions_station ON station_tracking_sessions (station_id, created_at)"
+        },
+        {
+          "name": "ix_station_tracking_sessions_tracker_user_id",
+          "sql": "CREATE INDEX ix_station_tracking_sessions_tracker_user_id ON station_tracking_sessions (tracker_user_id)"
+        }
+      ]
+    },
+    {
+      "name": "station_tracked_positions",
+      "sql": "\nCREATE TABLE station_tracked_positions (\n\tid BIGSERIAL NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tstation_id VARCHAR(50) NOT NULL, \n\tlatitude FLOAT NOT NULL, \n\tlongitude FLOAT NOT NULL, \n\taccuracy_m FLOAT NOT NULL, \n\tcaptured_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\treceived_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT ck_station_tracked_latitude CHECK (latitude >= -90 AND latitude <= 90), \n\tCONSTRAINT ck_station_tracked_longitude CHECK (longitude >= -180 AND longitude <= 180), \n\tCONSTRAINT ck_station_tracked_accuracy CHECK (accuracy_m > 0 AND accuracy_m <= 50), \n\tFOREIGN KEY(session_id) REFERENCES station_tracking_sessions (id), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id)\n)\n\n",
+      "columns": [
+        "id",
+        "session_id",
+        "station_id",
+        "latitude",
+        "longitude",
+        "accuracy_m",
+        "captured_at",
+        "received_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "session_id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "latitude": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "longitude": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "accuracy_m": {
+          "type": "FLOAT",
+          "nullable": false
+        },
+        "captured_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "received_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_station_tracked_positions_session",
+          "sql": "CREATE INDEX ix_station_tracked_positions_session ON station_tracked_positions (session_id, captured_at)"
+        },
+        {
+          "name": "ix_station_tracked_positions_station",
+          "sql": "CREATE INDEX ix_station_tracked_positions_station ON station_tracked_positions (station_id, captured_at)"
+        }
+      ]
+    }
+  ]
+}
