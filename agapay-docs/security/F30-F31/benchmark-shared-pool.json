@@ -1,0 +1,76 @@
+{
+  "mode": "shared",
+  "stations": 20,
+  "viewers": 40,
+  "rounds": 2,
+  "concurrency": 10,
+  "samples_per_station": 120,
+  "response_history_limit": 120,
+  "cold": {
+    "requests": 10,
+    "status_counts": {
+      "200": 10
+    },
+    "sql_statements": 572,
+    "retained_refresh_responses": 0,
+    "errors": {},
+    "cpu_seconds": 1.640625,
+    "wall_seconds": 1.5008528999969712,
+    "cpu_seconds_per_success": 0.1640625,
+    "response_bytes": 4614700,
+    "mean_success_bytes": 461470.0,
+    "p95_http_seconds": 1.489759000003687,
+    "p99_http_seconds": 1.489759000003687,
+    "p95_snapshot_age_seconds": 1.229303,
+    "p99_snapshot_age_seconds": 1.229303
+  },
+  "steady": {
+    "requests": 80,
+    "status_counts": {
+      "200": 43,
+      "503": 37
+    },
+    "sql_statements": 1849,
+    "retained_refresh_responses": 30,
+    "errors": {
+      "Read model is rebuilding; retain original timestamps and retry": 37
+    },
+    "cpu_seconds": 12.6875,
+    "wall_seconds": 11.966101700003492,
+    "cpu_seconds_per_success": 0.29505813953488375,
+    "response_bytes": 19847725,
+    "mean_success_bytes": 461510.4651162791,
+    "p95_http_seconds": 2.39071729999705,
+    "p99_http_seconds": 2.665109299996402,
+    "p95_snapshot_age_seconds": 4.064523,
+    "p99_snapshot_age_seconds": 4.093097
+  },
+  "committed_to_first_visible_seconds": 2.186963,
+  "visibility_probe_attempts": 11,
+  "scope": "Synthetic SQLite ASGI; no TCP/BFF/render/device/battery evidence. All modes include auth and workflow instrumentation.",
+  "producer_metrics": {
+    "readmodel.build": {
+      "count": 4,
+      "failures": 0,
+      "total_seconds": 12.82509669999854,
+      "maximum_seconds": 10.406629500001145,
+      "histogram": {
+        "1": 3,
+        "30": 1
+      },
+      "p95_seconds_upper_bound": 30,
+      "p99_seconds_upper_bound": 30
+    },
+    "readmodel.hit": {
+      "count": 64,
+      "failures": 0,
+      "total_seconds": 0.0,
+      "maximum_seconds": 0.0,
+      "histogram": {
+        "0.005": 64
+      },
+      "p95_seconds_upper_bound": 0.005,
+      "p99_seconds_upper_bound": 0.005
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "mode": "uncached",
+  "stations": 20,
+  "viewers": 40,
+  "rounds": 2,
+  "concurrency": 10,
+  "samples_per_station": 120,
+  "response_history_limit": 120,
+  "cold": {
+    "requests": 10,
+    "status_counts": {
+      "200": 10
+    },
+    "sql_statements": 3747,
+    "cpu_seconds": 10.28125,
+    "wall_seconds": 5.767072200003895,
+    "cpu_seconds_per_success": 1.028125,
+    "response_bytes": 4614620,
+    "mean_success_bytes": 461462.0,
+    "p95_http_seconds": 5.720038799998292,
+    "p99_http_seconds": 5.720038799998292,
+    "p95_snapshot_age_seconds": 5.575038,
+    "p99_snapshot_age_seconds": 5.575038
+  },
+  "steady": {
+    "requests": 80,
+    "status_counts": {
+      "200": 80
+    },
+    "sql_statements": 29992,
+    "cpu_seconds": 111.640625,
+    "wall_seconds": 51.06972329999553,
+    "cpu_seconds_per_success": 1.3955078125,
+    "response_bytes": 36927280,
+    "mean_success_bytes": 461591.0,
+    "p95_http_seconds": 9.06407130000298,
+    "p99_http_seconds": 9.380086599994684,
+    "p95_snapshot_age_seconds": 8.167273,
+    "p99_snapshot_age_seconds": 8.892044
+  },
+  "committed_to_first_visible_seconds": 0.403833,
+  "visibility_probe_attempts": 1,
+  "scope": "Synthetic SQLite ASGI; no TCP/BFF/render/device/battery evidence. All modes include auth and workflow instrumentation."
+}

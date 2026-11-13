@@ -1,0 +1,133 @@
+00:00 +0: loading C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart
+00:00 +0: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +2: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +3: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +4: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +5: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +6: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +7: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +8: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +9: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +10: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +11: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:00 +12: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +13: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +14: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +15: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +16: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +17: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +18: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +19: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +20: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +21: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +22: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +23: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +24: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +25: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:02 +26: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:02 +27: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:02 +28: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:02 +29: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:02 +30: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:02 +31: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:02 +32: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +33: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +34: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +35: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +36: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +37: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +38: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +39: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +40: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +41: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +42: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:04 +43: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:04 +44: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:04 +45: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:04 +46: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:05 +47: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:05 +48: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:05 +49: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +50: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +51: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +52: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +53: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +54: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +55: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:07 +56: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:07 +57: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:07 +58: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:07 +59: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:07 +60: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:07 +61: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:07 +62: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:07 +63: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:07 +64: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +65: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +66: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +67: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +68: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +69: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +70: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +71: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +72: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +73: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +74: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +75: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +76: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +77: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+00:07 +78: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: exactly one matching candidate
+  Actual: _TextContainingWidgetFinder:<Found 2 widgets with text containing Depth measured 1 hr ago:
+[
+            Text("Depth measured 1 hr ago · retained / stale", inherit: true, color: Color(alpha:
+1.0000, red: 0.2510, green: 0.3412, blue: 0.4588, colorSpace: ColorSpace.sRGB), family: Inter, size:
+10.0, weight: 400, letterSpacing: 0.0, height: 1.5x, dependencies: [DefaultSelectionStyle,
+DefaultTextStyle, MediaQuery]),
+            Text("STATION_001 · Depth measured 1 hr ago · Last valid readings", inherit: true,
+color: Color(alpha: 1.0000, red: 0.3216, green: 0.3961, blue: 0.5059, colorSpace: ColorSpace.sRGB),
+family: Inter, size: 10.0, weight: 400, letterSpacing: 0.0, height: 1.5x, dependencies:
+[DefaultSelectionStyle, DefaultTextStyle, MediaQuery]),
+          ]>
+   Which: is too many
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart:131:7)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart line 131
+The test description was:
+  home shows online heartbeat, one-hour retained depth and unresolved hazard together
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:07 +78 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:07 +78 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/monitoring_contract_test.dart: home shows online heartbeat, one-hour retained depth and unresolved hazard together [E]
+  Test failed. See exception logs above.
+  The test description was: home shows online heartbeat, one-hour retained depth and unresolved hazard together
+  
+00:07 +79 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:08 +80 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:08 +81 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:08 +82 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:08 +83 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:08 +84 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:08 +85 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:08 +86 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:08 +87 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:09 +88 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:10 +89 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:10 +90 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:11 +91 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:15 +92 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/theme_test.dart: profile selector updates all tabs and map fallback in both themes
+00:18 +93 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: registration, keyboard and all tabs fit a narrow phone
+00:18 +94 -1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: (tearDownAll)
+00:18 +94 -1: Some tests failed.

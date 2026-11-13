@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGAPAY authenticated MQTT ingress envelope v1",
+  "type": "object",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "required": [
+        "ingest_token",
+        "telemetry"
+      ],
+      "properties": {
+        "ingest_token": {
+          "type": "string",
+          "pattern": "^agi_[A-Za-z0-9_-]{43}$"
+        },
+        "telemetry": {
+          "$ref": "mqtt-telemetry.schema.json"
+        },
+        "delivery_mode": {
+          "enum": [
+            "live",
+            "backfill"
+          ],
+          "default": "live"
+        }
+      }
+    },
+    {
+      "additionalProperties": false,
+      "required": [
+        "ingest_token",
+        "rain"
+      ],
+      "properties": {
+        "ingest_token": {
+          "type": "string",
+          "pattern": "^agi_[A-Za-z0-9_-]{43}$"
+        },
+        "rain": {
+          "$ref": "rain-gauge-event.schema.json"
+        }
+      }
+    }
+  ]
+}

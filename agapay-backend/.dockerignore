@@ -1,6 +1,12 @@
 .venv
+.venv-*
 __pycache__
 .pytest_cache
 .env
+.env.*
+*.env
+*.pem
+*.key
+credentials
 *.db
 tests

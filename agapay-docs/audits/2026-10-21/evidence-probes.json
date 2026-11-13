@@ -1,0 +1,46 @@
+{
+  "scope": "disposable in-memory SQLite; no external calls or live writes",
+  "unauthenticated_station_creation": 201,
+  "unauthenticated_telemetry_side_effect": {
+    "http_status": 201,
+    "alert_severity": "EVACUATE",
+    "notification_event_created": true
+  },
+  "out_of_order_unique_sequence": {
+    "received_sequences": [
+      1001,
+      1000
+    ],
+    "http_status_for_older_sequence": 201,
+    "episode_status": "RESOLVED",
+    "severity": "NORMAL"
+  },
+  "maintenance_station_ingestion": {
+    "http_status": 201,
+    "latest_episode_status": "ACTIVE",
+    "latest_episode_severity": "EVACUATE"
+  },
+  "invalid_heartbeat_after_old_valid_depth": {
+    "connection": "online",
+    "age_seconds": 0,
+    "current_depth_cm": 105.0,
+    "sensor_quality": "invalid",
+    "observed_at": "2026-10-21T08:29:43.703192+00:00",
+    "last_valid_depth_age_seconds": 3600,
+    "source_inferred_from_client_firmware_string": "device"
+  },
+  "retained_mqtt_telemetry": {
+    "stored": true,
+    "server_received_age_seconds": 0.002591
+  },
+  "threshold_chatter": {
+    "depths_cm": [
+      59.9,
+      60.1,
+      59.9,
+      60.1
+    ],
+    "episodes_created": 2,
+    "notification_events_total_including_other_probes": 4
+  }
+}

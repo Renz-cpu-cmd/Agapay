@@ -1,0 +1,68 @@
+# Linux host with a local HTTPS reverse proxy and an EXTERNAL managed PostgreSQL.
+# No database container, reset, seeder, auto-migration or public API listener.
+x-service: &service
+  build: ..
+  env_file: ./production.env
+  network_mode: host
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  user: "10001:10001"
+  volumes:
+    - ./certificates:/run/agapay-certificates:ro
+    - rain-journal:/var/lib/agapay
+
+services:
+  api:
+    <<: *service
+    command: [python, -m, app.serve_production]
+    environment:
+      AGAPAY_MQTT_ENABLED: "true"
+      AGAPAY_MQTT_EXTERNAL_SUBSCRIBER: "true"
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  ingest:
+    <<: *service
+    command: [python, -m, app.ingestion_worker]
+    environment:
+      AGAPAY_MQTT_ENABLED: "true"
+      AGAPAY_MQTT_EXTERNAL_SUBSCRIBER: "false"
+    restart: unless-stopped
+  migrate:
+    <<: *service
+    profiles: [administration]
+    command: [python, -m, app.migrations]
+  notifications:
+    <<: *service
+    profiles: [delivery]
+    command: [python, -m, app.worker_service, notifications]
+    restart: unless-stopped
+  identity-mail:
+    <<: *service
+    command: [python, -m, app.worker_service, identity-mail]
+    restart: unless-stopped
+  sos-drills:
+    <<: *service
+    command: [python, -m, app.worker_service, sos-drills]
+    restart: unless-stopped
+  read-model:
+    <<: *service
+    command: [python, -m, app.worker_service, read-model]
+    restart: unless-stopped
+  diagnostics:
+    <<: *service
+    command: [python, -m, app.worker_service, diagnostics]
+    restart: unless-stopped
+  forecasts:
+    <<: *service
+    profiles: [forecasting]
+    command: [python, -m, app.worker_service, forecasts]
+    restart: unless-stopped
+
+volumes:
+  rain-journal:

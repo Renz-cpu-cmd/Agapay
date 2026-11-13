@@ -1,0 +1,98 @@
+00:00 +0: loading C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart
+00:00 +0: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +1: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +2: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +3: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +4: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +5: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +6: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +7: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +8: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +9: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +10: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +11: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:01 +12: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:02 +13: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:02 +14: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:02 +15: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:02 +16: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:02 +17: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:02 +18: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:02 +19: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:02 +20: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:02 +21: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:03 +22: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:03 +23: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:03 +24: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:03 +25: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: mobile login offers resident login and registration only
+00:03 +26: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +27: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +28: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +29: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +30: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:03 +31: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:04 +32: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:04 +33: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:05 +34: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:05 +35: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:05 +36: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:05 +37: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:05 +38: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:05 +39: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:05 +40: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +41: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +42: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +43: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +44: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +45: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:06 +46: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:07 +47: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:07 +48: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:08 +49: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/firebase_push_test.dart: tap returns from history subroute to real episode detail
+00:09 +50: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:09 +51: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:09 +52: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:09 +53: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:09 +54: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:10 +55: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:10 +56: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +57: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +58: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +59: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +60: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +61: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +62: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +63: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +64: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +65: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +66: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +67: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +68: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +69: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +70: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +71: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +72: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +73: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +74: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +75: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +76: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +77: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +78: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:11 +79: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/auth_test.dart: resident registration and edited profile are reflected in the app
+00:12 +80: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:12 +81: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:12 +82: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:12 +83: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:12 +84: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:12 +85: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:13 +86: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:13 +87: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:13 +88: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:13 +89: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:15 +90: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:16 +91: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:18 +92: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: prototype navigation, alerts, maps, settings and confirmed practice SOS
+00:24 +93: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/theme_test.dart: profile selector updates all tabs and map fallback in both themes
+00:28 +94: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: registration, keyboard and all tabs fit a narrow phone
+00:28 +95: C:/Users/Asus/OneDrive/Documents/Agapay/Agapay/agapay-mobile/test/navigation_test.dart: (tearDownAll)
+00:28 +95: All tests passed!

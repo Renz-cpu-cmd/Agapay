@@ -1,0 +1,92 @@
+{
+  "sqlite": [
+    {
+      "name": "station_location_precision",
+      "sql": "\nCREATE TABLE station_location_precision (\n\tstation_id VARCHAR(50) NOT NULL, \n\tprecision_m INTEGER NOT NULL, \n\tbasis VARCHAR(20) NOT NULL, \n\tnote VARCHAR(300), \n\tupdated_by INTEGER, \n\tupdated_at DATETIME NOT NULL, \n\tPRIMARY KEY (station_id), \n\tCONSTRAINT ck_station_location_precision_range CHECK (precision_m >= 1 AND precision_m <= 100000), \n\tCONSTRAINT ck_station_location_precision_basis CHECK (basis IN ('surveyed','owner_confirmed','estimated')), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(updated_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "precision_m",
+        "basis",
+        "note",
+        "updated_by",
+        "updated_at"
+      ],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "precision_m": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "basis": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "note": {
+          "type": "VARCHAR(300)",
+          "nullable": true
+        },
+        "updated_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ],
+      "indexes": []
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "station_location_precision",
+      "sql": "\nCREATE TABLE station_location_precision (\n\tstation_id VARCHAR(50) NOT NULL, \n\tprecision_m INTEGER NOT NULL, \n\tbasis VARCHAR(20) NOT NULL, \n\tnote VARCHAR(300), \n\tupdated_by INTEGER, \n\tupdated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (station_id), \n\tCONSTRAINT ck_station_location_precision_range CHECK (precision_m >= 1 AND precision_m <= 100000), \n\tCONSTRAINT ck_station_location_precision_basis CHECK (basis IN ('surveyed','owner_confirmed','estimated')), \n\tFOREIGN KEY(station_id) REFERENCES stations (station_id), \n\tFOREIGN KEY(updated_by) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "station_id",
+        "precision_m",
+        "basis",
+        "note",
+        "updated_by",
+        "updated_at"
+      ],
+      "column_contract": {
+        "station_id": {
+          "type": "VARCHAR(50)",
+          "nullable": false
+        },
+        "precision_m": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "basis": {
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        "note": {
+          "type": "VARCHAR(300)",
+          "nullable": true
+        },
+        "updated_by": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "station_id"
+      ],
+      "indexes": []
+    }
+  ]
+}

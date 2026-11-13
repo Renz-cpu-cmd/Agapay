@@ -1,0 +1,10 @@
+{
+  "scope": "Shared authentication/ingestion services, development settings, in-memory database; not a full production deployment test",
+  "validation_status": "prototype",
+  "disposition": "current",
+  "eligible_for_current": true,
+  "episode_tier": "EVACUATE",
+  "notification_events": 1,
+  "notification_deliveries": 0,
+  "external_messages_sent": 0
+}

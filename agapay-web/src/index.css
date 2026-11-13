@@ -1,0 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@import 'tailwindcss';
+@import './figma.css';
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --radius-DEFAULT: var(--radius);
+}
+
+:root {
+  --background: #000000;
+  --foreground: #dde4ed;
+  --card: #00112e;
+  --card-foreground: #dde4ed;
+  --primary: #0ea5e9;
+  --primary-foreground: #ffffff;
+  --adaptive-action-foreground: #000000;
+  --secondary: #131e2e;
+  --secondary-foreground: #94a3b8;
+  --muted: #111c2b;
+  --muted-foreground: #64748b;
+  --accent: #00d4ff;
+  --accent-foreground: #070b10;
+  --border: #002967;
+  --ring: #0ea5e9;
+  --radius: 4px;
+
+  --alert-evacuate: #ef4444;
+  --alert-warning: #f97316;
+  --alert-advisory: #eab308;
+  --alert-normal: #22c55e;
+  --alert-offline: #6b7280;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1a2640 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: #1a2640; border-radius: 2px; }
+
+.font-ui { font-family: 'Inter', sans-serif; }
+.font-data { font-family: 'Inter', sans-serif; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
+}
+@keyframes ping-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+@keyframes sos-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+.ping-ring { animation: ping-ring 1.5s ease-out infinite; }
+.sos-flash { animation: sos-flash 0.8s ease-in-out infinite; }
+
+/* Preserve the export's custom numeric font-weight utilities. */
+.font-500 { font-weight: 500; }
+.font-600 { font-weight: 600; }
+.font-700 { font-weight: 700; }
+button:not(:disabled), select { cursor: pointer; }
+:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Light is the default. The export's original colors remain the dark fallbacks. */
+:root { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+/* Every shared token must exist in both themes, including outside charts. */
+:root[data-theme="dark"] {
+  --adaptive-background:#000000; --adaptive-surface:#00112e;
+  --adaptive-border:#12396d; --adaptive-text:#eef5ff; --adaptive-muted:#91a6c5;
+  --adaptive-secondary:#a2b5d0; --adaptive-blue:#69a7ff;
+  --adaptive-danger:#fda4af; --adaptive-danger-surface:#390d1b;
+  --adaptive-success:#86efac; --adaptive-success-surface:#07351e;
+  --adaptive-orange:#fdba74; --adaptive-warning:#fde68a; --adaptive-warning-surface:#392b09;
+  --navigation-selected:#082b60; --navigation-hover:#071a34;
+}
+/* Charts use the same palette as controls and cards. */
+:root[data-theme="dark"] .recharts-default-tooltip { color: #e2e8f0; }
+:root:not([data-theme="dark"]) {
+  --background: #f3f6fb; --foreground: #172b49;
+  --card: #ffffff; --card-foreground: #172b49;
+  --secondary: #eaf0f8; --secondary-foreground: #405775;
+  --muted: #edf2f8; --muted-foreground: #526581; --border: #cbd8e8;
+  --design-panel: #ffffff; --design-shell: #f8faff; --design-line: #cbd8e8;
+  --design-blue: #2462b7; --design-muted: #526581;
+  --adaptive-background: #f3f6fb; --adaptive-surface: #ffffff;
+  --adaptive-border: #cbd8e8; --adaptive-text: #172b49; --adaptive-muted: #526581;
+  --adaptive-secondary: #405775; --adaptive-blue: #2462b7;
+  --adaptive-action-foreground: #ffffff;
+  --navigation-selected:#e4efff; --navigation-hover:#edf2f8;
+  --adaptive-danger: #b91c1c; --adaptive-danger-surface: #fff1f2;
+  --adaptive-success: #15803d; --adaptive-success-surface: #effaf2;
+  --adaptive-orange: #b45309; --adaptive-warning: #946000; --adaptive-warning-surface: #fff7e5;
+  --severity-evacuate-text: #991b1b; --severity-warning-text: #9a3412;
+  --severity-advisory-text: #854d0e; --severity-normal-text: #166534;
+  --severity-offline-text: #4b5563; --severity-unknown-text: #7e22ce;
+}
+:root:not([data-theme="dark"]) .auth-screen { background: radial-gradient(ellipse at center, #e0edff, #f3f6fb 75%); }
+:root:not([data-theme="dark"]) .auth-card { background: linear-gradient(160deg, #fff, #edf4ff); }
+:root:not([data-theme="dark"]) .design-modal { box-shadow: 0 20px 65px #172b4920; }
+:root:not([data-theme="dark"]) .design-modal .design-input,
+:root:not([data-theme="dark"]) .auth-form input { background: #fff; }
+:root:not([data-theme="dark"]) .design-button.outline { color: #2462b7; }
+:root:not([data-theme="dark"]) .google-map-loading { background: #edf4ff; color: #405775; }
+:root:not([data-theme="dark"]) .station-map-progress,
+:root:not([data-theme="dark"]) .station-map-notice { background: #fffffff2; color: #172b49; }
+:root:not([data-theme="dark"]) .text-white { color: #172b49; }
+:root:not([data-theme="dark"]) .text-slate-400 { color: #526581; }
+:root:not([data-theme="dark"]) .text-amber-400 { color: #946000; }
+:root:not([data-theme="dark"]) .text-red-400 { color: #b91c1c; }
+:root:not([data-theme="dark"]) .text-green-400 { color: #15803d; }
+:root:not([data-theme="dark"]) .text-sky-400 { color: #0369a1; }
+:root:not([data-theme="dark"]) .text-blue-400 { color: #2462b7; }
+
+:root:not([data-theme="dark"]) .auth-submit { background: #2462b7; color: white; }
+:root:not([data-theme="dark"]) img.figma-icon { filter: brightness(.62) saturate(1.4); }
+.auth-theme { position: absolute; top: 16px; right: 16px; }

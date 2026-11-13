@@ -1,0 +1,1 @@
+PASS: unprovisioned firmware withholds telemetry/rain publication and preserves local sensing

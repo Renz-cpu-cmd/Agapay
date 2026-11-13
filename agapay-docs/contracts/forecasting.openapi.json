@@ -1,0 +1,2625 @@
+{
+  "components": {
+    "schemas": {
+      "Balance": {
+        "additionalProperties": false,
+        "properties": {
+          "depth_cm": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Depth Cm",
+            "type": "number"
+          },
+          "inflow_m3": {
+            "minimum": 0.0,
+            "title": "Inflow M3",
+            "type": "number"
+          },
+          "outflow_m3": {
+            "minimum": 0.0,
+            "title": "Outflow M3",
+            "type": "number"
+          },
+          "overflow_m3": {
+            "minimum": 0.0,
+            "title": "Overflow M3",
+            "type": "number"
+          },
+          "unmet_outflow_m3": {
+            "minimum": 0.0,
+            "title": "Unmet Outflow M3",
+            "type": "number"
+          }
+        },
+        "required": [
+          "depth_cm",
+          "inflow_m3",
+          "outflow_m3",
+          "overflow_m3",
+          "unmet_outflow_m3"
+        ],
+        "title": "Balance",
+        "type": "object"
+      },
+      "BasinInput": {
+        "additionalProperties": false,
+        "properties": {
+          "basin_surface_area_m2": {
+            "default": 0.1,
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000000.0,
+            "title": "Basin Surface Area M2",
+            "type": "number"
+          },
+          "contributing_area_m2": {
+            "default": 2,
+            "maximum": 1000000.0,
+            "minimum": 0.0,
+            "title": "Contributing Area M2",
+            "type": "number"
+          },
+          "maximum_depth_cm": {
+            "default": 100,
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000.0,
+            "title": "Maximum Depth Cm",
+            "type": "number"
+          },
+          "outflow_m3_per_hour": {
+            "default": 0,
+            "maximum": 1000000.0,
+            "minimum": 0.0,
+            "title": "Outflow M3 Per Hour",
+            "type": "number"
+          },
+          "parameter_basis": {
+            "additionalProperties": {
+              "enum": [
+                "assumed",
+                "estimated",
+                "measured"
+              ],
+              "type": "string"
+            },
+            "title": "Parameter Basis",
+            "type": "object"
+          },
+          "runoff_coefficient": {
+            "default": 0.8,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Runoff Coefficient",
+            "type": "number"
+          }
+        },
+        "title": "BasinInput",
+        "type": "object"
+      },
+      "CandidateRead": {
+        "additionalProperties": false,
+        "properties": {
+          "card": {
+            "$ref": "#/components/schemas/ModelCard"
+          },
+          "decision_evaluation": {
+            "additionalProperties": true,
+            "title": "Decision Evaluation",
+            "type": "object"
+          },
+          "evaluation": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/ErrorScore"
+              },
+              "type": "object"
+            },
+            "title": "Evaluation",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "draft",
+              "approved",
+              "revoked"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "card",
+          "state",
+          "version",
+          "evaluation",
+          "decision_evaluation"
+        ],
+        "title": "CandidateRead",
+        "type": "object"
+      },
+      "CatalogResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "experimental": {
+            "additionalProperties": true,
+            "title": "Experimental",
+            "type": "object"
+          },
+          "operational": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateRead"
+            },
+            "maxItems": 100,
+            "title": "Operational",
+            "type": "array"
+          }
+        },
+        "required": [
+          "checked_at",
+          "operational",
+          "experimental"
+        ],
+        "title": "CatalogResponse",
+        "type": "object"
+      },
+      "DeploymentRead": {
+        "additionalProperties": false,
+        "properties": {
+          "configuration_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configuration Hash"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "model_review_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Review Version"
+          },
+          "station_id": {
+            "title": "Station Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "station_id",
+          "version",
+          "model_id",
+          "configuration_hash",
+          "model_review_version"
+        ],
+        "title": "DeploymentRead",
+        "type": "object"
+      },
+      "DeploymentRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "configuration_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configuration Hash"
+          },
+          "expected_version": {
+            "minimum": 0.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 8,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "reason"
+        ],
+        "title": "DeploymentRequest",
+        "type": "object"
+      },
+      "ErrorScore": {
+        "additionalProperties": false,
+        "properties": {
+          "bias_cm": {
+            "title": "Bias Cm",
+            "type": "number"
+          },
+          "count": {
+            "minimum": 1.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "mae_cm": {
+            "minimum": 0.0,
+            "title": "Mae Cm",
+            "type": "number"
+          },
+          "maximum_absolute_error_cm": {
+            "minimum": 0.0,
+            "title": "Maximum Absolute Error Cm",
+            "type": "number"
+          },
+          "rmse_cm": {
+            "minimum": 0.0,
+            "title": "Rmse Cm",
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "mae_cm",
+          "rmse_cm",
+          "bias_cm",
+          "maximum_absolute_error_cm"
+        ],
+        "title": "ErrorScore",
+        "type": "object"
+      },
+      "ForecastEnvelope": {
+        "additionalProperties": false,
+        "properties": {
+          "current": {
+            "title": "Current",
+            "type": "boolean"
+          },
+          "notice": {
+            "const": "Historical product; never extend its original expiry",
+            "default": "Historical product; never extend its original expiry",
+            "title": "Notice",
+            "type": "string"
+          },
+          "product": {
+            "$ref": "#/components/schemas/PublishedPredictionResponse"
+          },
+          "read_at": {
+            "format": "date-time",
+            "title": "Read At",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product",
+          "read_at",
+          "current"
+        ],
+        "title": "ForecastEnvelope",
+        "type": "object"
+      },
+      "ForecastPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "horizon_minutes": {
+            "enum": [
+              30,
+              60,
+              90
+            ],
+            "title": "Horizon Minutes",
+            "type": "integer"
+          },
+          "lower_depth_cm": {
+            "anyOf": [
+              {
+                "maximum": 1000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lower Depth Cm"
+          },
+          "target_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target At"
+          },
+          "upper_depth_cm": {
+            "anyOf": [
+              {
+                "maximum": 1000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper Depth Cm"
+          },
+          "water_depth_cm": {
+            "anyOf": [
+              {
+                "maximum": 1000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Water Depth Cm"
+          }
+        },
+        "required": [
+          "horizon_minutes"
+        ],
+        "title": "ForecastPoint",
+        "type": "object"
+      },
+      "ForecastUncertainty": {
+        "additionalProperties": false,
+        "properties": {
+          "calibration_events": {
+            "minimum": 1.0,
+            "title": "Calibration Events",
+            "type": "integer"
+          },
+          "display_resolution_cm": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 100.0,
+            "title": "Display Resolution Cm",
+            "type": "number"
+          },
+          "method": {
+            "const": "calibration_event_max_absolute_residual_all_horizons",
+            "title": "Method",
+            "type": "string"
+          },
+          "nominal_coverage": {
+            "maximum": 0.99,
+            "minimum": 0.8,
+            "title": "Nominal Coverage",
+            "type": "number"
+          },
+          "notice": {
+            "const": "Event-calibrated local-depth interval; coverage can fail under drift",
+            "default": "Event-calibrated local-depth interval; coverage can fail under drift",
+            "title": "Notice",
+            "type": "string"
+          },
+          "policy_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Policy Sha256",
+            "type": "string"
+          },
+          "test_events": {
+            "minimum": 1.0,
+            "title": "Test Events",
+            "type": "integer"
+          },
+          "withheld_event_coverage": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Withheld Event Coverage",
+            "type": "number"
+          }
+        },
+        "required": [
+          "method",
+          "nominal_coverage",
+          "withheld_event_coverage",
+          "calibration_events",
+          "test_events",
+          "policy_sha256",
+          "display_resolution_cm"
+        ],
+        "title": "ForecastUncertainty",
+        "type": "object"
+      },
+      "ForecastWorkspaceResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "current_forecast_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Forecast Id"
+          },
+          "deployment": {
+            "$ref": "#/components/schemas/DeploymentRead"
+          },
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ModelStateRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/ForecastEnvelope"
+            },
+            "maxItems": 20,
+            "title": "Products",
+            "type": "array"
+          },
+          "publication_reason": {
+            "title": "Publication Reason",
+            "type": "string"
+          },
+          "publication_status": {
+            "title": "Publication Status",
+            "type": "string"
+          },
+          "station_id": {
+            "title": "Station Id",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "station_id",
+          "checked_at",
+          "deployment",
+          "model",
+          "publication_status",
+          "publication_reason",
+          "current_forecast_id",
+          "products",
+          "total",
+          "has_more"
+        ],
+        "title": "ForecastWorkspaceResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HybridPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "depth_cm": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Depth Cm",
+            "type": "number"
+          },
+          "horizon_minutes": {
+            "enum": [
+              30,
+              60,
+              90
+            ],
+            "title": "Horizon Minutes",
+            "type": "integer"
+          },
+          "inflow_m3": {
+            "minimum": 0.0,
+            "title": "Inflow M3",
+            "type": "number"
+          },
+          "outflow_m3": {
+            "minimum": 0.0,
+            "title": "Outflow M3",
+            "type": "number"
+          },
+          "overflow_m3": {
+            "minimum": 0.0,
+            "title": "Overflow M3",
+            "type": "number"
+          },
+          "rainfall_mm": {
+            "minimum": 0.0,
+            "title": "Rainfall Mm",
+            "type": "number"
+          },
+          "target_at": {
+            "format": "date-time",
+            "title": "Target At",
+            "type": "string"
+          },
+          "unmet_outflow_m3": {
+            "minimum": 0.0,
+            "title": "Unmet Outflow M3",
+            "type": "number"
+          }
+        },
+        "required": [
+          "horizon_minutes",
+          "target_at",
+          "depth_cm",
+          "rainfall_mm",
+          "inflow_m3",
+          "outflow_m3",
+          "overflow_m3",
+          "unmet_outflow_m3"
+        ],
+        "title": "HybridPoint",
+        "type": "object"
+      },
+      "HybridProjectionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "basin": {
+            "$ref": "#/components/schemas/BasinInput"
+          },
+          "context_at": {
+            "default": "2025-07-01T12:00:00Z",
+            "format": "date-time",
+            "title": "Context At",
+            "type": "string"
+          },
+          "controlled_basin_confirmed": {
+            "const": true,
+            "title": "Controlled Basin Confirmed",
+            "type": "boolean"
+          },
+          "depth_source": {
+            "default": "manual",
+            "enum": [
+              "manual",
+              "sensor"
+            ],
+            "title": "Depth Source",
+            "type": "string"
+          },
+          "initialization_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initialization At"
+          },
+          "manual_depth_cm": {
+            "default": 20,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Manual Depth Cm",
+            "type": "number"
+          },
+          "mode": {
+            "default": "historical_context",
+            "enum": [
+              "historical_context",
+              "live"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "rain_source": {
+            "default": "physical_rain_gauge",
+            "enum": [
+              "physical_rain_gauge",
+              "simulated_rain_gauge"
+            ],
+            "title": "Rain Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "controlled_basin_confirmed"
+        ],
+        "title": "HybridProjectionRequest",
+        "type": "object"
+      },
+      "HybridProjectionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "adjusted": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Balance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "advisory_only": {
+            "const": true,
+            "title": "Advisory Only",
+            "type": "boolean"
+          },
+          "assumption": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assumption"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "initial_depth_cm": {
+            "anyOf": [
+              {
+                "maximum": 1000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial Depth Cm"
+          },
+          "initial_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial Source"
+          },
+          "initialization_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initialization At"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "live",
+                  "historical_context"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "notice": {
+            "title": "Notice",
+            "type": "string"
+          },
+          "observed_rainfall_since_initialization_mm": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Rainfall Since Initialization Mm"
+          },
+          "parameters": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BasinInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/HybridPoint"
+            },
+            "maxItems": 3,
+            "title": "Points",
+            "type": "array"
+          },
+          "rain_activity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RainActivity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rain_snapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RainActivity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rainfall_context_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rainfall Context At"
+          },
+          "rainfall_history": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RainHour"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rainfall History"
+          },
+          "rainfall_hourly_mm": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rainfall Hourly Mm"
+          },
+          "rainfall_origin": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rainfall Origin"
+          },
+          "rainfall_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rainfall Source"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "setup_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Setup Label"
+          },
+          "station_id": {
+            "title": "Station Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "available",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          },
+          "workspace": {
+            "const": "private_experiment",
+            "default": "private_experiment",
+            "title": "Workspace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "station_id",
+          "status",
+          "reason",
+          "notice",
+          "advisory_only",
+          "checked_at",
+          "points"
+        ],
+        "title": "HybridProjectionResponse",
+        "type": "object"
+      },
+      "ModelCard": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_use": {
+            "const": "advisory_only",
+            "default": "advisory_only",
+            "title": "Allowed Use",
+            "type": "string"
+          },
+          "calibration_history": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Calibration History",
+            "type": "string"
+          },
+          "configuration_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Configuration Hash",
+            "type": "string"
+          },
+          "data_license": {
+            "maxLength": 1000,
+            "minLength": 5,
+            "title": "Data License",
+            "type": "string"
+          },
+          "dataset_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Dataset Sha256",
+            "type": "string"
+          },
+          "datum": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Datum",
+            "type": "string"
+          },
+          "fallback": {
+            "const": "unavailable_measured_observations_remain_visible",
+            "default": "unavailable_measured_observations_remain_visible",
+            "title": "Fallback",
+            "type": "string"
+          },
+          "features": {
+            "const": "depth_cm,rate_cm_per_minute",
+            "default": "depth_cm,rate_cm_per_minute",
+            "title": "Features",
+            "type": "string"
+          },
+          "inference_availability": {
+            "const": "observations_received_by_issue_time",
+            "default": "observations_received_by_issue_time",
+            "title": "Inference Availability",
+            "type": "string"
+          },
+          "limitations": {
+            "maxLength": 3000,
+            "minLength": 20,
+            "title": "Limitations",
+            "type": "string"
+          },
+          "provenance": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Provenance",
+            "type": "string"
+          },
+          "source_class": {
+            "enum": [
+              "physical_field",
+              "synthetic_fixture"
+            ],
+            "title": "Source Class",
+            "type": "string"
+          },
+          "station_id": {
+            "pattern": "^[A-Z0-9_-]{3,50}$",
+            "title": "Station Id",
+            "type": "string"
+          },
+          "target": {
+            "const": "local_sensor_depth_above_datum",
+            "default": "local_sensor_depth_above_datum",
+            "title": "Target",
+            "type": "string"
+          },
+          "training_cutoff": {
+            "format": "date-time",
+            "title": "Training Cutoff",
+            "type": "string"
+          },
+          "units": {
+            "const": "cm",
+            "default": "cm",
+            "title": "Units",
+            "type": "string"
+          }
+        },
+        "required": [
+          "station_id",
+          "datum",
+          "configuration_hash",
+          "source_class",
+          "data_license",
+          "provenance",
+          "calibration_history",
+          "training_cutoff",
+          "limitations",
+          "dataset_sha256"
+        ],
+        "title": "ModelCard",
+        "type": "object"
+      },
+      "ModelStateRead": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Sha256"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "version",
+          "evidence_sha256"
+        ],
+        "title": "ModelStateRead",
+        "type": "object"
+      },
+      "PredictionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "advisory_only": {
+            "const": true,
+            "default": true,
+            "title": "Advisory Only",
+            "type": "boolean"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "configuration_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configuration Hash"
+          },
+          "data_cutoff": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Cutoff"
+          },
+          "deployment_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment Version"
+          },
+          "forecast_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forecast Id"
+          },
+          "forecasts": {
+            "items": {
+              "$ref": "#/components/schemas/ForecastPoint"
+            },
+            "title": "Forecasts",
+            "type": "array"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "ingress_identity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingress Identity"
+          },
+          "input_last_recorded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Last Recorded At"
+          },
+          "input_status": {
+            "enum": [
+              "usable",
+              "insufficient_data",
+              "stale_data",
+              "invalid_data"
+            ],
+            "title": "Input Status",
+            "type": "string"
+          },
+          "input_window_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Window Start"
+          },
+          "measurement_source": {
+            "anyOf": [
+              {
+                "const": "registry_verified_physical_device",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measurement Source"
+          },
+          "model_card_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Card Id"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "preview_allowed": {
+            "title": "Preview Allowed",
+            "type": "boolean"
+          },
+          "rainfall_interval_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rainfall Interval Seconds"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "reference_datum": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Datum"
+          },
+          "registry_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registry Version"
+          },
+          "sample_count": {
+            "minimum": 0.0,
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "none",
+              "model",
+              "simulated"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "station_id": {
+            "title": "Station Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "not_trained",
+              "unavailable",
+              "insufficient_data",
+              "stale_data",
+              "invalid_data",
+              "available",
+              "service_error"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timestamp_basis": {
+            "enum": [
+              "server_received",
+              "device_measured",
+              "synthetic"
+            ],
+            "title": "Timestamp Basis",
+            "type": "string"
+          },
+          "uncertainty": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ForecastUncertainty"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "valid_sample_count": {
+            "minimum": 0.0,
+            "title": "Valid Sample Count",
+            "type": "integer"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "station_id",
+          "status",
+          "reason",
+          "source",
+          "checked_at",
+          "input_status",
+          "sample_count",
+          "valid_sample_count",
+          "timestamp_basis",
+          "preview_allowed",
+          "forecasts"
+        ],
+        "title": "PredictionResponse",
+        "type": "object"
+      },
+      "PublishedPredictionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "advisory_only": {
+            "const": true,
+            "default": true,
+            "title": "Advisory Only",
+            "type": "boolean"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "configuration_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Configuration Hash",
+            "type": "string"
+          },
+          "data_cutoff": {
+            "format": "date-time",
+            "title": "Data Cutoff",
+            "type": "string"
+          },
+          "deployment_version": {
+            "minimum": 1.0,
+            "title": "Deployment Version",
+            "type": "integer"
+          },
+          "forecast_id": {
+            "pattern": "^[a-f0-9-]{36}$",
+            "title": "Forecast Id",
+            "type": "string"
+          },
+          "forecasts": {
+            "items": {
+              "$ref": "#/components/schemas/ForecastPoint"
+            },
+            "title": "Forecasts",
+            "type": "array"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "ingress_identity": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Ingress Identity",
+            "type": "string"
+          },
+          "input_last_recorded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Last Recorded At"
+          },
+          "input_status": {
+            "enum": [
+              "usable",
+              "insufficient_data",
+              "stale_data",
+              "invalid_data"
+            ],
+            "title": "Input Status",
+            "type": "string"
+          },
+          "input_window_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Window Start"
+          },
+          "measurement_source": {
+            "const": "registry_verified_physical_device",
+            "title": "Measurement Source",
+            "type": "string"
+          },
+          "model_card_id": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Model Card Id",
+            "type": "string"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "preview_allowed": {
+            "title": "Preview Allowed",
+            "type": "boolean"
+          },
+          "rainfall_interval_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rainfall Interval Seconds"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "reference_datum": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Reference Datum",
+            "type": "string"
+          },
+          "registry_version": {
+            "minimum": 1.0,
+            "title": "Registry Version",
+            "type": "integer"
+          },
+          "sample_count": {
+            "minimum": 0.0,
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source": {
+            "const": "model",
+            "default": "model",
+            "title": "Source",
+            "type": "string"
+          },
+          "station_id": {
+            "title": "Station Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "available",
+            "default": "available",
+            "title": "Status",
+            "type": "string"
+          },
+          "timestamp_basis": {
+            "enum": [
+              "server_received",
+              "device_measured",
+              "synthetic"
+            ],
+            "title": "Timestamp Basis",
+            "type": "string"
+          },
+          "uncertainty": {
+            "$ref": "#/components/schemas/ForecastUncertainty"
+          },
+          "valid_sample_count": {
+            "minimum": 0.0,
+            "title": "Valid Sample Count",
+            "type": "integer"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "station_id",
+          "reason",
+          "checked_at",
+          "input_status",
+          "sample_count",
+          "valid_sample_count",
+          "timestamp_basis",
+          "preview_allowed",
+          "forecasts",
+          "forecast_id",
+          "deployment_version",
+          "configuration_hash",
+          "reference_datum",
+          "model_card_id",
+          "data_cutoff",
+          "measurement_source",
+          "ingress_identity",
+          "registry_version",
+          "uncertainty"
+        ],
+        "title": "PublishedPredictionResponse",
+        "type": "object"
+      },
+      "RainActivity": {
+        "properties": {
+          "boot_session_tip_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boot Session Tip Count"
+          },
+          "calibration_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibration Version"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "completed_hours": {
+            "items": {
+              "$ref": "#/components/schemas/RainHour"
+            },
+            "maxItems": 24,
+            "title": "Completed Hours",
+            "type": "array"
+          },
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "current_hour_product": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Hour Product"
+          },
+          "current_hour_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Hour Start"
+          },
+          "data_source": {
+            "enum": [
+              "physical_rain_gauge",
+              "simulated_rain_gauge"
+            ],
+            "title": "Data Source",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 100,
+            "title": "Events",
+            "type": "array"
+          },
+          "incomplete_hour_mm": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incomplete Hour Mm"
+          },
+          "last_received_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Received At"
+          },
+          "latest_tip_event_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Tip Event Id"
+          },
+          "ml_ready": {
+            "default": false,
+            "title": "Ml Ready",
+            "type": "boolean"
+          },
+          "mm_per_tip": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mm Per Tip"
+          },
+          "product_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Version"
+          },
+          "source_class": {
+            "default": "unverified",
+            "title": "Source Class",
+            "type": "string"
+          },
+          "source_trusted": {
+            "default": false,
+            "title": "Source Trusted",
+            "type": "boolean"
+          },
+          "station_id": {
+            "title": "Station Id",
+            "type": "string"
+          },
+          "status": {
+            "default": "no_data",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "station_id",
+          "data_source",
+          "connected",
+          "checked_at"
+        ],
+        "title": "RainActivity",
+        "type": "object"
+      },
+      "RainActivityResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "advisory_only": {
+            "const": true,
+            "default": true,
+            "title": "Advisory Only",
+            "type": "boolean"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "notice": {
+            "default": "Observed rainfall is independent of forecasting",
+            "title": "Notice",
+            "type": "string"
+          },
+          "points": {
+            "items": {},
+            "maxItems": 0,
+            "title": "Points",
+            "type": "array"
+          },
+          "rain_activity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RainActivity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "default": "Rain observations only; published water-depth forecasts use the prediction product.",
+            "title": "Reason",
+            "type": "string"
+          },
+          "station_id": {
+            "title": "Station Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "unavailable",
+            "default": "unavailable",
+            "title": "Status",
+            "type": "string"
+          },
+          "workspace": {
+            "const": "observations_only",
+            "default": "observations_only",
+            "title": "Workspace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "station_id",
+          "checked_at"
+        ],
+        "title": "RainActivityResponse",
+        "type": "object"
+      },
+      "RainHour": {
+        "properties": {
+          "calibration_versions": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10000,
+            "title": "Calibration Versions",
+            "type": "array"
+          },
+          "interval_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interval End"
+          },
+          "interval_seconds": {
+            "const": 3600,
+            "title": "Interval Seconds",
+            "type": "integer"
+          },
+          "interval_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interval Start"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality"
+          },
+          "rainfall_mm": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rainfall Mm"
+          },
+          "timestamp_utc": {
+            "format": "date-time",
+            "title": "Timestamp Utc",
+            "type": "string"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "timestamp_utc",
+          "interval_seconds",
+          "valid"
+        ],
+        "title": "RainHour",
+        "type": "object"
+      },
+      "ReviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "approved",
+              "revoked"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "evidence_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Evidence Sha256",
+            "type": "string"
+          },
+          "expected_version": {
+            "minimum": 0.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 8,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "decision",
+          "reason",
+          "evidence_sha256"
+        ],
+        "title": "ReviewRequest",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/forecast-deployments/{station_id}": {
+      "get": {
+        "operationId": "deployment_api_forecast_deployments__station_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "station_id",
+            "required": true,
+            "schema": {
+              "title": "Station Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Deployment",
+        "tags": [
+          "published advisory forecasts"
+        ]
+      },
+      "post": {
+        "operationId": "configure_api_forecast_deployments__station_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "station_id",
+            "required": true,
+            "schema": {
+              "title": "Station Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeploymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Configure",
+        "tags": [
+          "published advisory forecasts"
+        ]
+      }
+    },
+    "/api/forecast-registry": {
+      "get": {
+        "operationId": "catalog_api_forecast_registry_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Catalog",
+        "tags": [
+          "published advisory forecasts"
+        ]
+      }
+    },
+    "/api/forecast-registry/{identity}/evidence": {
+      "get": {
+        "operationId": "deployed_evidence_api_forecast_registry__identity__evidence_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Deployed Evidence",
+        "tags": [
+          "published advisory forecasts"
+        ]
+      }
+    },
+    "/api/forecast-registry/{identity}/review": {
+      "post": {
+        "operationId": "review_api_forecast_registry__identity__review_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Review",
+        "tags": [
+          "published advisory forecasts"
+        ]
+      }
+    },
+    "/api/forecast-workspaces/{station_id}": {
+      "get": {
+        "operationId": "workspace_api_forecast_workspaces__station_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "station_id",
+            "required": true,
+            "schema": {
+              "title": "Station Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 5,
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastWorkspaceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Workspace",
+        "tags": [
+          "published advisory forecasts"
+        ]
+      }
+    },
+    "/api/forecasts/{identity}": {
+      "get": {
+        "operationId": "historical_api_forecasts__identity__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastEnvelope"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Historical",
+        "tags": [
+          "published advisory forecasts"
+        ]
+      }
+    },
+    "/api/hybrid-projections/{station_id}": {
+      "post": {
+        "operationId": "projection_api_hybrid_projections__station_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "station_id",
+            "required": true,
+            "schema": {
+              "title": "Station Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HybridProjectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HybridProjectionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Projection",
+        "tags": [
+          "experimental dashboard projection"
+        ]
+      }
+    },
+    "/api/hybrid-projections/{station_id}/summary": {
+      "get": {
+        "description": "Resident-readable demo summary with server-owned inputs, never staff controls.\n\nUses the same assumed basin as the automatic local web demo. It does not\ninherit another browser's private settings or publish a field-validated forecast.",
+        "operationId": "projection_summary_api_hybrid_projections__station_id__summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "station_id",
+            "required": true,
+            "schema": {
+              "title": "Station Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HybridProjectionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Projection Summary",
+        "tags": [
+          "experimental dashboard projection"
+        ]
+      }
+    },
+    "/api/predictions/{station_id}": {
+      "get": {
+        "operationId": "forecast_api_predictions__station_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "station_id",
+            "required": true,
+            "schema": {
+              "title": "Station Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "schema": {
+              "default": "actual",
+              "enum": [
+                "actual",
+                "preview"
+              ],
+              "title": "Mode",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "default": "available",
+              "enum": [
+                "not_trained",
+                "unavailable",
+                "insufficient_data",
+                "stale_data",
+                "invalid_data",
+                "available",
+                "service_error"
+              ],
+              "title": "Scenario",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Forecast",
+        "tags": [
+          "advisory predictions"
+        ]
+      }
+    },
+    "/api/rain-activity/{station_id}": {
+      "get": {
+        "operationId": "rain_activity_api_rain_activity__station_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "station_id",
+            "required": true,
+            "schema": {
+              "title": "Station Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RainActivityResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Rain Activity",
+        "tags": [
+          "published advisory forecasts"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+# F22–F23 verification — October 22, 2026
+
+Local changes on `feature/day1-foundation`, HEAD `67f85e0`. The 48 previously staged paths and unrelated work were preserved. [Contracts and rollout](README.md) describe the additive migration and the operational activation gate.
+
+| Check | Observed result | Evidence |
+| --- | --- | --- |
+| Complete backend/ML regression | **503 passed**, 23 dependency warnings, 409.78 seconds | [backend-full.log](backend-full.log) |
+| Initial focused SOS acceptance | **36 passed** before four additional regression cases were included in the final full suite | [backend-focused.log](backend-focused.log) |
+| Complete web Node suite, including CJS and MJS tests | **51 passed** | [web-tests.log](web-tests.log) |
+| Web TypeScript | Passed separately and in production build | [web-typecheck.log](web-typecheck.log) |
+| Next.js production webpack build | **Passed**, including TypeScript and `/sos` route generation | [web-build.log](web-build.log) |
+| Final complete mobile unit/widget suite | **127 passed** | [mobile-tests.log](mobile-tests.log) |
+| Final Flutter analysis | **No issues found** | [mobile-analyze.log](mobile-analyze.log) |
+| Final Flutter web compilation | **Passed**, including Wasm dry run and the explicit-resume control | [mobile-build.log](mobile-build.log) |
+| Backlog regeneration | **40 unique findings**, with F22/F23 implementation and pending acceptance recorded | [prioritized-backlog.csv](../../audits/2026-10-21/prioritized-backlog.csv) |
+
+The new backend cases use actual SQLite database writes and independent request/session connections, not a mocked database. Barriers force both requests to read the same old version before the controlled interleaving. A delayed older fix then loses after the newer commit; the returned conflict includes the current version. Equal-time different fixes produce one winner and one explicit conflict; concurrent exact duplicate fixes both succeed while incrementing version only once. A resolution winning the race prevents the competing location write and leaves the manual fix unchanged. Missing versions are rejected and ordinary duplicate retries retain the original response.
+
+Response-drill cases exercise recorded acknowledgement, assignment, contact attempts, dispatch acceptance, departure, arrival and evidence-bearing closure, including unauthorized actors and skipped-stage rejection. The unavailable primary is replaced by an eligible alternate without claiming dispatch; only that alternate can accept. Deadline checks preserve EN_ROUTE without inventing arrival, and two concurrent workers append one escalation. Handoff requires renewed acceptance. Active drills retain their reviewed policy snapshot; expired duty windows and disabled staff block assignment. Incident correlation preserves two independent residents' requests and private access. Stale actions cannot append events, response events reject ORM modification, general audit identifies actor/reason, operational injection is rejected, and the additive migration preserves existing synthetic SOS IDs, flags and statuses and is idempotent.
+
+Web tests execute the BFF handlers and component actions. They verify the backend namespace/method allowlist, mutation-origin checks and staff-only proxy access. The legacy status editor retains its opening version despite a newer polled location and discards a rejected resolution note. Drill writes use the reviewed response version, discard stale input, block until manual refresh and never replay the failed action automatically. The provider transmits the selected version unchanged.
+
+Mobile tests verify the expected version in GPS updates, no guessed version for an unknown request, conflict latching across periodic refresh, no rejected-fix replay, and explicit manual refresh before a new fix. The final widget check proves refresh exposes a separate foreground-sharing resume action without issuing a GPS write automatically. Resident activity shows only recorded assignment/escalation, failed feeds do not invent stages, and cached response activity disappears after account expiry. The real OS permission/GPS stream is not exercised by these widget tests.
+
+Diagnostic checks are not additional passes. The first mobile conflict test used a synthetic fixture missing required `location_source`; it was corrected. Three brace lints were fixed. Final UI inspection found that sharing paused correctly but lacked a resume control; the final control requests a fresh permitted fix and explicit foreground opt-in, and the complete mobile suite/analyzer were rerun. The first web glob omitted the existing MJS rain tests; the final full run includes both file types. Existing backend dependency deprecations and Node module-type warnings remain. No dependency upgrade was introduced. Windows IANA `Asia/Manila` timezone lookup was also verified.
+
+No live database migration/reset/reseed, operational activation, real contact attempt, SMS/call/push, broker restart, firmware upload, native installation, deployment, staging, commit or push was performed. PostgreSQL concurrency acceptance, a witnessed drill with real operators, actual dispatch integration and installed-device permission/GPS tests remain pending. Software tests establish the configurable drill behavior; they do not establish an LGU operating agreement or a real emergency response. F16 physical commissioning acceptance remains pending.

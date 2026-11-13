@@ -1,0 +1,76 @@
+{
+  "mode": "mobile",
+  "stations": 20,
+  "viewers": 40,
+  "rounds": 2,
+  "concurrency": 10,
+  "samples_per_station": 120,
+  "response_history_limit": 20,
+  "cold": {
+    "requests": 10,
+    "status_counts": {
+      "200": 10
+    },
+    "sql_statements": 561,
+    "retained_refresh_responses": 0,
+    "errors": {},
+    "cpu_seconds": 1.28125,
+    "wall_seconds": 1.2011547000001883,
+    "cpu_seconds_per_success": 0.128125,
+    "response_bytes": 1519500,
+    "mean_success_bytes": 151950.0,
+    "p95_http_seconds": 1.1945993999979692,
+    "p99_http_seconds": 1.1945993999979692,
+    "p95_snapshot_age_seconds": 0.973355,
+    "p99_snapshot_age_seconds": 0.973355
+  },
+  "steady": {
+    "requests": 80,
+    "status_counts": {
+      "200": 80
+    },
+    "sql_statements": 1092,
+    "retained_refresh_responses": 1,
+    "errors": {},
+    "cpu_seconds": 4.140625,
+    "wall_seconds": 3.213854400004493,
+    "cpu_seconds_per_success": 0.0517578125,
+    "response_bytes": 12156058,
+    "mean_success_bytes": 151950.725,
+    "p95_http_seconds": 0.5506449000022258,
+    "p99_http_seconds": 0.7568566999980249,
+    "p95_snapshot_age_seconds": 2.008201,
+    "p99_snapshot_age_seconds": 2.189851,
+    "api_cpu_seconds": 3.140625,
+    "producer_cpu_seconds": 1.0,
+    "producer_sql_statements": 757
+  },
+  "committed_to_first_visible_seconds": 0.845185,
+  "visibility_probe_attempts": 6,
+  "scope": "Synthetic SQLite ASGI; dedicated producer process in shared modes; CPU and SQL include producer. No TCP/BFF/render/device/battery evidence. All modes include auth and workflow instrumentation.",
+  "producer_metrics": {
+    "readmodel.build": {
+      "count": 5,
+      "failures": 0,
+      "total_seconds": 2.955758499992953,
+      "maximum_seconds": 0.7185439000022598,
+      "histogram": {
+        "1": 4,
+        "0.5": 1
+      },
+      "p95_seconds_upper_bound": 1,
+      "p99_seconds_upper_bound": 1
+    },
+    "readmodel.hit": {
+      "count": 97,
+      "failures": 0,
+      "total_seconds": 0.0,
+      "maximum_seconds": 0.0,
+      "histogram": {
+        "0.005": 97
+      },
+      "p95_seconds_upper_bound": 0.005,
+      "p99_seconds_upper_bound": 0.005
+    }
+  }
+}

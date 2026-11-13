@@ -1,0 +1,11 @@
+{
+  "environment": "staging",
+  "version": "0.1.0",
+  "build_number": 1,
+  "revision": "REPLACE_WITH_COMMITTED_40_CHARACTER_SHA",
+  "release_id": "REPLACE_WITH_UNIQUE_RELEASE_ID",
+  "api_origin": "https://REPLACE_WITH_REVIEWED_API_ORIGIN",
+  "map_mode": "list_only",
+  "map_origin": "",
+  "map_restriction_evidence_sha256": ""
+}

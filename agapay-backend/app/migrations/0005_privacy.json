@@ -1,0 +1,398 @@
+{
+  "sqlite": [
+    {
+      "name": "privacy_cases",
+      "sql": "\nCREATE TABLE privacy_cases (\n\tid VARCHAR(36) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tkind VARCHAR(16) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tstate VARCHAR(24) NOT NULL, \n\tdecision_code VARCHAR(40), \n\tevidence_sha256 VARCHAR(64), \n\tcreated_at DATETIME NOT NULL, \n\tdue_at DATETIME NOT NULL, \n\tupdated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "user_id",
+        "kind",
+        "version",
+        "state",
+        "decision_code",
+        "evidence_sha256",
+        "created_at",
+        "due_at",
+        "updated_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "decision_code": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        },
+        "evidence_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "due_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "updated_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_privacy_cases_due_at",
+          "sql": "CREATE INDEX ix_privacy_cases_due_at ON privacy_cases (due_at)"
+        },
+        {
+          "name": "ix_privacy_cases_user_id",
+          "sql": "CREATE INDEX ix_privacy_cases_user_id ON privacy_cases (user_id)"
+        }
+      ]
+    },
+    {
+      "name": "privacy_holds",
+      "sql": "\nCREATE TABLE privacy_holds (\n\tuser_id INTEGER NOT NULL, \n\tversion INTEGER NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\texpires_at DATETIME NOT NULL, \n\treason_code VARCHAR(40) NOT NULL, \n\tevidence_sha256 VARCHAR(64) NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\tPRIMARY KEY (user_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "user_id",
+        "version",
+        "active",
+        "expires_at",
+        "reason_code",
+        "evidence_sha256",
+        "actor_id"
+      ],
+      "column_contract": {
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "active": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "DATETIME",
+          "nullable": false
+        },
+        "reason_code": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "evidence_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "user_id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "privacy_events",
+      "sql": "\nCREATE TABLE privacy_events (\n\tid INTEGER NOT NULL, \n\tactor_id INTEGER, \n\tsubject_id VARCHAR(80) NOT NULL, \n\taction VARCHAR(40) NOT NULL, \n\tdetails JSON NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "actor_id",
+        "subject_id",
+        "action",
+        "details",
+        "created_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "subject_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "details": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "recovery_fences",
+      "sql": "\nCREATE TABLE recovery_fences (\n\tid INTEGER NOT NULL, \n\tstate VARCHAR(24) NOT NULL, \n\tbackup_sha256 VARCHAR(64) NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "state",
+        "backup_sha256",
+        "created_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "backup_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "DATETIME",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": []
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "privacy_cases",
+      "sql": "\nCREATE TABLE privacy_cases (\n\tid VARCHAR(36) NOT NULL, \n\tuser_id INTEGER NOT NULL, \n\tkind VARCHAR(16) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tstate VARCHAR(24) NOT NULL, \n\tdecision_code VARCHAR(40), \n\tevidence_sha256 VARCHAR(64), \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tdue_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tupdated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(user_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "id",
+        "user_id",
+        "kind",
+        "version",
+        "state",
+        "decision_code",
+        "evidence_sha256",
+        "created_at",
+        "due_at",
+        "updated_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "VARCHAR(36)",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "kind": {
+          "type": "VARCHAR(16)",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "decision_code": {
+          "type": "VARCHAR(40)",
+          "nullable": true
+        },
+        "evidence_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": true
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "due_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "updated_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "ix_privacy_cases_due_at",
+          "sql": "CREATE INDEX ix_privacy_cases_due_at ON privacy_cases (due_at)"
+        },
+        {
+          "name": "ix_privacy_cases_user_id",
+          "sql": "CREATE INDEX ix_privacy_cases_user_id ON privacy_cases (user_id)"
+        }
+      ]
+    },
+    {
+      "name": "privacy_holds",
+      "sql": "\nCREATE TABLE privacy_holds (\n\tuser_id INTEGER NOT NULL, \n\tversion INTEGER NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\treason_code VARCHAR(40) NOT NULL, \n\tevidence_sha256 VARCHAR(64) NOT NULL, \n\tactor_id INTEGER NOT NULL, \n\tPRIMARY KEY (user_id), \n\tFOREIGN KEY(user_id) REFERENCES users (id), \n\tFOREIGN KEY(actor_id) REFERENCES users (id)\n)\n\n",
+      "columns": [
+        "user_id",
+        "version",
+        "active",
+        "expires_at",
+        "reason_code",
+        "evidence_sha256",
+        "actor_id"
+      ],
+      "column_contract": {
+        "user_id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "version": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "active": {
+          "type": "BOOLEAN",
+          "nullable": false
+        },
+        "expires_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        },
+        "reason_code": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "evidence_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "user_id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "privacy_events",
+      "sql": "\nCREATE TABLE privacy_events (\n\tid BIGSERIAL NOT NULL, \n\tactor_id INTEGER, \n\tsubject_id VARCHAR(80) NOT NULL, \n\taction VARCHAR(40) NOT NULL, \n\tdetails JSON NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "actor_id",
+        "subject_id",
+        "action",
+        "details",
+        "created_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "BIGINT",
+          "nullable": false
+        },
+        "actor_id": {
+          "type": "INTEGER",
+          "nullable": true
+        },
+        "subject_id": {
+          "type": "VARCHAR(80)",
+          "nullable": false
+        },
+        "action": {
+          "type": "VARCHAR(40)",
+          "nullable": false
+        },
+        "details": {
+          "type": "JSON",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": []
+    },
+    {
+      "name": "recovery_fences",
+      "sql": "\nCREATE TABLE recovery_fences (\n\tid SERIAL NOT NULL, \n\tstate VARCHAR(24) NOT NULL, \n\tbackup_sha256 VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+      "columns": [
+        "id",
+        "state",
+        "backup_sha256",
+        "created_at"
+      ],
+      "column_contract": {
+        "id": {
+          "type": "INTEGER",
+          "nullable": false
+        },
+        "state": {
+          "type": "VARCHAR(24)",
+          "nullable": false
+        },
+        "backup_sha256": {
+          "type": "VARCHAR(64)",
+          "nullable": false
+        },
+        "created_at": {
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "nullable": false
+        }
+      },
+      "unique_contract": [],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": []
+    }
+  ]
+}

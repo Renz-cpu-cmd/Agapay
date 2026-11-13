@@ -1,0 +1,30 @@
+[
+  {
+    "surface": "station state matrix",
+    "theme": "light",
+    "width": 1440,
+    "textScale": 1,
+    "violations": []
+  },
+  {
+    "surface": "station state matrix",
+    "theme": "light",
+    "width": 320,
+    "textScale": 2,
+    "violations": []
+  },
+  {
+    "surface": "station state matrix",
+    "theme": "dark",
+    "width": 1440,
+    "textScale": 1,
+    "violations": []
+  },
+  {
+    "surface": "station state matrix",
+    "theme": "dark",
+    "width": 320,
+    "textScale": 2,
+    "violations": []
+  }
+]

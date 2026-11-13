@@ -1,0 +1,18 @@
+# Install in your monitoring service; not loaded or deployed automatically.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+rule_files: [agapay.rules.yaml]
+scrape_configs:
+  - job_name: agapay-workflows
+    scheme: https
+    metrics_path: /api/operations/metrics
+    authorization:
+      credentials_file: /run/secrets/agapay_metrics_token
+    static_configs:
+      - targets: [REPLACE_API_CERTIFICATE_HOSTNAME]
+    # Validate a private CA explicitly if applicable. Never use insecure_skip_verify.
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: [REPLACE_ALERTMANAGER_HOST:9093]

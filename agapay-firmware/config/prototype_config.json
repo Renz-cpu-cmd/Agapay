@@ -1,0 +1,20 @@
+{
+  "_note": "Sanitized source of include/prototype_config.h (revision 2). Prototype exercise geometry for the 65 cm cardboard bench rig; not field-reviewed and not San Vicente river thresholds. Contains no credentials or network details. Render with tools/render_station_config.py; run_host_tests.py fails if the header and this record diverge.",
+  "station_id": "STATION_001",
+  "revision": 2,
+  "config_hash": "198f54baa791602e1db4178dc104a229add527c35fe359d658dc4f6c389d7610",
+  "validation_status": "prototype",
+  "installation": {
+    "datum": "UNVALIDATED 65 cm cardboard bench rig (floor = 0 cm); exercise geometry, not a river datum",
+    "installation_height_cm": 65.0,
+    "sensor_min_cm": 20.0,
+    "sensor_max_cm": 450.0,
+    "uncertainty_cm": 2.0,
+    "range_margin_cm": 5.0,
+    "advisory_cm": 15.0,
+    "warning_cm": 25.0,
+    "critical_cm": 35.0,
+    "rain_mm_per_tip": 0.7,
+    "fault_policy": "latch_hazard_signal_fault"
+  }
+}

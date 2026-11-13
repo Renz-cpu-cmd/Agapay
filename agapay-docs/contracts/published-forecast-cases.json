@@ -1,0 +1,1237 @@
+[
+  {
+    "name": "published_valid_zero",
+    "valid": true,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "missing_interval",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": null,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "reversed_interval",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 3,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "missing_forecast_id",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "missing_deployment_version",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "missing_configuration_hash",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "missing_reference_datum",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "missing_model_card_id",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "missing_data_cutoff",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "missing_measurement_source",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "missing_ingress_identity",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "missing_registry_version",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "missing_uncertainty",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1
+    }
+  },
+  {
+    "name": "bad_configuration_hash",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "wrong",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "bad_measurement_source",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "simulator",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "bad_data_cutoff",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2025-12-31T23:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "bad_model_card_id",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "bad_generated_at",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00Z",
+      "generated_at": "2026-01-01T00:01:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  },
+  {
+    "name": "bad_checked_at",
+    "valid": false,
+    "value": {
+      "schema_version": "1.0",
+      "station_id": "CONTRACT_FIXTURE",
+      "status": "available",
+      "reason": "Synthetic contract fixture only",
+      "source": "model",
+      "advisory_only": true,
+      "checked_at": "2026-01-01T00:00:00",
+      "generated_at": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-01-01T00:01:00Z",
+      "model_version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "input_status": "usable",
+      "input_window_start": "2025-12-31T23:05:00Z",
+      "input_last_recorded_at": "2026-01-01T00:00:00Z",
+      "sample_count": 12,
+      "valid_sample_count": 12,
+      "timestamp_basis": "device_measured",
+      "rainfall_interval_seconds": null,
+      "preview_allowed": false,
+      "forecasts": [
+        {
+          "horizon_minutes": 30,
+          "target_at": "2026-01-01T00:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 60,
+          "target_at": "2026-01-01T01:00:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        },
+        {
+          "horizon_minutes": 90,
+          "target_at": "2026-01-01T01:30:00Z",
+          "water_depth_cm": 0.0,
+          "lower_depth_cm": 0.0,
+          "upper_depth_cm": 2.0
+        }
+      ],
+      "forecast_id": "00000000-0000-4000-8000-000000000001",
+      "deployment_version": 1,
+      "configuration_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reference_datum": "Synthetic contract datum",
+      "model_card_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "data_cutoff": "2026-01-01T00:00:00Z",
+      "measurement_source": "registry_verified_physical_device",
+      "ingress_identity": "CONTRACT_DEVICE",
+      "registry_version": 1,
+      "uncertainty": {
+        "method": "calibration_event_max_absolute_residual_all_horizons",
+        "nominal_coverage": 0.9,
+        "withheld_event_coverage": 0.9,
+        "calibration_events": 10,
+        "test_events": 10,
+        "policy_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "display_resolution_cm": 2.0,
+        "notice": "Event-calibrated local-depth interval; coverage can fail under drift"
+      }
+    }
+  }
+]

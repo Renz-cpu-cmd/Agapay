@@ -21,3 +21,58 @@
 .vscode/
 *.swp
 *.log
+
+# Local environment and hardware credentials in every subsystem
+.env
+.env.*
+!.env.example
+secrets.h
+
+# Local push configuration and service credentials (never commit)
+google-services.json
+GoogleService-Info.plist
+*service-account*.json
+*service_account*.json
+*firebase-adminsdk*.json
+**/credentials/
+firebase_options.dart
+firebase.json
+application_default_credentials.json
+*.p8
+*.p12
+*.pem
+
+# Historical datasets stay local; only the directory skeleton is tracked.
+/data/**
+!/data/**/
+!/data/**/.gitkeep
+
+# Generated offline demo includes archived rainfall and the trained estimator.
+/agapay-web/public/hybrid-demo/
+
+# Isolated upgrade/restore copies can contain personal account and SOS data.
+/agapay-docs/security/**/*.db
+/agapay-docs/security/**/*.db-*
+**/production.env
+agapay-backend/forecast-release/
+agapay-backend/.ci-venv/
+.ci-check/
+
+# Encrypted recovery packages and private deployment ownership records
+*.agapaybak
+**/recovery-private/
+**/recovery-restored/
+service-governance.json
+
+# Flavor-specific Firebase client configuration
+agapay-mobile/android/app/src/development/google-services.json
+
+# R3: local environments, caches, tool output and personal files never belong in the repository.
+.venv*/
+**/.venv*/
+__pycache__/
+*.pyc
+/.preview-devices.json
+/*.xlsx
+/agapay-web/a11y-results.json
+/agapay-web/a11y-narrow.png

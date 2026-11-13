@@ -1,0 +1,6 @@
+-r requirements-ml.txt
+scikit-learn>=1.5,<1.8
+joblib>=1.4,<2
+# Optional local demo service; existing API remains separate.
+fastapi>=0.115,<1
+uvicorn>=0.30,<1

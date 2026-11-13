@@ -1,0 +1,44 @@
+
+> agapay-web@2.0.0 build
+> next build --webpack
+
+▲ Next.js 16.3.4 (webpack)
+- Environments: .env.local
+✓ Running next.config.mjs took 99ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 18.1s
+  Running TypeScript ...
+  Finished TypeScript in 9.5s ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/16) ...
+  Generating static pages using 15 workers (4/16) 
+  Generating static pages using 15 workers (8/16) 
+  Generating static pages using 15 workers (12/16) 
+✓ Generating static pages using 15 workers (16/16) in 3.5s
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /alerts
+├ ƒ /analytics
+├ ƒ /api/account/[...path]
+├ ƒ /dashboard
+├ ○ /hybrid-demo
+├ ○ /login
+├ ƒ /ml-configuration
+├ ƒ /ml-evaluation
+├ ○ /register
+├ ƒ /settings
+├ ƒ /sos
+├ ƒ /stations
+├ ƒ /stations/[id]
+├ ƒ /system-health
+└ ƒ /users
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

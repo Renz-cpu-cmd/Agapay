@@ -43,3 +43,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local Google Maps credentials
+/ios/Flutter/GoogleMapsApiKey.xcconfig
+/assets/config/google_maps_demo_key.txt
+
+# Protected release inputs/outputs are supplied by the release environment.
+/android/key.properties
+*.jks
+*.keystore
+/release-config/
+/release-output/
+/symbols/
+/android/app/src/staging/google-services.json
+/android/app/src/production/google-services.json
