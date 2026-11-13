@@ -91,7 +91,10 @@ constexpr float BENCH_WARNING_DISTANCE_CM = 35.0F;
 constexpr float BENCH_RED_DISTANCE_CM = 25.0F;
 constexpr uint8_t BUZZER_ON_LEVEL = LOW;
 constexpr uint8_t BUZZER_OFF_LEVEL = HIGH;
-constexpr uint32_t RAIN_DEBOUNCE_US = 50000;
+// A8 bench evidence (2026-11-13): one manual tip produced a second closure 50-110 ms later
+// (bucket rebound / reed bounce), so 50 ms double-counted rainfall. 250 ms still allows
+// 4 tips/s, far above any real rain rate for this bucket.
+constexpr uint32_t RAIN_DEBOUNCE_US = 250000;
 constexpr uint32_t ECHO_TIMEOUT_US = 30000;
 constexpr uint32_t SENSOR_INTERVAL_MS = 1000;
 constexpr uint32_t PING_SPACING_MS = 60;

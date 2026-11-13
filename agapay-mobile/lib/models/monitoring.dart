@@ -94,6 +94,24 @@ class MonitoringStation {
       channelHealth;
   final bool rainfallFresh;
   final int? rainfallAgeSeconds;
+  /// A8: how confidently the rain-gauge figure may be presented, from structured
+  /// metadata only. Missing metadata never becomes a claim of verified accuracy.
+  RainPresentation get rainPresentation =>
+      RainPresentation.from(
+        rainfallProduct,
+        configuration,
+        physicalValidation:
+            (channelHealth?['calibration'] as Map?)?['physical_validation']
+                as String?,
+      );
+
+  String get rainfallNote => rainfallProduct == null
+      ? "Independent rainfall interval/source unavailable"
+      : "${rainfallProduct!['interval_start'] ?? '—'} to ${rainfallProduct!['interval_end'] ?? '—'} · ${rainfallProduct!['source']} · ${rainfallProduct!['coverage']} · calibration ${rainfallProduct!['calibration_version'] ?? 'unknown'}";
+  final String id, name, barangay, municipality;
+  final double? latitude, longitude;
+  final String? coordinateStatus;
+
   /// A7.1: recorded radius (m) of the registry position and how it was obtained
   /// ('surveyed' | 'owner_confirmed' | 'estimated'). Null = never recorded: the
   /// existing presentation is kept and nothing is inferred from the digits.
@@ -282,4 +300,92 @@ class StationFreshnessView {
   final DateTime asOf;
   final ChannelFreshness depth, rain, heartbeat;
   final String sourceLabel, sourceStatus, hazardState;
+}
+
+/// A8 rain-gauge presentation. Three separate facts, each from structured fields:
+/// coverage (rainfall_product quality/coverage_complete), calibration (claimed only with a
+/// measured-water physical validation on top of a field_reviewed, matched configuration
+/// whose hash the rain calibration version equals) and origin (prototype/bench
+/// configurations are labelled prototypes; that does not mean the tips were manual).
+class RainPresentation {
+  const RainPresentation({
+    required this.title,
+    required this.badge,
+    required this.amountSuffix,
+    required this.coverage,
+    required this.tips,
+    required this.calibration,
+    required this.origin,
+    required this.calibrated,
+    required this.completeCoverage,
+  });
+
+  /// Calibration is claimed only with a measured-water attestation
+  /// (`physical_validation == 'validated'`) on top of a field-reviewed, matched
+  /// configuration with the same calibration hash; a field review alone is not
+  /// physical calibration. A prototype label does not mean the tips were manual.
+  factory RainPresentation.from(
+    Map<String, dynamic>? product,
+    Map<String, dynamic>? configuration, {
+    String? physicalValidation,
+  }) {
+    final status = configuration?['validation_status'] as String?;
+    final matched = configuration?['status'] == 'matched';
+    final hash = configuration?['config_hash'] as String?;
+    final version = product?['calibration_version'] as String?;
+    final calibrated =
+        physicalValidation == 'validated' &&
+        status == 'field_reviewed' &&
+        matched &&
+        hash != null &&
+        version != null &&
+        version == hash;
+    final complete =
+        product != null &&
+        product['coverage_complete'] == true &&
+        product['quality'] != 'partial';
+    final mmPerTip = (product?['mm_per_tip'] as num?)?.toDouble();
+    final tipCount = (product?['tip_count'] as num?)?.toInt();
+    final bench = status == 'prototype' || status == 'bench_reviewed';
+    final conversion = mmPerTip == null
+        ? 'conversion unknown'
+        : '${mmPerTip.toStringAsFixed(mmPerTip < 1 ? 1 : 2)} mm/tip';
+    return RainPresentation(
+      title: calibrated ? 'RAINFALL' : 'RAIN-GAUGE ACTIVITY',
+      badge: bench
+          ? 'Prototype'
+          : calibrated
+          ? null
+          : 'Unvalidated',
+      amountSuffix: calibrated ? 'mm' : 'mm rainfall-equivalent',
+      coverage: product == null
+          ? 'Coverage unknown'
+          : complete
+          ? 'Complete coverage'
+          : 'Partial coverage',
+      tips: tipCount == null
+          ? null
+          : '$tipCount recorded tip${tipCount == 1 ? '' : 's'}',
+      calibration: calibrated
+          ? 'Calibrated conversion: $conversion (measured-water validation).'
+          : 'Provisional conversion: $conversion. Not calibrated against measured water.',
+      origin: bench
+          ? 'Prototype configuration: tips are not validated as measured rainfall.'
+          : calibrated
+          ? null
+          : 'Not confirmed as measured rainfall.',
+      calibrated: calibrated,
+      completeCoverage: complete,
+    );
+  }
+
+  final String title, amountSuffix, coverage, calibration;
+  final String? badge, tips, origin;
+  final bool calibrated, completeCoverage;
+
+  /// One sentence for screen readers and narrow layouts.
+  String get caveat => [
+    calibration,
+    ?origin,
+  ].join(' ');
 }

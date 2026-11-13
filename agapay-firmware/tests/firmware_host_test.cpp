@@ -466,19 +466,20 @@ int main() {
   rainTipCount = 0; rainTipSeen = false;
   expectNear(snapshotRainfallInterval(), 0);
   fakeUs = 1; rainTipISR(); // first tip need not wait for debounce after boot
-  fakeUs = 50000; rainTipISR(); // 49999 us: bounce ignored
+  fakeUs = RAIN_DEBOUNCE_US; rainTipISR(); // debounce - 1 us: bounce ignored
+  fakeUs = 82001; rainTipISR(); // A8 regression: second closure 82 ms after a tip is not a new tip
   expectNear(snapshotRainfallInterval(), 0.70F);
-  fakeUs = 50001; rainTipISR();
-  fakeUs = 100001; rainTipISR();
+  fakeUs = RAIN_DEBOUNCE_US + 1; rainTipISR();
+  fakeUs = 2 * RAIN_DEBOUNCE_US + 1; rainTipISR();
   expectNear(snapshotRainfallInterval(), 1.40F);
   expectNear(snapshotRainfallInterval(), 0);
-  fakeUs = 150001; rainTipISR();
-  fakeUs = 200001;
+  fakeUs = 3 * RAIN_DEBOUNCE_US + 1; rainTipISR();
+  fakeUs = 4 * RAIN_DEBOUNCE_US + 1;
   afterUnlock = rainTipISR; // a new tip immediately AFTER copy/reset
   expectNear(snapshotRainfallInterval(), 0.70F);
   expectNear(snapshotRainfallInterval(), 0.70F); // not lost or double counted
   rainTipSeen = true; lastRainInterruptUs = UINT32_MAX - 20000;
-  fakeUs = 30000; rainTipISR(); // micros wrap
+  fakeUs = RAIN_DEBOUNCE_US - 20000; rainTipISR(); // micros wrap: elapsed is debounce + 1 us
   expectNear(snapshotRainfallInterval(), 0.70F);
 
   uint64_t seq;
@@ -576,7 +577,7 @@ int main() {
   assert(logged("[RAIN ACK] backend acknowledged"));
   fakeMs=65000;publishRainSnapshot(fakeMs);
   std::cout<<"RAIN "<<mqttClient.lastPayload<<'\n'; // acknowledged repeat has zero increment
-  rainPreferences.writeOk=false;fakeMs=70000;fakeUs+=50000;rainTipISR();updateRainState(fakeMs);
+  rainPreferences.writeOk=false;fakeMs=70000;fakeUs+=RAIN_DEBOUNCE_US;rainTipISR();updateRainState(fakeMs);
   assert(rainPersistenceWarning && rainPersistedTips<rainLifetimeTips);
   rainPreferences.writeOk=true;updateRainState(fakeMs);
   assert(rainPersistedTips==rainLifetimeTips);

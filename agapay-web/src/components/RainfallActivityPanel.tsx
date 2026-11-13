@@ -6,10 +6,11 @@ import {Bar,BarChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis} from
 import {accountRequest} from "@/lib/accounts";
 import {visiblePoll} from '@/lib/visible-poll';
 import {selectRainActivity,type RainSnapshot} from "@/lib/rainfall-activity";
+import {rainPresentation,type RainConfiguration,type RainProduct} from "@/lib/rain-presentation";
 
 const time=(at:string|number)=>new Date(at).toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour:"2-digit",minute:"2-digit"});
 
-export default function RainfallActivityPanel({stationId,variant="dashboard"}:{stationId:string;variant?:"dashboard"|"analytics"}) {
+export default function RainfallActivityPanel({stationId,variant="dashboard",configuration,physicalValidation}:{stationId:string;variant?:"dashboard"|"analytics";configuration?:RainConfiguration;physicalValidation?:string|null}) {
   const config={rainSource:'physical_rain_gauge'};
   const [clock,setClock]=useState(0);
   useEffect(()=>{const tick=()=>setClock(Date.now());tick();const timer=setInterval(tick,1000);return()=>clearInterval(timer);},[]);
@@ -37,9 +38,11 @@ export default function RainfallActivityPanel({stationId,variant="dashboard"}:{s
   const hasChart=view.chart.some(row=>row.amount!==null);
   const currentHour=new Date(clock).toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour:"2-digit",minute:"2-digit"});
 
+  // A8: coverage, calibration and origin of the figure come from structured metadata only.
+  const rain=rainPresentation(feed?.current_hour_product as RainProduct,configuration,physicalValidation);
   return <section className={`rainfall-activity design-panel ${variant==="analytics"?"rainfall-analytics":""}`} aria-label="Rainfall activity">
-    <header><h2>Rainfall Activity</h2><span className={view.fresh?"rain-connected":""}>{view.fresh?(simulated?"SYNTHETIC":"Connected"):state==="Connecting"?"Connecting":"Offline"}</span></header>
-    <div className="rainfall-amount"><span>Received rain this hour</span><strong>{view.current===null?"—":view.current.toFixed(3)}<small>{view.current===null?"":" mm"}</small></strong><p>{view.current===null?"Waiting for current gauge readings.":`Incomplete hour · ${currentHour} PHT · received tips only`}</p></div>
+    <header><h2>{rain.title}</h2>{rain.badge&&<span className="rain-badge" data-testid="rain-badge">{rain.badge}</span>}<span className={view.fresh?"rain-connected":""}>{view.fresh?(simulated?"SYNTHETIC":"Connected"):state==="Connecting"?"Connecting":"Offline"}</span></header>
+    <div className="rainfall-amount"><span>{rain.calibrated?"Received rain this hour":"Rain-gauge activity this hour"}</span><strong>{view.current===null?"—":view.current.toFixed(3)}<small>{view.current===null?"":` ${rain.amountSuffix}`}</small></strong><p>{view.current===null?"Waiting for current gauge readings.":`Incomplete hour · ${currentHour} PHT · received tips only`}</p><p className="rain-caveat" data-testid="rain-caveat">{[rain.tips,rain.coverage].filter(Boolean).join(" · ")}. {rain.caveat}</p></div>
     <p className="subtle-note">Interval {feed?.current_hour_product?.interval_start??"—"} to {feed?.current_hour_product?.interval_end??"—"} · {feed?.current_hour_product?.coverage??"Coverage unknown"} · {config.rainSource} · calibration {feed?.calibration_version??"unknown"}</p><div className="rainfall-chart-heading"><h3>{view.chartSource==="archive"?"Archived rainfall context":"Rainfall trend"}</h3><span>{view.chartSource==="archive"?"HISTORICAL CONTEXT":simulated?"SYNTHETIC OBSERVATIONS":"Hourly amounts · mm"}</span></div>
     <div className="rainfall-chart">{hasChart?<ResponsiveContainer width="100%" height="100%"><BarChart data={bars} margin={{top:8,right:0,bottom:0,left:0}}><CartesianGrid stroke="var(--design-line)" strokeDasharray="3 3" vertical={false}/><XAxis dataKey="label" interval="preserveStartEnd" minTickGap={35} tick={{fill:"var(--adaptive-secondary)",fontSize:9}} axisLine={false} tickLine={false}/><YAxis width={32} tickFormatter={value=>Number(value).toFixed(1)} tick={{fill:"var(--adaptive-secondary)",fontSize:9}} axisLine={false} tickLine={false}/><Tooltip labelFormatter={(_,payload)=>{const row=payload?.[0]?.payload;return row?`${new Date(row.at).toLocaleString("en-PH",{timeZone:"Asia/Manila"})} PHT${row.partial?" · ongoing hour":" · completed hour"}`:"";}} formatter={value=>[`${Number(value).toFixed(3)} mm`,"Rainfall"]} contentStyle={{background:"var(--design-panel)",border:"1px solid var(--design-line)",fontSize:10}}/><Bar dataKey="complete" name="Completed hour" fill="var(--adaptive-blue)" radius={[3,3,0,0]} stackId="rain"/><Bar dataKey="ongoing" name="Ongoing hour" fill="var(--adaptive-orange)" radius={[3,3,0,0]} stackId="rain"/></BarChart></ResponsiveContainer>:<div className="rainfall-empty"><span aria-hidden="true">☂</span><strong>No rainfall history available</strong><p>Rainfall activity will appear when the gauge is connected.</p></div>}</div>
     <p className="rainfall-context">{view.fresh?"Completed hours are blue; the ongoing hour is orange. Missing intervals stay unknown.":"No rainfall amount is assumed while the gauge is unavailable."}</p>

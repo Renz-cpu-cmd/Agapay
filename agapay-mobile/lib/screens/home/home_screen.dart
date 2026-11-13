@@ -18,6 +18,8 @@ class HomeScreen extends StatelessWidget {
     final app = AppScope.of(context);
     final station = app.monitoring.primary;
     final view = app.monitoring.primaryView;
+    // A8: coverage, calibration and origin of the rain-gauge figure, from API metadata.
+    final rain = view?.station.rainPresentation;
     final usingMonitoring = station != null && view?.depth.value != null;
     final fresh = view?.depth.fresh == true;
     final level = usingMonitoring
@@ -259,9 +261,21 @@ class HomeScreen extends StatelessWidget {
                           size: 17,
                           color: context.colors.link,
                         ),
-                        Expanded(child: caption('RAINFALL')),
+                        Expanded(child: caption(rain?.title ?? 'RAINFALL')),
                       ],
                     ),
+                    if (rain?.badge != null) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        key: const ValueKey('rain-badge'),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: context.colors.muted),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: tx(rain!.badge!, size: 10, weight: 700, color: context.colors.muted),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     tx(
                       view?.rain.value == null
@@ -272,16 +286,28 @@ class HomeScreen extends StatelessWidget {
                       mono: true,
                       color: const Color(0xff93c5fd),
                     ),
+                    if (rain != null && !rain.calibrated && view?.rain.value != null)
+                      tx('rainfall-equivalent', size: 10, color: context.colors.muted),
                     tx(
                       usingMonitoring
                           ? view?.rain.fresh == true
-                                ? 'Observed interval · journal'
-                                : 'Last known / missing interval'
+                                ? [rain?.tips, rain?.coverage]
+                                      .whereType<String>()
+                                      .join(' · ')
+                                : 'Last known / missing interval · ${rain?.coverage ?? 'Coverage unknown'}'
                           : 'No valid rainfall interval',
                       size: 10,
                       mono: true,
                       color: context.colors.muted,
                     ),
+                    if (usingMonitoring && rain != null && !rain.calibrated)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: KeyedSubtree(
+                          key: const ValueKey('rain-caveat'),
+                          child: tx(rain.caveat, size: 10, color: context.colors.muted),
+                        ),
+                      ),
                   ],
                 ),
               ),

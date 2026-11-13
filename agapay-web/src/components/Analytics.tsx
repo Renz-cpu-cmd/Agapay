@@ -66,7 +66,7 @@ export default function Analytics(){
     </>}
     <div className="analytics-rainfall">
       <p className="subtle-note">Rainfall journal · {rainStation?.id??"No station selected"}. This independent hourly window is separate from the selected depth report and its CSV.</p>
-      {rainStation?<RainfallActivityPanel stationId={rainStation.id} variant="analytics"/>:<section className="design-panel chart-card"><h2>RAINFALL (MM)</h2><div className="chart-canvas design-empty">No rainfall station available.</div></section>}
+      {rainStation?<RainfallActivityPanel stationId={rainStation.id} variant="analytics" configuration={rainStation.configuration} physicalValidation={rainStation.channelHealth?.calibration.physical_validation}/>:<section className="design-panel chart-card"><h2>RAINFALL (MM)</h2><div className="chart-canvas design-empty">No rainfall station available.</div></section>}
     </div>
     <StationComparison stations={stations}/>
     <section className="design-panel report-card event-report"><h2>FLOOD EVENT / SELECTED DEPTH REPORT</h2>
