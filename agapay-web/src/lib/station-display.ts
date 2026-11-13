@@ -7,7 +7,8 @@ import { stationMeasurement } from "./measurements";
  * half-missing, non-finite or out-of-range pair yields no point; zero is a valid value.
  * No bundled, demo or "planned" coordinate is ever substituted.
  */
-export function registryLocation(source: Pick<MonitoringStation, "latitude" | "longitude" | "coordinate_status">):
+export function registryLocation(source: Pick<MonitoringStation, "latitude" | "longitude" | "coordinate_status">
+  & Partial<Pick<MonitoringStation, "coordinate_precision_m" | "coordinate_basis">>):
   { coordinates: Station["coordinates"]; status: NonNullable<Station["coordinateStatus"]> } {
   const { latitude, longitude } = source;
   // The server nulls an invalid stored pair; its explicit state takes precedence.
@@ -21,7 +22,10 @@ export function registryLocation(source: Pick<MonitoringStation, "latitude" | "l
   }
   // Absent status (older server) fails closed to unverified.
   const status = source.coordinate_status === "verified" ? "verified" : "unverified";
-  return { coordinates: { latitude, longitude, status }, status };
+  // A7.1: precision is passed through only for a mappable pair; it never creates a point.
+  const precisionM = typeof source.coordinate_precision_m === "number" && Number.isFinite(source.coordinate_precision_m)
+    ? source.coordinate_precision_m : null;
+  return { coordinates: { latitude, longitude, status, precisionM, basis: precisionM === null ? null : source.coordinate_basis ?? null }, status };
 }
 
 export function displayStation(source: MonitoringStation): Station {

@@ -25,6 +25,8 @@ class MonitoringStation {
       latitude = (json['latitude'] as num?)?.toDouble(),
       longitude = (json['longitude'] as num?)?.toDouble(),
       coordinateStatus = json['coordinate_status'] as String?,
+      coordinatePrecisionM = (json['coordinate_precision_m'] as num?)?.toInt(),
+      coordinateBasis = json['coordinate_basis'] as String?,
       connectionStatus = json['connection_status'] as String,
       isOnline = json['is_online'] as bool,
       isStale = json['is_stale'] as bool,
@@ -92,12 +94,11 @@ class MonitoringStation {
       channelHealth;
   final bool rainfallFresh;
   final int? rainfallAgeSeconds;
-  String get rainfallNote => rainfallProduct == null
-      ? "Independent rainfall interval/source unavailable"
-      : "${rainfallProduct!['interval_start'] ?? '—'} to ${rainfallProduct!['interval_end'] ?? '—'} · ${rainfallProduct!['source']} · ${rainfallProduct!['coverage']} · calibration ${rainfallProduct!['calibration_version'] ?? 'unknown'}";
-  final String id, name, barangay, municipality;
-  final double? latitude, longitude;
-  final String? coordinateStatus;
+  /// A7.1: recorded radius (m) of the registry position and how it was obtained
+  /// ('surveyed' | 'owner_confirmed' | 'estimated'). Null = never recorded: the
+  /// existing presentation is kept and nothing is inferred from the digits.
+  final int? coordinatePrecisionM;
+  final String? coordinateBasis;
   final String connectionStatus, trend, source;
   final double? riseRate, riseRateLower, riseRateUpper, trendCoverage;
   final String trendReason;
@@ -120,8 +121,10 @@ class MonitoringStation {
   final List<MonitoringSample> history;
 
   bool get isSimulator => source == 'simulator';
+  /// Device authentication identifies the source. It is not sensor calibration,
+  /// installation validation or warning authority (A7.1).
   String get sourceLabel => sourceClass == 'physical_device' && sourceTrusted
-      ? 'Registry-verified physical source'
+      ? 'Authenticated registered device'
       : sourceClass == 'simulator'
       ? 'Synthetic source'
       : 'Unverified source';
@@ -149,6 +152,49 @@ class MonitoringStation {
       : (latitude == null && longitude == null) || coordinateStatus == 'missing'
       ? 'missing'
       : 'invalid';
+
+  /// Radius at or below which a surveyed pair may be shown as an exact point.
+  static const precisePointRadiusM = 50;
+
+  /// True only when recorded metadata says the pin is an area, not a point.
+  bool get locationApproximate =>
+      mapCoordinates != null &&
+      coordinatePrecisionM != null &&
+      (coordinateBasis != 'surveyed' ||
+          coordinatePrecisionM! > precisePointRadiusM);
+
+  static String _radius(int metres) => metres >= 1000
+      ? '~${(metres / 1000).round()} km'
+      : '~$metres m';
+
+  static String _basis(String? basis) => switch (basis) {
+    'owner_confirmed' => 'owner-confirmed',
+    'surveyed' => 'surveyed',
+    _ => 'estimated',
+  };
+
+  /// Location wording for the map card. Precise or unrecorded precision keeps the
+  /// existing registry wording; missing/invalid pairs never get a pin (R1).
+  String get locationLabel {
+    final state = locationState;
+    if (state != 'verified' && state != 'unverified') {
+      return state == 'missing'
+          ? 'Coordinates unavailable · no map pin'
+          : 'Recorded location invalid · no map pin';
+    }
+    if (locationApproximate) {
+      final detail =
+          '${_radius(coordinatePrecisionM!)}, ${_basis(coordinateBasis)}';
+      return state == 'verified'
+          ? 'Approximate location ($detail)'
+          : 'Approximate unconfirmed location ($detail)';
+    }
+    if (state == 'unverified') return 'Unconfirmed registry location';
+    return coordinateBasis == 'surveyed' && coordinatePrecisionM != null
+        ? 'Confirmed registry location (±$coordinatePrecisionM m, surveyed)'
+        : 'Confirmed registry location';
+  }
+
   AlertLevel get observationLevel =>
       _alert(observationTier) ?? AlertLevel.unknown;
 

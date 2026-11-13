@@ -26,7 +26,8 @@ export interface Station {
   isOnline: boolean;
   // "planned" exists only in the labelled demo fixtures below; operational stations use
   // the registry's "verified" / "unverified" state, or null when missing/invalid (R1).
-  coordinates: { latitude: number; longitude: number; status: "planned" | "verified" | "unverified" } | null;
+  coordinates: { latitude: number; longitude: number; status: "planned" | "verified" | "unverified";
+    precisionM?: number | null; basis?: "surveyed" | "owner_confirmed" | "estimated" | null } | null;
   coordinateStatus?: "verified" | "unverified" | "planned" | "missing" | "invalid";
   thresholds: { advisory: number; warning: number; evacuate: number };
   waterHistory: { time: string; level: number | null; recordedAt?: string; measuredAt?:string|null; receivedAt?:string|null }[];

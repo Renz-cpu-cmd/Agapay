@@ -86,7 +86,7 @@ export function measurementReport(station: Station, stations: Station[]): string
   const summary = currentDepthSummary(stations);
   return [
     ["Station", station.id], ["Barangay", station.barangay],
-    ["Source", station.sourceTrusted ? "Registry-verified physical source" : "Unverified / exercise source"],
+    ["Source", station.sourceTrusted ? "Authenticated registered device" : "Unverified / exercise source"],
     ["Water depth", measurementText(station.depth, 1, "cm")],
     ["Depth state / reason / time", measurementNote(station.depth)],
     ["Depth age", station.measurementAge ?? "Unknown"],

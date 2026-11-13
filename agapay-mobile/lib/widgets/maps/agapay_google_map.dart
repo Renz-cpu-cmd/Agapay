@@ -119,6 +119,7 @@ class AgapayGoogleMap extends StatefulWidget {
     this.overlays = const [],
     this.route,
     this.zoom = 15,
+    this.focusZoom,
     this.tilt = 42,
     this.fitAll = false,
     this.selectedMarkerId,
@@ -131,6 +132,10 @@ class AgapayGoogleMap extends StatefulWidget {
   final List<AgapayGoogleMapPolyline> overlays;
   final AgapayGoogleMapRoute? route;
   final double zoom;
+
+  /// Zoom for the selected marker. Null keeps the page's close-up (17); A7.1 passes a
+  /// wider value for an approximate position so its whole area is visible.
+  final double? focusZoom;
   final double tilt;
   final bool fitAll;
   final String? selectedMarkerId;
@@ -332,6 +337,7 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
       'theme': _dark ? 'dark' : 'light',
       'center': widget.center.toJson(),
       'zoom': widget.zoom,
+      'focusZoom': widget.focusZoom,
       'tilt': widget.tilt,
       'fitAll': widget.fitAll,
       'selectedMarkerId': widget.selectedMarkerId,
@@ -355,6 +361,7 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
   String _signature(AgapayGoogleMap value) => jsonEncode({
     'center': value.center.toJson(),
     'zoom': value.zoom,
+    'focusZoom': value.focusZoom,
     'tilt': value.tilt,
     'fitAll': value.fitAll,
     'selectedMarkerId': value.selectedMarkerId,
@@ -381,6 +388,7 @@ class _AgapayGoogleMapState extends State<AgapayGoogleMap> {
   String _structure(AgapayGoogleMap value) => jsonEncode({
     'center': value.center.toJson(),
     'zoom': value.zoom,
+    'focusZoom': value.focusZoom,
     'tilt': value.tilt,
     'fitAll': value.fitAll,
     'selectedMarkerId': value.selectedMarkerId,

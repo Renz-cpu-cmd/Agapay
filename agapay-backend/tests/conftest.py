@@ -81,6 +81,12 @@ def clean_station_security():
     with SessionLocal() as db:
         for table in reversed(PRIVACY_TABLES):db.execute(table.delete())
         db.commit()
+    # Migration 0009: precision rows reference stations.
+    from app.location_models import StationLocationPrecision
+    with SessionLocal() as db:
+        for model in (StationLocationPrecision,):
+            db.execute(model.__table__.delete())
+        db.commit()
     from app.delivery_models import TABLES as DELIVERY_TABLES
     with SessionLocal() as db:
         for table in reversed(DELIVERY_TABLES):db.execute(table.delete())

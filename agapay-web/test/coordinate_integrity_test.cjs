@@ -110,3 +110,30 @@ test('station switching recomputes each station from its own registry row', () =
   assert.deepEqual(plain(stations.map(s => [s.id, stationCoordinates(s), s.coordinateStatus])),
     [['A', [15.9, 120.5], 'verified'], ['B', null, 'missing'], ['C', [0, 0], 'unverified']]);
 });
+
+// A7.1: recorded precision (never inferred) decides whether a pin is an area.
+test('approximate registry positions are labelled as areas; surveyed points keep exact wording', () => {
+  const place = { latitude: 15.98, longitude: 120.56, coordinate_status: 'verified' };
+  const label = changes => locationLabel(displayStation(row({ ...place, ...changes })));
+  assert.equal(label({ coordinate_precision_m: 1100, coordinate_basis: 'owner_confirmed' }), 'Approximate location (~1 km, owner-confirmed)');
+  assert.equal(label({ coordinate_precision_m: 300, coordinate_basis: 'estimated' }), 'Approximate location (~300 m, estimated)');
+  assert.equal(label({ coordinate_precision_m: 200, coordinate_basis: 'surveyed' }), 'Approximate location (~200 m, surveyed)');
+  assert.equal(label({ coordinate_precision_m: 5, coordinate_basis: 'surveyed' }), 'Confirmed registry location (±5 m, surveyed)');
+  assert.equal(label({}), 'Confirmed registry location');                       // unrecorded: unchanged
+  assert.equal(label({ coordinate_status: 'unverified', coordinate_precision_m: 1100, coordinate_basis: 'owner_confirmed' }),
+    'Approximate unconfirmed location (~1 km, owner-confirmed)');
+  // Precision never creates a pin for a missing or invalid pair (R1).
+  const missing = displayStation(row({ coordinate_status: 'missing', coordinate_precision_m: 1100, coordinate_basis: 'owner_confirmed' }));
+  assert.equal(stationCoordinates(missing), null);
+  assert.equal(locationLabel(missing), 'Location unavailable · no map pin');
+});
+
+test('device authentication is not worded as validation', () => {
+  const files = ['components/StationMap.tsx', 'components/Stations.tsx', 'components/StationWorkspace.tsx',
+    'lib/measurements.ts', 'lib/monitoring.ts', 'lib/station-map.ts'];
+  for (const file of files) {
+    const text = fs.readFileSync(path.join(src, file), 'utf8');
+    assert.ok(!text.includes('Registry-verified physical source'), file);
+  }
+  assert.ok(fs.readFileSync(path.join(src, 'lib/station-map.ts'), 'utf8').includes('Authenticated registered device'));
+});

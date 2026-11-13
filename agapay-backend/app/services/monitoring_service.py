@@ -69,6 +69,8 @@ class _Prefetch:
             .where(Telemetry.station_id.in_(self.ids), HazardDecision.review_required.is_(True),
                    Telemetry.recorded_at >= checked_at - timedelta(seconds=WINDOW_SECONDS)))) if self.ids else set()
         self.identities = self._by_key(db, StationIdentity, StationIdentity.station_id, self.ids)
+        from app.location_models import StationLocationPrecision
+        self.location_precision = self._by_key(db, StationLocationPrecision, StationLocationPrecision.station_id, self.ids)
         self.policies = self._by_key(db, HazardPolicy, HazardPolicy.station_id, self.ids)
         self.operations = self._by_key(db, StationOperation, StationOperation.station_id, self.ids)
         self.episodes = {row.station_id: row for row in db.scalars(select(Alert).where(
@@ -166,10 +168,14 @@ def monitoring_snapshot(db: Session, *, stale_after_seconds: int, history_limit:
             trend.update(trend="unknown",rise_rate_cm_per_minute=None,rise_rate_lower=None,rise_rate_upper=None,
                          trend_reason="Unverified depth source; operational rate unknown")
         latitude, longitude, coordinate_status = registry_location(station, identity)
+        # Precision is reported only for a mappable pair; it never creates or moves a pin (R1).
+        precision = bulk.location_precision.get(sid) if latitude is not None else None
         result.append(MonitoringStation(
             station_id=station.station_id, station_name=station.station_name, barangay=station.barangay,
             municipality=station.municipality, latitude=latitude, longitude=longitude,
             coordinate_status=coordinate_status,
+            coordinate_precision_m=precision.precision_m if precision else None,
+            coordinate_basis=precision.basis if precision else None,
             administrative_status=station.status, connection_status=connection, is_online=connection == "online",
             is_stale=depth_status in ("stale", "retained"),
             # Compatibility aliases now date the retained value, not the heartbeat.

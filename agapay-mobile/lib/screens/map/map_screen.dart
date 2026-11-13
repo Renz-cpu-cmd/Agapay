@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../widgets/common/monitoring_status.dart';
 import '../../widgets/common/resident_decisions.dart';
 import '../../core/ui.dart';
@@ -109,9 +111,28 @@ class _MapScreenState extends State<MapScreen> {
                           selected: v.station.id == selected?.station.id,
                         ),
                     ],
+                    // A7.1: an approximate position is shown as an area at a zoom
+                    // that does not suggest installation-point accuracy.
+                    zoom: _zoomFor(center.station),
+                    focusZoom: center.station.locationApproximate
+                        ? _zoomFor(center.station)
+                        : null,
+                    overlays: [
+                      for (final v in mapped)
+                        if (v.station.locationApproximate)
+                          _precisionRing(v.station),
+                    ],
                     selectedMarkerId: selected?.station.id,
                     onMarkerTap: app.selectStation,
                   ),
+                ),
+              ),
+            if (center.station.locationApproximate)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  '${center.station.locationLabel}: the grey circle marks the area; the pin is not the exact installation point.',
+                  style: TextStyle(color: context.colors.muted),
                 ),
               ),
           ] else
@@ -284,12 +305,9 @@ class _MapScreenState extends State<MapScreen> {
                       title: const Text('Source and measurement details'),
                       children: [MonitoringStatus(view: view)],
                     ),
-                    switch (view.station.locationState) {
-                      'verified' => _MapFact('Location', 'Confirmed registry location'),
-                      'unverified' => _MapFact('Location', 'Unconfirmed registry location'),
-                      'missing' => const Text('Coordinates unavailable · no map pin'),
-                      _ => const Text('Recorded location invalid · no map pin'),
-                    },
+                    view.station.mapCoordinates != null
+                        ? _MapFact('Location', view.station.locationLabel)
+                        : Text(view.station.locationLabel),
                   ],
                 ),
               ),
@@ -339,5 +357,40 @@ class _MapFact extends StatelessWidget {
         ),
       ],
     ),
+  );
+}
+
+/// A7.1: camera zoom for the centred station. A precise or unrecorded position keeps
+/// the existing close-up; an approximate one zooms out so its whole area is visible.
+double _zoomFor(MonitoringStation station) {
+  if (!station.locationApproximate) return 15;
+  final metres = station.coordinatePrecisionM!;
+  if (metres >= 5000) return 11;
+  if (metres >= 2000) return 12;
+  if (metres >= 800) return 13;
+  if (metres >= 300) return 14;
+  return 15;
+}
+
+/// Closed ring of the recorded precision radius around an approximate pin, drawn with
+/// the existing overlay type. Geometry only: it never moves or creates a pin (R1).
+AgapayGoogleMapPolyline _precisionRing(MonitoringStation station) {
+  final c = station.mapCoordinates!;
+  final metres = station.coordinatePrecisionM!.toDouble();
+  const metresPerDegree = 111320.0;
+  final latRadius = metres / metresPerDegree;
+  final lonRadius =
+      metres / (metresPerDegree * math.cos(c.latitude * math.pi / 180).abs().clamp(0.01, 1.0));
+  return AgapayGoogleMapPolyline(
+    id: 'precision-${station.id}',
+    title: '${station.name} · ${station.locationLabel}',
+    points: [
+      for (var i = 0; i <= 48; i++)
+        AgapayMapCoordinate(
+          c.latitude + latRadius * math.sin(2 * math.pi * i / 48),
+          c.longitude + lonRadius * math.cos(2 * math.pi * i / 48),
+        ),
+    ],
+    color: '#94A3B8',
   );
 }

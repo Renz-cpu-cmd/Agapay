@@ -17,7 +17,7 @@ export function stationStatusDescription(station: Station): string {
     + ` · Episode tier: ${station.activeHazardTier ?? "None recorded"} (${station.hazardState ?? "unknown"})`
     + ` · Connectivity: ${station.connectionStatus ?? "unknown"} · Heartbeat age: ${station.lastPing ?? "unknown"}`
     + ` · Water depth: ${measurementLabel(station.depth)} · Latest sample validity: ${station.depth.latestSampleQuality}`
-    + ` · Measured: ${station.depth.measuredAt ?? "unknown"} · ${station.sourceTrusted && station.depthSourceTrusted ? "Registry-verified physical source" : "Unverified / test source"}`
+    + ` · Measured: ${station.depth.measuredAt ?? "unknown"} · ${station.sourceTrusted && station.depthSourceTrusted ? "Authenticated registered device" : "Unverified / test source"}`
     + ` · Station datum: ${station.channelHealth?.calibration.reference_datum ?? "unconfirmed"}`;
 }
 
@@ -28,10 +28,22 @@ export function locationLabel(station: Station): string {
       ? "Recorded location invalid · no map pin"
       : "Location unavailable · no map pin";
   }
-  return station.coordinates?.status === "verified" ? "Confirmed registry location"
-    : station.coordinates?.status === "planned" ? "Planned demo location"
-    : "Unconfirmed registry location";
+  const point = station.coordinates;
+  if (point?.status === "planned") return "Planned demo location";
+  // A7.1: recorded metadata, never inferred, decides whether the pin is an area.
+  const metres = point?.precisionM ?? null;
+  if (metres !== null && (point?.basis !== "surveyed" || metres > PRECISE_POINT_RADIUS_M)) {
+    const detail = `${metres >= 1000 ? `~${Math.round(metres / 1000)} km` : `~${metres} m`}, ${
+      point?.basis === "owner_confirmed" ? "owner-confirmed" : point?.basis === "surveyed" ? "surveyed" : "estimated"}`;
+    return point?.status === "verified" ? `Approximate location (${detail})` : `Approximate unconfirmed location (${detail})`;
+  }
+  if (point?.status !== "verified") return "Unconfirmed registry location";
+  return point.basis === "surveyed" && metres !== null
+    ? `Confirmed registry location (±${metres} m, surveyed)` : "Confirmed registry location";
 }
+
+/** Radius at or below which a surveyed pair may be shown as an exact installation point. */
+export const PRECISE_POINT_RADIUS_M = 50;
 
 export function stationCoordinates(station: Station): [number, number] | null {
   const point = station.coordinates;

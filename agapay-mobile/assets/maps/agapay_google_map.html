@@ -92,7 +92,7 @@
 
     function structureKey(config, theme) {
       return JSON.stringify({
-        theme, center: config.center, zoom: config.zoom, tilt: config.tilt, fitAll: config.fitAll,
+        theme, center: config.center, zoom: config.zoom, focusZoom: config.focusZoom ?? null, tilt: config.tilt, fitAll: config.fitAll,
         selectedMarkerId: config.selectedMarkerId, overlays: config.overlays || [], route: config.route || null,
         markers: config.markers.map(({ title, ...structure }) => structure),
       });
@@ -311,7 +311,8 @@
         } else if (selected) {
           map.moveCamera({
             center: { lat: selected.position.latitude, lng: selected.position.longitude },
-            zoom: 17,
+            // A7.1: an approximate station supplies a wider focus zoom; otherwise unchanged.
+            zoom: typeof config.focusZoom === 'number' ? config.focusZoom : 17,
             tilt: config.tilt,
           });
         } else if (routeViewport) {

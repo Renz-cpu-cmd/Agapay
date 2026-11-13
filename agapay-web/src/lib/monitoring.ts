@@ -21,6 +21,9 @@ export type MonitoringStation = {
   longitude: number | null;
   /** R1 registry location state. Absent (older server) is treated as unverified at best. */
   coordinate_status?: "verified" | "unverified" | "missing" | "invalid";
+  /** A7.1 recorded radius (m) of the registry position and how it was obtained; null = not recorded. */
+  coordinate_precision_m?: number | null;
+  coordinate_basis?: "surveyed" | "owner_confirmed" | "estimated" | null;
   administrative_status: "active" | "inactive" | "maintenance";
   connection_status: "online" | "offline" | "no_data" | "inactive" | "maintenance";
   /** Client evidence flag; an API failure does not establish a device outage. */
@@ -130,7 +133,7 @@ export function monitoringSourceIsFresh(
 }
 
 export function monitoringSourceLabel(station: Pick<MonitoringStation,"source_class"|"source_trusted">) {
-  return station.source_class==="physical_device" && station.source_trusted ? "Registry-verified physical source"
+  return station.source_class==="physical_device" && station.source_trusted ? "Authenticated registered device"
     : station.source_class==="simulator" ? "Synthetic source" : "Unverified source";
 }
 

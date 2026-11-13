@@ -96,6 +96,39 @@ def update_lifecycle(station_id:str,payload:LifecycleWrite,db:Session=Depends(ge
     return operations_contract(db,station)
 
 
+class LocationPrecisionWrite(BaseModel):
+    model_config=ConfigDict(extra="forbid",allow_inf_nan=False)
+    precision_m:int=Field(ge=1,le=100000)
+    basis:Literal["surveyed","owner_confirmed","estimated"]
+    note:str|None=Field(default=None,max_length=300)
+    reason:str=Field(min_length=3,max_length=500)
+
+
+def location_precision_contract(row):
+    return dict(station_id=row.station_id,precision_m=row.precision_m,basis=row.basis,note=row.note,updated_at=row.updated_at)
+
+
+@router.put("/{station_id}/location-precision")
+def set_location_precision(station_id:str,payload:LocationPrecisionWrite,db:Session=Depends(get_db),admin:User=Depends(require_admin)):
+    """Record how precise the registry position is (A7.1). Station metadata only: the commissioned
+    identity, its credentials, coordinates and eligibility are untouched."""
+    from app.location_models import StationLocationPrecision
+    station=lock_station(db,station_id)
+    row=db.get(StationLocationPrecision,station_id,populate_existing=True)
+    before=location_precision_contract(row) if row else None
+    if row is None:
+        row=StationLocationPrecision(station_id=station_id)
+        db.add(row)
+    row.precision_m,row.basis,row.note=payload.precision_m,payload.basis,(payload.note.strip() or None) if payload.note else None
+    row.updated_by,row.updated_at=admin.id,utc_now()
+    db.flush()
+    after=location_precision_contract(row)
+    audit(db,station,admin,"location_precision_recorded",payload.reason,{
+        "before":{k:str(v) for k,v in before.items()} if before else {},"after":{k:str(v) for k,v in after.items()}})
+    commit_security(db)
+    return after
+
+
 @router.get("/{station_id}/configuration")
 def get_configuration(station_id:str,db:Session=Depends(get_db),_admin:User=Depends(require_admin)):
     row=current_configuration(db,station_id)

@@ -62,7 +62,7 @@ export default function StationMap({ onViewStation, selectedStationId, onSelectS
     </div>
     <footer className="station-map-footer">
       {selected ? <>
-        <div><strong>{selected.name}</strong><p>{locationLabel(selected)} · {measurementLabel(selected.depth)}{selected.depth.value!==null?` · ${measurementText(selected.depth,1,"cm")} · ${selected.measurementAge??"Age unknown"}`:""}</p><StationStatusFacts station={selected} compact/><p>{selected.sourceTrusted&&selected.depthSourceTrusted?"Registry-verified physical source":"Unverified / test source"}</p></div>
+        <div><strong>{selected.name}</strong><p>{locationLabel(selected)} · {measurementLabel(selected.depth)}{selected.depth.value!==null?` · ${measurementText(selected.depth,1,"cm")} · ${selected.measurementAge??"Age unknown"}`:""}</p><StationStatusFacts station={selected} compact/><p>{selected.sourceTrusted&&selected.depthSourceTrusted?"Authenticated registered device":"Unverified / test source"}</p></div>
         <details className="station-evidence"><summary>Measurement evidence</summary><p>{measurementNote(selected.depth)}</p><StationStatusFacts station={selected}/></details>
         <button className="design-button small" onClick={() => onViewStation(selected.id)}>View station</button>
       </> : <>

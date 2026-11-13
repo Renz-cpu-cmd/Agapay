@@ -78,6 +78,15 @@ class MonitoringStation(BaseModel):
                     "'unverified': a recorded pair without commissioning confirmation. 'missing'/'invalid': "
                     "latitude/longitude are null and no map position may be shown or inferred. Independent of "
                     "installation-configuration review.")
+    coordinate_precision_m: int | None = Field(
+        default=None,
+        description="Recorded radius (metres) within which the true installation point lies. Null when the "
+                    "precision was never recorded, or when there is no mappable pair. A confirmed pair is not "
+                    "an exact point unless this is small and coordinate_basis is 'surveyed'.")
+    coordinate_basis: Literal["surveyed", "owner_confirmed", "estimated"] | None = Field(
+        default=None,
+        description="How the position was obtained. Null when not recorded or when there is no mappable pair. "
+                    "Independent of device authentication and of installation-configuration review.")
     administrative_status: Literal["active", "inactive", "maintenance"]
     connection_status: ConnectionState
     is_online: bool

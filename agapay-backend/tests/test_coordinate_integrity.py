@@ -71,3 +71,61 @@ def test_registry_writes_reject_out_of_range_or_half_coordinates(client):
     for changes in ({'latitude': 91}, {'longitude': 181}, {'latitude': None}):
         body, response = provision(client, admin, **changes)
         assert response.status_code == 422, (changes, response.text)
+
+
+# A7.1: precision of the registry position is structured metadata, never inferred.
+def precision(client, admin, station_id, **body):
+    return client.put(f'/api/stations/{station_id}/location-precision', headers=admin,
+                      json={'reason': 'Record location precision', **body})
+
+
+def test_precision_is_absent_until_recorded_and_never_inferred(client, device):
+    station_id, admin, issued = device
+    row = monitored(client, admin, station_id)
+    # 15.98/120.56 look "rounded", but nothing is inferred from digits or datum notes.
+    assert row['coordinate_status'] == 'verified'
+    assert (row['coordinate_precision_m'], row['coordinate_basis']) == (None, None)
+
+
+@pytest.mark.parametrize('metres,basis', [(1100, 'owner_confirmed'), (5, 'surveyed'), (300, 'estimated')])
+def test_recorded_precision_is_reported_without_touching_identity_or_credentials(client, device, metres, basis):
+    station_id, admin, issued = device
+    with SessionLocal() as db:
+        version = db.get(StationIdentity, station_id).version
+    response = precision(client, admin, station_id, precision_m=metres, basis=basis, note='synthetic')
+    assert response.status_code == 200, response.text
+    row = monitored(client, admin, station_id)
+    assert (row['coordinate_status'], row['coordinate_precision_m'], row['coordinate_basis']) == ('verified', metres, basis)
+    with SessionLocal() as db:
+        assert db.get(StationIdentity, station_id).version == version          # never re-commissioned
+    # The device credential still ingests: recording precision is metadata, not commissioning.
+    assert client.post('/api/telemetry', headers=token_headers(issued), json=payload(station_id, 7, 40)).status_code == 201
+
+
+def test_precision_never_creates_a_pin_for_missing_or_invalid_coordinates(client, device):
+    station_id, admin, issued = device
+    assert precision(client, admin, station_id, precision_m=1100, basis='owner_confirmed').status_code == 200
+    with SessionLocal() as db:
+        db.execute(update(Station).where(Station.station_id == station_id).values(latitude=None, longitude=None))
+        db.commit()
+    row = monitored(client, admin, station_id)
+    assert (row['latitude'], row['longitude'], row['coordinate_status']) == (None, None, 'missing')
+    assert (row['coordinate_precision_m'], row['coordinate_basis']) == (None, None)
+
+
+@pytest.mark.parametrize('body', [
+    {'precision_m': 0, 'basis': 'surveyed'}, {'precision_m': 100001, 'basis': 'surveyed'},
+    {'precision_m': 10, 'basis': 'guess'}, {'precision_m': 10, 'basis': 'surveyed', 'extra': 1},
+])
+def test_precision_writes_are_validated(client, device, body):
+    station_id, admin, issued = device
+    assert precision(client, admin, station_id, **body).status_code == 422
+
+
+def test_precision_write_requires_admin(client, device):
+    station_id, admin, issued = device
+    resident = client.post('/api/auth/register', json={'name': 'Resident', 'email': 'precision-resident@example.com',
+                           'password': 'resident-password-123', 'phone': '09170000002', 'barangay': 'Synthetic'})
+    assert resident.status_code == 201, resident.text
+    headers = {'Authorization': 'Bearer ' + resident.json()['access_token']}
+    assert precision(client, headers, station_id, precision_m=10, basis='surveyed').status_code in (401, 403)
